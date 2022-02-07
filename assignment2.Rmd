@@ -19,6 +19,7 @@ library(units)
 library(sf)
 library(knitr)
 library(PNWColors)
+library(lehdr)
 
 ```
 
@@ -154,6 +155,22 @@ census_data <- census_data %>%
          pct_high_inc = inc_quint_5/hh_totalE,
          res_density = housing_unitsE/tract_area)
 ```
+
+```{r lodes data}
+MSA_GEOIDS <- get_decennial(geography = "tract", state = "TX", variables = "P003001",county = c("Travis","Bastrop","Caldwell","Hays","Williamson"))$GEOID
+
+lodes <- grab_lodes(state = "tx", year = 2019, lodes_type = "wac", job_type = "JT00", 
+           segment = "S000", state_part = "main", agg_geo = "tract") %>%
+  filter(w_tract %in% MSA_GEOIDS)%>%
+    rename(total_emp = C000) %>%
+    mutate(basic_emp = CNS01+CNS02+CNS03+CNS04+CNS05+CNS06+CNS08+CNS09) %>%
+    rename(retail_emp = CNS07) %>%
+    mutate(service_emp = total_emp - basic_emp - retail_emp) %>%
+    select(w_tract, total_emp, basic_emp, retail_emp, service_emp)
+
+
+```
+
 
 ```{r}
 pnw_contin1 <- pnw_palette(name = "Moth", n = 5, type = "continuous")
