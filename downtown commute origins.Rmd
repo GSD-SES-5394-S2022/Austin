@@ -1,0 +1,34 @@
+---
+title: "Downtown Commutes"
+author: "Reuven Herzog"
+date: "2/7/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r lodes wac data, include = FALSE}
+library(lehdr)
+
+#specify MSA tracts
+MSA_GEOIDS <- get_acs(geography = "tract", state = "TX", variables = "B19001_001",county = c("Travis","Bastrop","Caldwell","Hays","Williamson"))$GEOID
+
+#get Origin-Destination data for the cordoned census tracts
+#austin, tx, tracts 7 and 11
+#hahaha slurpees
+lodes <- grab_lodes(state = "tx", year = 2019, lodes_type = "od", job_type = "JT00", 
+           segment = "S000", state_part = "main", agg_geo = "tract") %>%
+  filter(w_tract %in% c("48453001100","48453000700"), h_tract %in% MSA_GEOIDS)
+  
+```
+
+```{r aggregate, include = FALSE}
+commute_origin <- lodes %>%
+  select(w_tract, h_tract, S000) %>%
+  group_by(h_tract) %>%
+  rename(GEOID = h_tract) %>%
+  summarize(commutes = sum(S000))
+```
