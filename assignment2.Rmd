@@ -145,3 +145,17 @@ census_data <- census_data %>%
   mutate(res_density = housing_unitsE/tract_area)
 ```
 
+```{r}
+zone_boundaries <- census_data %>%
+  select(GEOID, geometry)
+
+zone_data <- census_data %>%
+  st_drop_geometry()
+
+st_write(zone_boundaries, "zones/boundaries.geojson", append = FALSE)
+
+write_csv(zone_data, "existing/data/zone_data.csv", append = FALSE)
+
+write_csv(zone_data, "alternative/data/zone_data.csv", append = FALSE)
+```
+
