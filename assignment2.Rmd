@@ -11,16 +11,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r}
-#load packages
+# load packages
 
 library(tidycensus)
 library(tidyverse)
 library(units)
 library(sf)
+library(knitr)
+library(PNWColors)
+
 ```
 
 ```{r}
-#view ACS variables
+# view ACS variables
 
 varlist_2019acs5 <- load_variables(2019, "acs5")
 
@@ -29,6 +32,8 @@ geoidlist <- get_acs(geography = "metropolitan statistical area/micropolitan sta
                      year = 2019)
 ```
 ```{r}
+# estimate income quintiles for MSA
+
 inc_vars <- c(inc_lt_10k = 'B19001_002',
 inc_btw_10k_15k = 'B19001_003',
 inc_btw_15k_20k = 'B19001_004',
@@ -62,10 +67,12 @@ region_inc <- get_acs(
   mutate(cumul_pct = cumsum(pct)) %>%
   select(variable, cumul_pct)
 
-# kable(region_inc, digits=2)
+kable(region_inc, digits=2)
 ```
 
 ```{r}
+# define variable list
+
 vars <- c(hh_total = 'B11012_001',
 hh_no_veh = 'B08201_002',
 workers_total = 'B08203_001',
@@ -137,12 +144,47 @@ census_data <- census_data %>%
          inc_quint_5 = inc_btw_150k_200kE +
                        inc_gt_200kE)
 
-census_data <- census_data %>%
-  mutate(tract_area = st_area(geometry) %>%
-  set_units("mi2"))
 
 census_data <- census_data %>%
-  mutate(res_density = housing_unitsE/tract_area)
+  mutate(tract_area = st_area(geometry) %>%
+           set_units("mi2"))
+    
+census_data <- census_data %>%
+  mutate(pct_low_inc = inc_quint_1/hh_totalE, 
+         pct_high_inc = inc_quint_5/hh_totalE,
+         res_density = housing_unitsE/tract_area)
+```
+
+```{r}
+pnw_contin1 <- pnw_palette(name = "Moth", n = 5, type = "continuous")
+
+low_inc_map <- ggplot(census_data) +
+  geom_sf(aes(fill = pct_low_inc), color = NA)
+
+low_inc_map + 
+  scale_fill_gradientn(name = "Percent low income \nhouseholds (<$35k)",
+                       breaks = my_brks <- seq(0, 1, by = 0.2),
+                       labels = paste(my_brks * 100, "%", sep = ""),
+                       colors = pnw_contin1)
+```
+```{r}
+high_inc_map <- ggplot(census_data) +
+  geom_sf(aes(fill = pct_high_inc), color = NA)
+
+high_inc_map +
+  scale_fill_gradientn(name = "Percent high income \nhouseholds (>$150k)",
+                       breaks = my_brks <- seq(0, 1, by = 0.2),
+                       labels = paste(my_brks * 100, "%", sep = ""),
+                       colors = pnw_contin1)
+```
+```{r}
+density_map <- ggplot(census_data) +
+  geom_sf(aes(fill = as.numeric(res_density)), color = NA)
+
+density_map + 
+  scale_fill_gradientn(name = "Residential density \n(units per square mile)",
+                       colors = pnw_contin1)
+  
 ```
 
 ```{r}
