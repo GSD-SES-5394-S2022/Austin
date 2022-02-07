@@ -157,25 +157,37 @@ census_data <- census_data %>%
 ```
 
 ```{r lodes data}
-MSA_GEOIDS <- get_decennial(geography = "tract", state = "TX", variables = "P003001",county = c("Travis","Bastrop","Caldwell","Hays","Williamson"))$GEOID
+MSA_GEOIDS <- get_acs(geography = "tract", state = "TX", variables = "B19001_001",county = c("Travis","Bastrop","Caldwell","Hays","Williamson"))$GEOID
 
 lodes <- grab_lodes(state = "tx", year = 2019, lodes_type = "wac", job_type = "JT00", 
            segment = "S000", state_part = "main", agg_geo = "tract") %>%
   filter(w_tract %in% MSA_GEOIDS)%>%
+    rename(GEOID = w_tract) %>%
     rename(total_emp = C000) %>%
     mutate(basic_emp = CNS01+CNS02+CNS03+CNS04+CNS05+CNS06+CNS08+CNS09) %>%
     rename(retail_emp = CNS07) %>%
     mutate(service_emp = total_emp - basic_emp - retail_emp) %>%
-    select(w_tract, total_emp, basic_emp, retail_emp, service_emp)
+    select(GEOID, total_emp, basic_emp, retail_emp, service_emp)
 
 
 ```
 
+```{r}
+# merge lehd and acs data
+
+zones <- left_join(census_data, lodes)
+```
+
+```{r}
+zones <- zones %>%
+  mutate(job_density = total_emp/tract_area,
+         job_home_ratio = total_emp/housing_unitsE)
+```
 
 ```{r}
 pnw_contin1 <- pnw_palette(name = "Moth", n = 5, type = "continuous")
 
-low_inc_map <- ggplot(census_data) +
+low_inc_map <- ggplot(zones) +
   geom_sf(aes(fill = pct_low_inc), color = NA)
 
 low_inc_map + 
@@ -185,7 +197,7 @@ low_inc_map +
                        colors = pnw_contin1)
 ```
 ```{r}
-high_inc_map <- ggplot(census_data) +
+high_inc_map <- ggplot(zones) +
   geom_sf(aes(fill = pct_high_inc), color = NA)
 
 high_inc_map +
@@ -195,7 +207,7 @@ high_inc_map +
                        colors = pnw_contin1)
 ```
 ```{r}
-density_map <- ggplot(census_data) +
+density_map <- ggplot(zones) +
   geom_sf(aes(fill = as.numeric(res_density)), color = NA)
 
 density_map + 
@@ -204,7 +216,7 @@ density_map +
   
 ```
 ```{r}
-no_veh_map <- ggplot(census_data) +
+no_veh_map <- ggplot(zones) +
   geom_sf(aes(fill = hh_no_vehE), color = NA)
 
 no_veh_map + 
@@ -214,10 +226,19 @@ no_veh_map +
 ```
 
 ```{r}
-zone_boundaries <- census_data %>%
+job_dens_map <- ggplot(zones) +
+  geom_sf(aes(fill = as.numeric(job_density)), color = NA)
+
+job_dens_map + 
+  scale_fill_gradientn(name = "Employment density \n(jobs per square mile)",
+                       colors = pnw_contin1)
+```
+
+```{r}
+zone_boundaries <- zones %>%
   select(GEOID, geometry)
 
-zone_data <- census_data %>%
+zone_data <- zones %>%
   st_drop_geometry()
 
 st_write(zone_boundaries, "zones/boundaries.geojson", append = FALSE)
