@@ -186,6 +186,15 @@ density_map +
                        colors = pnw_contin1)
   
 ```
+```{r}
+no_veh_map <- ggplot(census_data) +
+  geom_sf(aes(fill = hh_no_vehE), color = NA)
+
+no_veh_map + 
+  scale_fill_gradientn(name = "Number of households \nwithout vehicle access",
+                       colors = pnw_contin1)
+  
+```
 
 ```{r}
 zone_boundaries <- census_data %>%
