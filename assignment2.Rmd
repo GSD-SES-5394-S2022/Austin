@@ -76,6 +76,7 @@ region_inc <- get_acs(
 
 vars <- c(
   #this is a test comment
+  #test
   hh_total = 'B08201_001',
           hh_no_veh = 'B08201_002',
           workers_total = 'B08203_001',
