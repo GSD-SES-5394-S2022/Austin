@@ -12,9 +12,16 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r load libraries}
 library(lehdr)
+library(tidycensus)
+library(tidyverse)
+library(units)
+library(sf)
+library(knitr)
+library(PNWColors)
+
 ```
 
-```{r lodes wac data, include = FALSE}
+```{r lodes wac data}
 
 #specify MSA tracts
 MSA <- get_acs(geography = "tract", state = "TX", variables = "B19001_001",county = c("Travis","Bastrop","Caldwell","Hays","Williamson"), geometry = TRUE)
@@ -29,7 +36,7 @@ lodes <- grab_lodes(state = "tx", year = 2019, lodes_type = "od", job_type = "JT
   
 ```
 
-```{r aggregate, include = FALSE}
+```{r aggregate}
 commute_origin <- lodes %>%
   select(w_tract, h_tract, S000) %>%
   group_by(h_tract) %>%
@@ -37,7 +44,7 @@ commute_origin <- lodes %>%
   summarize(commutes = sum(S000))
 ```
 
-```{r join, include = FALSE}
+```{r join}
 MSA <- left_join(MSA, commute_origin)
 ```
 
