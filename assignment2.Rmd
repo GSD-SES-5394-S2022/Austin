@@ -315,16 +315,16 @@ job_dens_map +
 ```
 
 ```{r}
-zone_boundaries <- zones %>%
-  select(GEOID, geometry)
-
-zone_data <- zones %>%
-  st_drop_geometry()
-
-st_write(zone_boundaries, "zones/boundaries.geojson", append = FALSE)
-
-write_csv(zone_data, "existing/data/zone_data.csv", append = FALSE)
-
-write_csv(zone_data, "alternative/data/zone_data.csv", append = FALSE)
+# zone_boundaries <- zones %>%
+#   select(GEOID, geometry)
+# 
+# zone_data <- zones %>%
+#   st_drop_geometry()
+# 
+# st_write(zone_boundaries, "zones/boundaries.geojson", append = FALSE)
+# 
+# write_csv(zone_data, "existing/data/zone_data.csv", append = FALSE)
+# 
+# write_csv(zone_data, "alternative/data/zone_data.csv", append = FALSE)
 ```
 
