@@ -10,11 +10,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r lodes wac data, include = FALSE}
+```{r load libraries}
 library(lehdr)
+```
+
+```{r lodes wac data, include = FALSE}
 
 #specify MSA tracts
-MSA_GEOIDS <- get_acs(geography = "tract", state = "TX", variables = "B19001_001",county = c("Travis","Bastrop","Caldwell","Hays","Williamson"))$GEOID
+MSA <- get_acs(geography = "tract", state = "TX", variables = "B19001_001",county = c("Travis","Bastrop","Caldwell","Hays","Williamson"), geometry = TRUE)
+MSA_GEOIDS <- MSA$GEOID
 
 #get Origin-Destination data for the cordoned census tracts
 #austin, tx, tracts 7 and 11
@@ -32,3 +36,19 @@ commute_origin <- lodes %>%
   rename(GEOID = h_tract) %>%
   summarize(commutes = sum(S000))
 ```
+
+```{r join, include = FALSE}
+MSA <- left_join(MSA, commute_origin)
+```
+
+
+
+```{r visualize commutes}
+commute_dens_map <- ggplot(MSA) +
+  geom_sf(aes(fill = as.numeric(commutes)), color = NA) +
+  scale_fill_viridis_c(name = "Commuters to Downtown")
+
+commute_dens_map
+```
+
+
