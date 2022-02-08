@@ -328,3 +328,65 @@ job_dens_map +
 # write_csv(zone_data, "alternative/data/zone_data.csv", append = FALSE)
 ```
 
+
+```{r employment stats 1}
+bas_map <- ggplot(zones) +
+  geom_sf(aes(fill = basic_emp), color = NA)
+
+bas_hg <- ggplot(zones) +
+  geom_histogram(aes(x = basic_emp))
+
+bas_map + 
+  scale_fill_viridis_c(name = "Basic Jobs")
+```
+
+```{r employment stats 2}
+ret_map <- ggplot(zones) +
+  geom_sf(aes(fill = retail_emp), color = NA)
+
+ret_map + 
+  scale_fill_gradientn(name = "Retail Jobs",
+                       colors = pnw_contin2)
+
+ret_hg <- ggplot(zones) +
+  geom_histogram(aes(x = retail_emp))
+  
+```
+
+```{r employment stats 2}
+serv_map <- ggplot(zones) +
+  geom_sf(aes(fill = service_emp), color = NA)
+
+serv_map + 
+  scale_fill_gradientn(name = "Service Jobs",
+                       colors = pnw_contin5)
+  
+serv_hg <- ggplot(zones) +
+  geom_histogram(aes(x = service_emp))
+```
+
+```{r}
+bas_hg
+ret_hg
+serv_hg
+```
+
+
+
+```{r find primary employment type}
+# prim_emp <- function(basic, retail, service) {
+#   if((basic >= retail) && (basic >= service))
+#     return("basic")
+#   else
+#     if(retail >= service)
+#     return("retail")
+#   else return("service")
+# }
+# 
+# #prim <- apply(zones,1, prim_emp(basic_emp, retail_emp, service_emp)
+# 
+# zones <- zones %>%
+#   mutate(primary_emp_type = ))
+
+```
+
