@@ -68,47 +68,56 @@ region_inc <- get_acs(
   mutate(cumul_pct = cumsum(pct)) %>%
   select(variable, cumul_pct)
 
-kable(region_inc, digits=2)
+# kable(region_inc, digits=2)
 ```
 
 ```{r}
 # define variable list
 
 vars <- c(hh_total = 'B11012_001',
-hh_no_veh = 'B08201_002',
-workers_total = 'B08203_001',
-workers_no_veh = 'B08203_002',
+          hh_no_veh = 'B08201_002',
+          workers_total = 'B08203_001',
+          workers_no_veh = 'B08203_002',
+          agg_vehicles = 'B25046_001',
 
-housing_units = 'B25001_001',
+          housing_units = 'B25001_001',
+          
+          commute_time = 'B08013_001',
 
-hh_1person = 'B08201_007',
-hh_2person = 'B08201_013',
-hh_3person = 'B08201_019',
-hh_4person_plus = 'B08201_025',
+          hh_1person = 'B08201_007',
+          hh_2person = 'B08201_013',
+          hh_3person = 'B08201_019',
+          hh_4person_plus = 'B08201_025',
 
-pop_under_18 = 'B09001_001',
-pop_over_65 = 'B08101_008',
+          pop_under_18 = 'B09001_001',
+          pop_over_65 = 'B08101_008',
+          
+          pop_total = 'B02001_001',
+          pop_white = 'B02001_002',
+          pop_black = 'B02001_003',
+          pop_ai = 'B02001_004',
+          pop_asian = 'B02001_005',
+          pop_nhpi = 'B02001_006',
+          pop_other = 'B02001_007',
+          pop_two_plus = 'B02001_010',
+          pop_hisp_lat = 'B03002_001',
 
-inc_lt_10k = 'B19001_002',
-inc_btw_10k_15k = 'B19001_003',
-inc_btw_15k_20k = 'B19001_004',
-inc_btw_20k_25k = 'B19001_005',
-inc_btw_25k_30k = 'B19001_006',
-inc_btw_30k_35k = 'B19001_007',
-
-inc_btw_35k_40k = 'B19001_008',
-inc_btw_40k_45k = 'B19001_009',
-inc_btw_45k_50k = 'B19001_010',
-inc_btw_50k_60k = 'B19001_011',
-
-inc_btw_60k_75k = 'B19001_012',
-inc_btw_75k_100k = 'B19001_013',
-
-inc_btw_100k_125k = 'B19001_014',
-inc_btw_125k_150k = 'B19001_015',
-	
-inc_btw_150k_200k = 'B19001_016',
-inc_gt_200k = 'B19001_017')
+          inc_lt_10k = 'B19001_002',
+          inc_btw_10k_15k = 'B19001_003',
+          inc_btw_15k_20k = 'B19001_004',
+          inc_btw_20k_25k = 'B19001_005',
+          inc_btw_25k_30k = 'B19001_006',
+          inc_btw_30k_35k = 'B19001_007',
+          inc_btw_35k_40k = 'B19001_008',
+          inc_btw_40k_45k = 'B19001_009',
+          inc_btw_45k_50k = 'B19001_010',
+          inc_btw_50k_60k = 'B19001_011',
+          inc_btw_60k_75k = 'B19001_012',
+          inc_btw_75k_100k = 'B19001_013',
+          inc_btw_100k_125k = 'B19001_014',
+          inc_btw_125k_150k = 'B19001_015',
+          inc_btw_150k_200k = 'B19001_016',
+          inc_gt_200k = 'B19001_017')
 
 counties <- c("Travis", "Bastrop", "Hays", "Caldwell", "Williamson")
 ```
@@ -153,7 +162,18 @@ census_data <- census_data %>%
 census_data <- census_data %>%
   mutate(pct_low_inc = inc_quint_1/hh_totalE, 
          pct_high_inc = inc_quint_5/hh_totalE,
-         res_density = housing_unitsE/tract_area)
+         res_density = housing_unitsE/tract_area,
+         avg_commute_time = commute_timeE/workers_totalE,
+         veh_per_hh = agg_vehiclesE/hh_totalE,
+         pct_white = pop_whiteE/pop_totalE,
+         pct_nonwhite = 1-pct_white,
+         pct_black = pop_blackE/pop_totalE,
+         pct_ai = pop_aiE/pop_totalE,
+         pct_asian = pop_asianE/pop_totalE,
+         pct_nhpi = pop_nhpiE/pop_totalE,
+         pct_other = pop_otherE/pop_totalE,
+         pct_two_plus = pop_two_plusE/pop_totalE,
+         pct_hisp_lat = pop_hisp_latE/pop_totalE)
 ```
 
 ```{r lodes data}
@@ -187,41 +207,100 @@ zones <- zones %>%
 ```{r}
 pnw_contin1 <- pnw_palette(name = "Moth", n = 5, type = "continuous")
 
+pnw_contin2 <- pnw_palette(name = "Sunset2", n = 5, type = "continuous")
+
+pnw_contin3 <- pnw_palette(name = "Starfish", n = 5, type = "continuous")
+
+pnw_contin4 <- pnw_palette(name = "Winter", n = 5, type = "continuous")
+
+pnw_contin5 <- pnw_palette(name = "Bay", n = 5, type = "continuous")
+
 low_inc_map <- ggplot(zones) +
   geom_sf(aes(fill = pct_low_inc), color = NA)
 
 low_inc_map + 
+  theme_light() +
   scale_fill_gradientn(name = "Percent low income \nhouseholds (<$35k)",
                        breaks = my_brks <- seq(0, 1, by = 0.2),
                        labels = paste(my_brks * 100, "%", sep = ""),
-                       colors = pnw_contin1)
+                       colors = pnw_contin2)
 ```
 ```{r}
 high_inc_map <- ggplot(zones) +
   geom_sf(aes(fill = pct_high_inc), color = NA)
 
 high_inc_map +
+  theme_light() +
   scale_fill_gradientn(name = "Percent high income \nhouseholds (>$150k)",
                        breaks = my_brks <- seq(0, 1, by = 0.2),
                        labels = paste(my_brks * 100, "%", sep = ""),
-                       colors = pnw_contin1)
+                       colors = pnw_contin2)
 ```
 ```{r}
 density_map <- ggplot(zones) +
   geom_sf(aes(fill = as.numeric(res_density)), color = NA)
 
 density_map + 
+  theme_light() +
   scale_fill_gradientn(name = "Residential density \n(units per square mile)",
                        colors = pnw_contin1)
   
 ```
 ```{r}
+high_inc_map <- ggplot(zones) +
+  geom_sf(aes(fill = pct_white), color = NA)
+
+high_inc_map +
+  theme_light() +
+  scale_fill_gradientn(name = "Percent white",
+                       breaks = my_brks <- seq(0, 1, by = 0.2),
+                       labels = paste(my_brks * 100, "%", sep = ""),
+                       colors = pnw_contin3)
+```
+```{r}
+veh_hist <- ggplot(zones) +
+  geom_histogram(aes(x = veh_per_hh),
+                 fill = "aquamarine",
+                 color = "azure4")
+
+veh_hist +
+  theme_light() +
+  scale_x_continuous(name = "Average number of vehicles per household") +
+  scale_y_continuous(name = "Number of census tracts")
+```
+
+```{r}
+commute_map <- ggplot(zones) +
+  geom_sf(aes(fill = avg_commute_time), color = NA)
+
+commute_map +
+  theme_light() +
+  scale_fill_gradientn(name = "Average commute \ntime (minutes)",
+                       colors = pnw_contin5)
+```
+
+```{r}
+commute_hist <- ggplot(zones) +
+  geom_histogram(aes(x = avg_commute_time),
+                 fill = "coral2",
+                 color = "azure4")
+
+commute_hist +
+  theme_light() +
+  scale_x_continuous(name = "Average commute time (minutes)",
+                     breaks = seq(0, 135, by = 15)) +
+  scale_y_continuous(name = "Number of census tracts")
+```
+
+
+```{r}
 no_veh_map <- ggplot(zones) +
   geom_sf(aes(fill = hh_no_vehE), color = NA)
 
 no_veh_map + 
+  theme_light() +
   scale_fill_gradientn(name = "Number of households \nwithout vehicle access",
-                       colors = pnw_contin1)
+                       colors = pnw_contin4)
   
 ```
 
