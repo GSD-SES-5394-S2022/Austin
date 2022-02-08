@@ -74,7 +74,7 @@ region_inc <- get_acs(
 ```{r}
 # define variable list
 
-vars <- c(hh_total = 'B11012_001',
+vars <- c(hh_total = 'B08201_001',
           hh_no_veh = 'B08201_002',
           workers_total = 'B08203_001',
           workers_no_veh = 'B08203_002',
