@@ -104,7 +104,7 @@ vars <- c(
           pop_nhpi = 'B02001_006',
           pop_other = 'B02001_007',
           pop_two_plus = 'B02001_010',
-          pop_hisp_lat = 'B03002_001',
+          pop_hisp_lat = 'B03002_012',
 
           inc_lt_10k = 'B19001_002',
           inc_btw_10k_15k = 'B19001_003',
@@ -123,7 +123,11 @@ vars <- c(
           inc_btw_150k_200k = 'B19001_016',
           inc_gt_200k = 'B19001_017')
 
-counties <- c("Travis", "Bastrop", "Hays", "Caldwell", "Williamson")
+counties <- c("Travis", 
+              "Bastrop", 
+              "Hays", 
+              "Caldwell", 
+              "Williamson")
 ```
 
 ```{r}
@@ -234,7 +238,47 @@ zones <- zones %>%
 ```{r}
 # remove unnecessary columns from dataset
 
-
+zones <- zones %>%
+  select(GEOID,
+         total_emp,
+         basic_emp,
+         retail_emp,
+         service_emp,
+         job_density,
+         job_home_ratio,
+         workers_totalE,
+         workers_no_vehE,
+         avg_commute_time,
+         hh_totalE,
+         hh_no_vehE,
+         agg_vehiclesE,
+         veh_per_hh,
+         tract_area,
+         housing_unitsE,
+         res_density,
+         hh_1personE,
+         hh_2personE,
+         hh_3personE,
+         hh_4person_plusE,
+         pop_totalE,
+         pop_under_18E,
+         pop_over_65E,
+         inc_quint_1,
+         inc_quint_2,
+         inc_quint_3,
+         inc_quint_4,
+         inc_quint_5,
+         pct_low_inc,
+         pct_high_inc,
+         pct_white,
+         pct_nonwhite,
+         pct_black,
+         pct_ai,
+         pct_asian,
+         pct_nhpi,
+         pct_other,
+         pct_two_plus,
+         pct_hisp_lat)
 ```
 
 ```{r}
