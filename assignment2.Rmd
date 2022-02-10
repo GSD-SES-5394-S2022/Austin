@@ -9,7 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r load libraries}
 # load packages
 
@@ -20,7 +19,6 @@ library(sf)
 library(knitr)
 library(PNWColors)
 library(lehdr)
-
 ```
 
 ```{r}
@@ -28,46 +26,51 @@ library(lehdr)
 
 varlist_2019acs5 <- load_variables(2019, "acs5")
 
+# look up Austin MSA GEOID
+
 geoidlist <- get_acs(geography = "metropolitan statistical area/micropolitan statistical area",
                      variables = "B19001_001",
                      year = 2019)
 ```
+
 ```{r}
-# estimate income quintiles for MSA
-
-inc_vars <- c(inc_lt_10k = 'B19001_002',
-inc_btw_10k_15k = 'B19001_003',
-inc_btw_15k_20k = 'B19001_004',
-inc_btw_20k_25k = 'B19001_005',
-inc_btw_25k_30k = 'B19001_006',
-inc_btw_30k_35k = 'B19001_007',
-
-inc_btw_35k_40k = 'B19001_008',
-inc_btw_40k_45k = 'B19001_009',
-inc_btw_45k_50k = 'B19001_010',
-inc_btw_50k_60k = 'B19001_011',
-
-inc_btw_60k_75k = 'B19001_012',
-inc_btw_75k_100k = 'B19001_013',
-
-inc_btw_100k_125k = 'B19001_014',
-inc_btw_125k_150k = 'B19001_015',
-	
-inc_btw_150k_200k = 'B19001_016',
-inc_gt_200k = 'B19001_017')
-
-
-
-region_inc <- get_acs(
-  geography = "metropolitan statistical area/micropolitan statistical area",
-  variables = inc_vars,
-  summary_var = 'B19001_001',
-  geometry = FALSE) %>%
-  filter(GEOID == "12420") %>%
-  mutate(pct = estimate / summary_est) %>%
-  mutate(cumul_pct = cumsum(pct)) %>%
-  select(variable, cumul_pct)
-
+# # estimate income quintiles for MSA
+# 
+# inc_vars <- c(inc_lt_10k = 'B19001_002',
+# inc_btw_10k_15k = 'B19001_003',
+# inc_btw_15k_20k = 'B19001_004',
+# inc_btw_20k_25k = 'B19001_005',
+# inc_btw_25k_30k = 'B19001_006',
+# inc_btw_30k_35k = 'B19001_007',
+# 
+# inc_btw_35k_40k = 'B19001_008',
+# inc_btw_40k_45k = 'B19001_009',
+# inc_btw_45k_50k = 'B19001_010',
+# inc_btw_50k_60k = 'B19001_011',
+# 
+# inc_btw_60k_75k = 'B19001_012',
+# inc_btw_75k_100k = 'B19001_013',
+# 
+# inc_btw_100k_125k = 'B19001_014',
+# inc_btw_125k_150k = 'B19001_015',
+# 	
+# inc_btw_150k_200k = 'B19001_016',
+# inc_gt_200k = 'B19001_017')
+# 
+# # import income data from ACS
+# 
+# region_inc <- get_acs(
+#   geography = "metropolitan statistical area/micropolitan statistical area",
+#   variables = inc_vars,
+#   summary_var = 'B19001_001',
+#   geometry = FALSE) %>%
+#   filter(GEOID == "12420") %>%
+#   mutate(pct = estimate / summary_est) %>%
+#   mutate(cumul_pct = cumsum(pct)) %>%
+#   select(variable, cumul_pct)
+# 
+# # display cumulative percentiles
+# 
 # kable(region_inc, digits=2)
 ```
 
@@ -135,7 +138,7 @@ census_data <- get_acs(geography = "tract",
 ```
 
 ```{r}
-#additional variable generation
+# convert income ranges to approximate quintiles
 
 census_data <- census_data %>%
   mutate(inc_quint_1 = inc_lt_10kE +
@@ -155,18 +158,25 @@ census_data <- census_data %>%
          inc_quint_5 = inc_btw_150k_200kE +
                        inc_gt_200kE)
 
+# calculate tract area in square miles
 
 census_data <- census_data %>%
   mutate(tract_area = st_area(geometry) %>%
            set_units("mi2"))
-    
+
+# additional variable generation
+
 census_data <- census_data %>%
   mutate(pct_low_inc = inc_quint_1/hh_totalE, 
          pct_high_inc = inc_quint_5/hh_totalE,
          res_density = housing_unitsE/tract_area,
          avg_commute_time = commute_timeE/workers_totalE,
-         veh_per_hh = agg_vehiclesE/hh_totalE,
-         pct_white = pop_whiteE/pop_totalE,
+         veh_per_hh = agg_vehiclesE/hh_totalE)
+
+# convert race/ethnicity counts to percentages
+    
+census_data <- census_data %>%
+  mutate(pct_white = pop_whiteE/pop_totalE,
          pct_nonwhite = 1-pct_white,
          pct_black = pop_blackE/pop_totalE,
          pct_ai = pop_aiE/pop_totalE,
@@ -178,10 +188,26 @@ census_data <- census_data %>%
 ```
 
 ```{r lodes data}
-MSA_GEOIDS <- get_acs(geography = "tract", state = "TX", variables = "B19001_001",county = c("Travis","Bastrop","Caldwell","Hays","Williamson"))$GEOID
+# pull GEOIDS for tracts in the MSA
 
-lodes <- grab_lodes(state = "tx", year = 2019, lodes_type = "wac", job_type = "JT00", 
-           segment = "S000", state_part = "main", agg_geo = "tract") %>%
+MSA_GEOIDS <- get_acs(geography = "tract", 
+                      state = "TX", 
+                      variables = "B19001_001",
+                      county = c("Travis",
+                                 "Bastrop",
+                                 "Caldwell",
+                                 "Hays",
+                                 "Williamson"))$GEOID
+
+# import employment data for tracts in list
+
+lodes <- grab_lodes(state = "tx", 
+                    year = 2019, 
+                    lodes_type = "wac", 
+                    job_type = "JT00", 
+                    segment = "S000", 
+                    state_part = "main", 
+                    agg_geo = "tract") %>%
   filter(w_tract %in% MSA_GEOIDS)%>%
     rename(GEOID = w_tract) %>%
     rename(total_emp = C000) %>%
@@ -189,147 +215,192 @@ lodes <- grab_lodes(state = "tx", year = 2019, lodes_type = "wac", job_type = "J
     rename(retail_emp = CNS07) %>%
     mutate(service_emp = total_emp - basic_emp - retail_emp) %>%
     select(GEOID, total_emp, basic_emp, retail_emp, service_emp)
-
-
 ```
 
 ```{r}
-# merge lehd and acs data
+# merge LEHD and ACS data
 
 zones <- left_join(census_data, lodes)
 ```
 
 ```{r}
+# calculate employment density
+
 zones <- zones %>%
   mutate(job_density = total_emp/tract_area,
          job_home_ratio = total_emp/housing_unitsE)
 ```
 
 ```{r}
-pnw_contin1 <- pnw_palette(name = "Moth", n = 5, type = "continuous")
+# remove unnecessary columns from dataset
 
-pnw_contin2 <- pnw_palette(name = "Sunset2", n = 5, type = "continuous")
 
-pnw_contin3 <- pnw_palette(name = "Starfish", n = 5, type = "continuous")
+```
 
-pnw_contin4 <- pnw_palette(name = "Winter", n = 5, type = "continuous")
+```{r}
+# separate zone geometry from data
 
-pnw_contin5 <- pnw_palette(name = "Bay", n = 5, type = "continuous")
+zone_boundaries <- zones %>%
+  select(GEOID, geometry)
+
+zone_data <- zones %>%
+  st_drop_geometry()
+
+# save zone and data to repo separately as .csv files
+
+st_write(zone_boundaries, "zones/boundaries.geojson", append = FALSE)
+
+write_csv(zone_data, "existing/data/zone_data.csv", append = FALSE)
+
+write_csv(zone_data, "alternative/data/zone_data.csv", append = FALSE)
+```
+
+```{r}
+# define various color palettes for vis
+
+pnw_contin1 <- pnw_palette(name = "Moth", 
+                           n = 5, 
+                           type = "continuous")
+
+pnw_contin2 <- pnw_palette(name = "Sunset2", 
+                           n = 5, 
+                           type = "continuous")
+
+pnw_contin3 <- pnw_palette(name = "Starfish", 
+                           n = 5, 
+                           type = "continuous")
+
+pnw_contin4 <- pnw_palette(name = "Winter", 
+                           n = 5, 
+                           type = "continuous")
+
+pnw_contin5 <- pnw_palette(name = "Bay", 
+                           n = 5, 
+                           type = "continuous")
+```
+
+```{r}
+# map percentage of low-income households by tract
 
 low_inc_map <- ggplot(zones) +
   geom_sf(aes(fill = pct_low_inc), color = NA)
 
 low_inc_map + 
-  theme_light() +
+  theme_void() +
   scale_fill_gradientn(name = "Percent low income \nhouseholds (<$35k)",
                        breaks = my_brks <- seq(0, 1, by = 0.2),
                        labels = paste(my_brks * 100, "%", sep = ""),
                        colors = pnw_contin2)
 ```
+
 ```{r}
+# map percentage of high-income households by tract
+
 high_inc_map <- ggplot(zones) +
   geom_sf(aes(fill = pct_high_inc), color = NA)
 
 high_inc_map +
-  theme_light() +
+  theme_void() +
   scale_fill_gradientn(name = "Percent high income \nhouseholds (>$150k)",
                        breaks = my_brks <- seq(0, 1, by = 0.2),
                        labels = paste(my_brks * 100, "%", sep = ""),
                        colors = pnw_contin2)
 ```
+
 ```{r}
+# map residential density in MSA
+
 density_map <- ggplot(zones) +
   geom_sf(aes(fill = as.numeric(res_density)), color = NA)
 
 density_map + 
-  theme_light() +
+  theme_void() +
   scale_fill_gradientn(name = "Residential density \n(units per square mile)",
                        colors = pnw_contin1)
-  
 ```
+
 ```{r}
-high_inc_map <- ggplot(zones) +
+# map racial distribution
+
+race_map <- ggplot(zones) +
   geom_sf(aes(fill = pct_white), color = NA)
 
-high_inc_map +
-  theme_light() +
+race_map +
+  theme_void() +
   scale_fill_gradientn(name = "Percent white",
                        breaks = my_brks <- seq(0, 1, by = 0.2),
                        labels = paste(my_brks * 100, "%", sep = ""),
                        colors = pnw_contin3)
 ```
+
 ```{r}
+# generate histogram of vehicle availability
+
 veh_hist <- ggplot(zones) +
   geom_histogram(aes(x = veh_per_hh),
                  fill = "aquamarine",
                  color = "azure4")
 
 veh_hist +
-  theme_light() +
+  theme_void() +
   scale_x_continuous(name = "Average number of vehicles per household") +
   scale_y_continuous(name = "Number of census tracts")
 ```
 
 ```{r}
+# map average commute time by tract
+
 commute_map <- ggplot(zones) +
   geom_sf(aes(fill = avg_commute_time), color = NA)
 
 commute_map +
-  theme_light() +
+  theme_void() +
   scale_fill_gradientn(name = "Average commute \ntime (minutes)",
                        colors = pnw_contin5)
 ```
 
 ```{r}
+# generate histogram of commute times by tract
+
 commute_hist <- ggplot(zones) +
   geom_histogram(aes(x = avg_commute_time),
                  fill = "coral2",
                  color = "azure4")
 
 commute_hist +
-  theme_light() +
+  theme_void() +
   scale_x_continuous(name = "Average commute time (minutes)",
                      breaks = seq(0, 135, by = 15)) +
   scale_y_continuous(name = "Number of census tracts")
 ```
 
-
 ```{r}
+# map number of households with no vehicle access
+
 no_veh_map <- ggplot(zones) +
   geom_sf(aes(fill = hh_no_vehE), color = NA)
 
 no_veh_map + 
-  theme_light() +
+  theme_void() +
   scale_fill_gradientn(name = "Number of households \nwithout vehicle access",
                        colors = pnw_contin4)
-  
 ```
 
 ```{r}
+# map of employment density
+
 job_dens_map <- ggplot(zones) +
   geom_sf(aes(fill = as.numeric(job_density)), color = NA)
 
 job_dens_map + 
+  theme_void() +
   scale_fill_gradientn(name = "Employment density \n(jobs per square mile)",
                        colors = pnw_contin1)
 ```
 
-```{r}
-# zone_boundaries <- zones %>%
-#   select(GEOID, geometry)
-# 
-# zone_data <- zones %>%
-#   st_drop_geometry()
-# 
-# st_write(zone_boundaries, "zones/boundaries.geojson", append = FALSE)
-# 
-# write_csv(zone_data, "existing/data/zone_data.csv", append = FALSE)
-# 
-# write_csv(zone_data, "alternative/data/zone_data.csv", append = FALSE)
-```
-
-
 ```{r employment stats 1}
+# map number of basic jobs by tract
+
 bas_map <- ggplot(zones) +
   geom_sf(aes(fill = basic_emp), color = NA)
 
@@ -337,27 +408,33 @@ bas_hg <- ggplot(zones) +
   geom_histogram(aes(x = basic_emp))
 
 bas_map + 
+  theme_void() +
   scale_fill_viridis_c(name = "Basic Jobs")
 ```
 
 ```{r employment stats 2}
+# map number of retail jobs by tract
+
 ret_map <- ggplot(zones) +
   geom_sf(aes(fill = retail_emp), color = NA)
 
 ret_map + 
+  theme_void() +
   scale_fill_gradientn(name = "Retail Jobs",
                        colors = pnw_contin2)
 
 ret_hg <- ggplot(zones) +
   geom_histogram(aes(x = retail_emp))
-  
 ```
 
-```{r employment stats 2}
+```{r employment stats 3}
+# map number of service jobs by tract
+
 serv_map <- ggplot(zones) +
   geom_sf(aes(fill = service_emp), color = NA)
 
 serv_map + 
+  theme_void() +
   scale_fill_gradientn(name = "Service Jobs",
                        colors = pnw_contin5)
   
@@ -366,12 +443,12 @@ serv_hg <- ggplot(zones) +
 ```
 
 ```{r}
+# generate histograms for employment data by job type
+
 bas_hg
 ret_hg
 serv_hg
 ```
-
-
 
 ```{r find primary employment type}
 # prim_emp <- function(basic, retail, service) {
