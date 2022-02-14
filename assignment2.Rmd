@@ -9,7 +9,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-The purpose of this R Markdown document is to assemble a dataset for building our travel model. First, we import ACS data with population characteristics. Next, we download employment information for the MSA and join it with the census data. Additional variables are calculated from this. Finally, the spatial information is separated from the data, and they are both uploaded to Github. The second half of this document generates data visualizations used in our report.
+The purpose of this R Markdown document is to assemble a dataset for building our travel model. 
+First, we import ACS data with population characteristics. 
+Next, we download employment information for the MSA and join it with the census data. 
+Additional variables are calculated from this. 
+Finally, the spatial information is separated from the data, and they are both uploaded to Github. 
+The second half of this document generates data visualizations used in our report.
 
 ```{r load libraries}
 # load packages
