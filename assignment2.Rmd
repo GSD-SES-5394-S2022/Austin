@@ -19,6 +19,7 @@ library(sf)
 library(knitr)
 library(PNWColors)
 library(lehdr)
+library(here)
 ```
 
 ```{r}
@@ -194,14 +195,13 @@ census_data <- census_data %>%
 ```{r lodes data}
 # pull GEOIDS for tracts in the MSA
 
-MSA_GEOIDS <- get_acs(geography = "tract", 
-                      state = "TX", 
-                      variables = "B19001_001",
-                      county = c("Travis",
-                                 "Bastrop",
-                                 "Caldwell",
-                                 "Hays",
-                                 "Williamson"))$GEOID
+MSA <- get_acs(geography = "tract", 
+               state = "TX", 
+               variables = "B19001_001",
+               county = counties, 
+               geometry = TRUE)
+
+MSA_GEOIDS <- MSA$GEOID
 
 # import employment data for tracts in list
 
@@ -220,6 +220,28 @@ lodes <- grab_lodes(state = "tx",
     rename(retail_emp = CNS07) %>%
     mutate(service_emp = total_emp - basic_emp - retail_emp) %>%
     select(GEOID, total_emp, basic_emp, retail_emp, service_emp)
+
+commute_od <- read_csv(here("O-D commutes all MSA.csv"), 
+                       col_types = "ncccnnnnnnnnnn")
+
+commute_origin <- commute_od %>%
+  select(w_tract, h_tract, S000) %>%
+  group_by(h_tract) %>%
+  rename(GEOID = h_tract) %>%
+  summarize(commutes = sum(S000))
+
+MSA <- left_join(MSA, commute_origin)
+
+downtown <- st_union(filter(MSA,GEOID == "48453001100"),
+                     filter(MSA,GEOID == "48453000700"))
+
+prim_emp <- function(basic, retail, service) {
+  if((basic >= retail) & (basic >= service))
+    return("basic")
+  else if(retail >= service)
+    return("retail")
+  else return("service")
+}
 ```
 
 ```{r}
@@ -229,11 +251,12 @@ zones <- left_join(census_data, lodes)
 ```
 
 ```{r}
-# calculate employment density
+# calculate employment statistics
 
 zones <- zones %>%
   mutate(job_density = total_emp/tract_area,
-         job_home_ratio = total_emp/housing_unitsE)
+         job_home_ratio = total_emp/housing_unitsE,
+         primary_emp_type = prim_emp(basic_emp, retail_emp, service_emp))
 ```
 
 ```{r}
@@ -245,6 +268,7 @@ zones <- zones %>%
          basic_emp,
          retail_emp,
          service_emp,
+         primary_emp_type,
          job_density,
          job_home_ratio,
          workers_totalE,
@@ -486,6 +510,27 @@ serv_map +
 serv_hg <- ggplot(zones) +
   geom_histogram(aes(x = service_emp))
 ```
+```{r}
+# map number of commuters who work downtown
+
+commute_dens_map <- ggplot(MSA) +
+  geom_sf(aes(fill = as.numeric(commutes)), color = NA) +
+  scale_fill_viridis_c(name = "Commuters to Downtown\nby Census Tract")
+
+commute_dens_map +
+  theme_void()
+```
+
+```{r the downtown moat}
+# map tracts affected by road closures downtown
+
+moat_map <- ggplot(MSA) +
+  geom_sf(aes(color = NULL))+
+  geom_sf(data = downtown, color = 'red', lwd = 1)
+
+moat_map +
+  theme_void()
+```
 
 ```{r}
 # generate histograms for employment data by job type
@@ -494,21 +539,3 @@ bas_hg
 ret_hg
 serv_hg
 ```
-
-```{r find primary employment type}
-# prim_emp <- function(basic, retail, service) {
-#   if((basic >= retail) && (basic >= service))
-#     return("basic")
-#   else
-#     if(retail >= service)
-#     return("retail")
-#   else return("service")
-# }
-# 
-# #prim <- apply(zones,1, prim_emp(basic_emp, retail_emp, service_emp)
-# 
-# zones <- zones %>%
-#   mutate(primary_emp_type = ))
-
-```
-
