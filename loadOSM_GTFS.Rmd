@@ -14,3 +14,40 @@ knitr::opts_chunk$set(echo = TRUE)
 In this document we load the OpenStreetMap data and the GTFS data for the Austin MSA.
 Then prepare the OSM data for editing.
 
+```{r load libraries}
+library(sf)
+library(tigris)
+library(tidyverse)
+library(osmdata)
+library(scenRios)
+```
+
+
+```{r pull OSM data}
+# Try to avoid re-running this one, because the query takes a few minutes
+# to execute
+
+# Load the MSA boundaries
+boundary <- core_based_statistical_areas() %>%
+  filter(GEOID == "12420")
+
+# Define a bounding box containing the MSA
+austin_bbox <- st_bbox(boundary)
+
+q <- opq(bbox = austin_bbox, timeout = 120) %>% # create a query
+  add_osm_feature(key = 'highway') %>% # request only road data
+  osmdata_xml(file = 'existing/networks/streets.osm') # download osm file
+```
+
+```{r prepare Alternate OSM map}
+# Creates a copy of the "existing" OSM map, prepares it for editing in JSOM,
+# and outputs it to the "alternative" folder
+
+old_network <- read_lines("existing/networks/streets.osm")
+
+new_network <- osm_prep_network(old_network)
+
+write_lines(new_network, 
+            file = "alternative/networks/streets.osm")
+```
+
