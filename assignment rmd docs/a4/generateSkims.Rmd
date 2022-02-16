@@ -1,0 +1,18 @@
+---
+title: "Generate Skims"
+author: "Reuven Herzog"
+date: "2/16/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## script overview
+
+This Rmd doc contains the scripts to generate travel skims.
+We will be doing skims for the following modes: car, transit, pedestrian, bicycle.
+We also will be running transit skims for 3 times of day:
+8:15, 12:30, and 17:15, to correspond to the morning and evening rushes,
+plus a mid-day travel time.

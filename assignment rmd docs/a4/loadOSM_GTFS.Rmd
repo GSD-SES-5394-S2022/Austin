@@ -1,5 +1,5 @@
 ---
-title: "Load OSM and GTFS Data"
+title: "Preparing data for travel skims"
 author: "Reuven Herzog"
 date: "2/16/2022"
 output: html_document
@@ -14,6 +14,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 In this document we load the OpenStreetMap data and the GTFS data for the Austin MSA.
 Then prepare the OSM data for editing.
+
+We also create a file of centroids for the travel skims.
+
+Actually creating the travel skims will be done in a separate file.
 
 ```{r load libraries}
 library(sf)
@@ -59,7 +63,7 @@ OSM-related code blocks commented out to avoid wasting our time by accidentally 
 # existing/network and copied into alternative/network
 ```
 
-```{r}
+```{r make centroids}
 centroids <- here("zones",
                   "boundaries.geojson") %>%
   st_read() %>%
