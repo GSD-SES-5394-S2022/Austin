@@ -16,3 +16,21 @@ We will be doing skims for the following modes: car, transit, pedestrian, bicycl
 We also will be running transit skims for 3 times of day:
 8:15, 12:30, and 17:15, to correspond to the morning and evening rushes,
 plus a mid-day travel time.
+
+Our chosen date for the skim is Wednesday, April 6, 2022.
+
+```{r load libraries}
+# allocate more memory to Java for using r5r
+options(java.parameters = "-Xmx2G")
+library(r5r)
+
+library(tidyverse)
+library(here)
+```
+
+```{r setup r5 core}
+existing_core <- here("existing",
+                      "networks") %>%
+  setup_r5(verbose = FALSE)
+```
+
