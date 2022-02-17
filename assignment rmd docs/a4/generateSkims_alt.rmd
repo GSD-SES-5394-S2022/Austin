@@ -21,7 +21,7 @@ Our chosen date for the skim is Wednesday, April 6, 2022.
 
 ```{r load libraries}
 # allocate more memory to Java for using r5r
-options(java.parameters = "-Xmx2G")
+options(java.parameters = "-Xmx3G")
 library(r5r)
 
 library(tidyverse)
@@ -44,22 +44,24 @@ alt_core <- here("alternative",
   setup_r5(verbose = FALSE)
 ```
 
+
+
 ```{r driving skim}
-car_skim_alt <- travel_time_matrix(existing_core, 
+car_skim_alt <- travel_time_matrix(alt_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "CAR")
 ```
 
 ```{r walking skim}
-walk_skim_alt <- travel_time_matrix(existing_core, 
+walk_skim_alt <- travel_time_matrix(alt_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "WALK")
 ```
 
 ```{r biking skim}
-bike_skim_alt <- travel_time_matrix(existing_core, 
+bike_skim_alt <- travel_time_matrix(alt_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "BICYCLE")
