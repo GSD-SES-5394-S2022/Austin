@@ -1,0 +1,97 @@
+---
+title: "Generate Skims"
+author: "Reuven Herzog"
+date: "2/16/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## script overview
+
+This Rmd doc contains the scripts to generate travel skims.
+We will be doing skims for the following modes: car, transit, pedestrian, bicycle.
+We also will be running transit skims for 3 times of day:
+8:15, 12:30, and 17:15, to correspond to the morning and evening rushes,
+plus a mid-day travel time.
+
+Our chosen date for the skim is Wednesday, April 6, 2022.
+
+```{r load libraries}
+# allocate more memory to Java for using r5r
+options(java.parameters = "-Xmx2G")
+library(r5r)
+
+library(tidyverse)
+library(here)
+
+library(lubridate)
+library(sf)
+```
+
+```{r load centroids}
+centroids <- st_read(here("zones",
+                          "centroids.geojson"))
+```
+
+#Existing network travel skims
+
+```{r setup r5 core}
+existing_core <- here("existing",
+                      "networks") %>%
+  setup_r5(verbose = FALSE)
+```
+
+```{r driving skim}
+car_skim_ext <- travel_time_matrix(existing_core, 
+                     origins = centroids,
+                     destinations = centroids,
+                     mode = "CAR")
+```
+
+```{r walking skim}
+walk_skim_ext <- travel_time_matrix(existing_core, 
+                     origins = centroids,
+                     destinations = centroids,
+                     mode = "WALK")
+```
+
+```{r biking skim}
+bike_skim_ext <- travel_time_matrix(existing_core, 
+                     origins = centroids,
+                     destinations = centroids,
+                     mode = "BICYCLE")
+```
+
+```{r transit skim morning rush}
+trans_skim_ext_morn <- travel_time_matrix(existing_core, 
+                     origins = centroids,
+                     destinations = centroids,
+                     mode = "TRANSIT",
+                     departure_datetime = ymd_hm("2022-04-06 08:15"),
+                     breakdown = TRUE)
+```
+
+```{r transit skim evening rush}
+trans_skim_ext_eve <- travel_time_matrix(existing_core, 
+                     origins = centroids,
+                     destinations = centroids,
+                     mode = "TRANSIT",
+                     departure_datetime = ymd_hm("2022-04-06 17:15"),
+                     breakdown = TRUE)
+```
+
+```{r transit skim midday}
+trans_skim_ext_midday <- travel_time_matrix(existing_core, 
+                     origins = centroids,
+                     destinations = centroids,
+                     mode = "TRANSIT",
+                     departure_datetime = ymd_hm("2022-04-06 12:30"),
+                     breakdown = TRUE)
+```
+
+```{r stop existing core}
+stop_r5()
+```
