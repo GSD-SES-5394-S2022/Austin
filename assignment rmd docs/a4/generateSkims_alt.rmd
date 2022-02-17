@@ -39,34 +39,34 @@ centroids <- st_read(here("zones",
 #Existing network travel skims
 
 ```{r setup r5 core}
-existing_core <- here("existing",
-                      "networks") %>%
+alt_core <- here("alternative",
+                 "networks") %>%
   setup_r5(verbose = FALSE)
 ```
 
 ```{r driving skim}
-car_skim_ext <- travel_time_matrix(existing_core, 
+car_skim_alt <- travel_time_matrix(existing_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "CAR")
 ```
 
 ```{r walking skim}
-walk_skim_ext <- travel_time_matrix(existing_core, 
+walk_skim_alt <- travel_time_matrix(existing_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "WALK")
 ```
 
 ```{r biking skim}
-bike_skim_ext <- travel_time_matrix(existing_core, 
+bike_skim_alt <- travel_time_matrix(existing_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "BICYCLE")
 ```
 
 ```{r transit skim morning rush}
-trans_skim_ext_morn <- travel_time_matrix(existing_core, 
+trans_skim_alt_morn <- travel_time_matrix(existing_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "TRANSIT",
@@ -75,7 +75,7 @@ trans_skim_ext_morn <- travel_time_matrix(existing_core,
 ```
 
 ```{r transit skim evening rush}
-trans_skim_ext_eve <- travel_time_matrix(existing_core, 
+trans_skim_alt_eve <- travel_time_matrix(existing_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "TRANSIT",
@@ -84,7 +84,7 @@ trans_skim_ext_eve <- travel_time_matrix(existing_core,
 ```
 
 ```{r transit skim midday}
-trans_skim_ext_midday <- travel_time_matrix(existing_core, 
+trans_skim_alt_midday <- travel_time_matrix(existing_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "TRANSIT",
