@@ -51,21 +51,21 @@ car_skim_ext <- travel_time_matrix(existing_core,
                      mode = "CAR")
 ```
 
-```{r walking skim}
+```{r walking skim, message = FALSE}
 walk_skim_ext <- travel_time_matrix(existing_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "WALK")
 ```
 
-```{r biking skim}
+```{r biking skim, message = FALSE}
 bike_skim_ext <- travel_time_matrix(existing_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "BICYCLE")
 ```
 
-```{r transit skim morning rush}
+```{r transit skim morning rush, warning = FALSE}
 trans_skim_ext_morn <- travel_time_matrix(existing_core, 
                      origins = centroids,
                      destinations = centroids,
@@ -74,7 +74,7 @@ trans_skim_ext_morn <- travel_time_matrix(existing_core,
                      breakdown = TRUE)
 ```
 
-```{r transit skim evening rush}
+```{r transit skim evening rush, message = FALSE}
 trans_skim_ext_eve <- travel_time_matrix(existing_core, 
                      origins = centroids,
                      destinations = centroids,
@@ -83,7 +83,7 @@ trans_skim_ext_eve <- travel_time_matrix(existing_core,
                      breakdown = TRUE)
 ```
 
-```{r transit skim midday}
+```{r transit skim midday, message = FALSE}
 trans_skim_ext_midday <- travel_time_matrix(existing_core, 
                      origins = centroids,
                      destinations = centroids,
@@ -95,3 +95,16 @@ trans_skim_ext_midday <- travel_time_matrix(existing_core,
 ```{r stop existing core}
 stop_r5()
 ```
+
+```{r filter transit skims}
+tran_skim_ext_morn <- trans_skim_ext_morn %>%
+  filter(n_rides > 0)
+
+trans_skim_ext_eve <- trans_skim_ext_eve %>%
+  filter(n_rides > 0)
+
+trans_skim_ext_midday <- trans_skim_ext_midday %>%
+  filter(n_rides > 0)
+```
+
+
