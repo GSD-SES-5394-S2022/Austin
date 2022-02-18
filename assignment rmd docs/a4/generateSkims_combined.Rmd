@@ -187,6 +187,10 @@ write_csv(all_skims_alt, here("C:/Users/chris/Documents/School/Spring 2022/SES 5
 ```
 
 ```{r}
+all_skims_alt <- read.csv("C:/Users/chris/Documents/School/Spring 2022/SES 5394 Travel Bahavior and Forecasting/alternative/all_skims_alt.csv")
+
+all_skims_ex <- read.csv("C:/Users/chris/Documents/School/Spring 2022/SES 5394 Travel Bahavior and Forecasting/existing/all_skims_ex.csv")
+
 car_mat_ex <- all_skims_ex %>% 
   select(fromId, toId, car_time) %>%
   pivot_wider(names_from = toId, 
@@ -198,12 +202,52 @@ car_mat_alt <- all_skims_alt %>%
   pivot_wider(names_from = toId, 
               values_from = car_time) %>%
   column_to_rownames("fromId")
+
+walk_mat_ex <- all_skims_ex %>% 
+  select(fromId, toId, walk_time) %>%
+  pivot_wider(names_from = toId, 
+              values_from = walk_time) %>%
+  column_to_rownames("fromId")
+
+walk_mat_alt <- all_skims_alt %>%
+  select(fromId, toId, walk_time) %>%
+  pivot_wider(names_from = toId, 
+              values_from = walk_time) %>%
+  column_to_rownames("fromId")
+
+bike_mat_ex <- all_skims_ex %>% 
+  select(fromId, toId, bike_time) %>%
+  pivot_wider(names_from = toId, 
+              values_from = bike_time) %>%
+  column_to_rownames("fromId")
+
+bike_mat_alt <- all_skims_alt %>%
+  select(fromId, toId, bike_time) %>%
+  pivot_wider(names_from = toId, 
+              values_from = bike_time) %>%
+  column_to_rownames("fromId")
 ```
 
 ```{r}
 car_diff <- car_mat_ex - car_mat_alt
 
 total_diff <- car_diff %>%
+  replace(is.na(.), 0) %>%
+  mutate(total_diff = rowSums(across())) %>%
+  select(total_diff) %>%
+  rownames_to_column("GEOID")
+
+walk_diff <- walk_mat_ex - walk_mat_alt
+
+total_diff_walk <- walk_diff %>%
+  replace(is.na(.), 0) %>%
+  mutate(total_diff = rowSums(across())) %>%
+  select(total_diff) %>%
+  rownames_to_column("GEOID")
+
+bike_diff <- bike_mat_ex - bike_mat_alt
+
+total_diff_bike <- bike_diff %>%
   replace(is.na(.), 0) %>%
   mutate(total_diff = rowSums(across())) %>%
   select(total_diff) %>%
@@ -232,6 +276,46 @@ zones <- here("zones",
   st_read() %>%
   inner_join(existing_max_diff) %>%
   inner_join(alt_max_diff) %>%
+  mutate(diff = alt - existing)
+```
+
+```{r}
+existing_max_diff_walk <- walk_mat_ex %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453001100`) %>%
+  rename(existing = `48453001100`)
+
+alt_max_diff_walk <- walk_mat_alt %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453001100`) %>%
+  rename(alt = `48453001100`)
+
+
+zones <- here("zones",
+              "boundaries.geojson") %>%
+  st_read() %>%
+  inner_join(existing_max_diff_walk) %>%
+  inner_join(alt_max_diff_walk) %>%
+  mutate(diff = alt - existing)
+```
+
+```{r}
+existing_max_diff_bike <- bike_mat_ex %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453001100`) %>%
+  rename(existing = `48453001100`)
+
+alt_max_diff_bike <- bike_mat_alt %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453001100`) %>%
+  rename(alt = `48453001100`)
+
+
+zones <- here("zones",
+              "boundaries.geojson") %>%
+  st_read() %>%
+  inner_join(existing_max_diff_bike) %>%
+  inner_join(alt_max_diff_bike) %>%
   mutate(diff = alt - existing)
 ```
 
