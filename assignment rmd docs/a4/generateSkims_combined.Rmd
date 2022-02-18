@@ -100,8 +100,28 @@ stop_r5()
 ```
 
 ```{r}
+trans_skim_alt_morn <- trans_skim_alt_morn %>%
+  filter(n_rides > 0)
 
+car_skim_alt <- car_skim_alt %>%
+  rename(car_time = travel_time) 
 
+trans_skim_alt_morn <- trans_skim_alt_morn %>%
+  rename(transit_time = travel_time) 
+
+walk_skim_alt <- walk_skim_alt %>%
+  rename(walk_time = travel_time)
+
+bike_skim_alt <- bike_skim_alt %>%
+  rename(bike_time = travel_time)
+
+all_skims_alt <- full_join(trans_skim_alt_morn, car_skim_alt) %>%
+  full_join(walk_skim_alt) %>%
+  full_join(bike_skim_alt)
+
+# THIS IS JUST LOCAL
+
+write_csv(all_skims_alt, here("C:/Users/chris/Documents/School/Spring 2022/SES 5394 Travel Bahavior and Forecasting/alternative/all_skims_alt.csv"))
 ```
 
 
@@ -116,4 +136,148 @@ car_skim_ex <- travel_time_matrix(ex_core,
                      origins = centroids,
                      destinations = centroids,
                      mode = "CAR")
+```
+
+```{r walking skim}
+walk_skim_ex <- travel_time_matrix(ex_core, 
+                     origins = centroids,
+                     destinations = centroids,
+                     mode = "WALK")
+```
+
+```{r biking skim}
+bike_skim_ex <- travel_time_matrix(ex_core, 
+                     origins = centroids,
+                     destinations = centroids,
+                     mode = "BICYCLE")
+```
+
+```{r transit skim morning rush}
+trans_skim_ex_morn <- travel_time_matrix(ex_core, 
+                     origins = centroids,
+                     destinations = centroids,
+                     mode = "TRANSIT",
+                     departure_datetime = ymd_hm("2022-04-06 08:30"),
+                     breakdown = TRUE)
+```
+
+```{r}
+trans_skim_ex_morn <- trans_skim_ex_morn %>%
+  filter(n_rides > 0)
+
+car_skim_ex <- car_skim_ex %>%
+  rename(car_time = travel_time) 
+
+trans_skim_ex_morn <- trans_skim_ex_morn %>%
+  rename(transit_time = travel_time) 
+
+walk_skim_ex <- walk_skim_ex %>%
+  rename(walk_time = travel_time)
+
+bike_skim_ex <- bike_skim_ex %>%
+  rename(bike_time = travel_time)
+
+all_skims_ex <- full_join(trans_skim_ex_morn, car_skim_ex) %>%
+  full_join(walk_skim_ex) %>%
+  full_join(bike_skim_ex)
+
+# THIS IS JUST LOCAL
+
+write_csv(all_skims_alt, here("C:/Users/chris/Documents/School/Spring 2022/SES 5394 Travel Bahavior and Forecasting/existing/all_skims_ex.csv"))
+```
+
+```{r}
+car_mat_ex <- all_skims_ex %>% 
+  select(fromId, toId, car_time) %>%
+  pivot_wider(names_from = toId, 
+              values_from = car_time) %>%
+  column_to_rownames("fromId")
+
+car_mat_alt <- all_skims_alt %>%
+  select(fromId, toId, car_time) %>%
+  pivot_wider(names_from = toId, 
+              values_from = car_time) %>%
+  column_to_rownames("fromId")
+```
+
+```{r}
+car_diff <- car_mat_ex - car_mat_alt
+
+total_diff <- car_diff %>%
+  replace(is.na(.), 0) %>%
+  mutate(total_diff = rowSums(across())) %>%
+  select(total_diff) %>%
+  rownames_to_column("GEOID")
+```
+
+```{r}
+# zones <- st_read(here("zones",
+#                        "boundaries.geojson"))
+```
+
+```{r}
+existing_max_diff <- car_mat_ex %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453001100`) %>%
+  rename(existing = `48453001100`)
+
+alt_max_diff <- car_mat_alt %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453001100`) %>%
+  rename(alt = `48453001100`)
+
+
+zones <- here("zones",
+              "boundaries.geojson") %>%
+  st_read() %>%
+  inner_join(existing_max_diff) %>%
+  inner_join(alt_max_diff) %>%
+  mutate(diff = alt - existing)
+```
+
+```{r}
+library(ggthemes)
+library(RColorBrewer)
+
+map_palette <- brewer.pal(5, "YlOrBr")
+
+map_existing <- ggplot(zones) +
+  geom_sf(aes(fill = existing),
+          color = NA) +
+  geom_sf(data = zones[zones$GEOID=="48453001100",],
+          fill = "blue",
+          color = "blue") +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Travel time\n(existing)") +
+  theme_void()
+
+map_existing
+```
+
+```{r}
+map_alt <- ggplot(zones) +
+  geom_sf(aes(fill = alt),
+          color = NA) +
+  geom_sf(data = zones[zones$GEOID=="48453001100",],
+          fill = "blue",
+          color = "blue") +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Travel time\n(alternative)") +
+  theme_void()
+
+map_alt
+```
+
+```{r}
+map_alt <- ggplot(zones) +
+  geom_sf(aes(fill = diff),
+          color = NA) +
+  geom_sf(data = zones[zones$GEOID=="48453001100",],
+          fill = "blue",
+          color = "blue") +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Difference\nin travel times") +
+  theme_void()
+
+map_alt
 ```
