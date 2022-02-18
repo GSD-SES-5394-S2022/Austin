@@ -20,10 +20,6 @@ plus a mid-day travel time.
 Our chosen date for the skim is Wednesday, April 6, 2022.
 
 ```{r load libraries}
-# allocate more memory to Java for using r5r
-options(java.parameters = "-Xmx2G")
-library(r5r)
-
 library(tidyverse)
 library(here)
 
@@ -39,6 +35,10 @@ centroids <- st_read(here("zones",
 #Existing network travel skims
 
 ```{r setup r5 core}
+# allocate more memory to Java for using r5r
+options(java.parameters = "-Xmx2G")
+library(r5r)
+
 existing_core <- here("existing",
                       "networks") %>%
   setup_r5(verbose = FALSE)
