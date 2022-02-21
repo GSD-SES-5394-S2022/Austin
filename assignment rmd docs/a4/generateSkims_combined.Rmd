@@ -1,7 +1,7 @@
 ---
-title: "Generate Skims"
-author: "Reuven Herzog"
-date: "2/16/2022"
+title: "Generate Combined Skims"
+author: "Reuven Herzog and Chris Dsida"
+date: "2/21/2022"
 output: html_document
 ---
 
@@ -119,9 +119,11 @@ all_skims_alt <- full_join(trans_skim_alt_morn, car_skim_alt) %>%
   full_join(walk_skim_alt) %>%
   full_join(bike_skim_alt)
 
-# THIS IS JUST LOCAL
 
-write_csv(all_skims_alt, here("C:/Users/chris/Documents/School/Spring 2022/SES 5394 Travel Bahavior and Forecasting/alternative/all_skims_alt.csv"))
+
+write_csv(all_skims_alt, here("alternative",
+                              "data",
+                              "all_skims_alt.csv"))
 ```
 
 
@@ -161,6 +163,10 @@ trans_skim_ex_morn <- travel_time_matrix(ex_core,
                      breakdown = TRUE)
 ```
 
+```{r stop existing core}
+stop_r5()
+```
+
 ```{r}
 trans_skim_ex_morn <- trans_skim_ex_morn %>%
   filter(n_rides > 0)
@@ -181,15 +187,21 @@ all_skims_ex <- full_join(trans_skim_ex_morn, car_skim_ex) %>%
   full_join(walk_skim_ex) %>%
   full_join(bike_skim_ex)
 
-# THIS IS JUST LOCAL
 
-write_csv(all_skims_ex, here("C:/Users/chris/Documents/School/Spring 2022/SES 5394 Travel Bahavior and Forecasting/existing/all_skims_ex.csv"))
+
+write_csv(all_skims_ex, here("existing",
+                             "data",
+                             "all_skims_ex.csv"))
 ```
 
 ```{r}
-all_skims_alt <- read.csv("C:/Users/chris/Documents/School/Spring 2022/SES 5394 Travel Bahavior and Forecasting/alternative/all_skims_alt.csv")
+all_skims_alt <- read.csv(here("alternative",
+                              "data",
+                              "all_skims_alt.csv"))
 
-all_skims_ex <- read.csv("C:/Users/chris/Documents/School/Spring 2022/SES 5394 Travel Bahavior and Forecasting/existing/all_skims_ex.csv")
+all_skims_ex <- read.csv(here("existing",
+                             "data",
+                             "all_skims_ex.csv"))
 
 car_mat_ex <- all_skims_ex %>% 
   select(fromId, toId, car_time) %>%
@@ -277,6 +289,8 @@ zones <- here("zones",
   inner_join(existing_max_diff) %>%
   inner_join(alt_max_diff) %>%
   mutate(diff = alt - existing)
+
+# Do this for GEOID 48453000700 as well
 ```
 
 ```{r}
