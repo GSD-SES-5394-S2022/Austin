@@ -15,5 +15,6 @@ Data and scripts for this project are contained in the following subfolders:
 
 The following R Markdown files are used to perform this analysis (list to be updated over the course of the semester):
 
-* *assignment2.Rmd* - generates tract-level TAZs and associated population/employment data, used for Assignment 2
-* *assignment3.Rmd* - 
+* *assignment2.Rmd* - generates tract-level TAZs and associated population/employment data for the MSA (assignment rmd docs/a2)
+* *loadOSM_GTFS.Rmd* - downloads public transit and road network data for Austin. (assignment rmd docs/a4)
+* *generateSkims_combined.Rmd* - calculates travel time by mode between TAZ centroids with maps comparing existing conditions to the alternative (assignment rmd docs/a4)
