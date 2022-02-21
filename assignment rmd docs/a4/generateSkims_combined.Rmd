@@ -9,13 +9,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## script overview
+## Script Overview
 
 This Rmd doc contains the scripts to generate travel skims.
 We will be doing skims for the following modes: car, transit, pedestrian, bicycle.
-We also will be running transit skims for 3 times of day:
-8:15, 12:30, and 17:15, to correspond to the morning and evening rushes,
-plus a mid-day travel time.
+While we will eventually incorporate transit skims run at multiple times of day, this initial analysis will be limited to a single run at 8:30am.
 
 Our chosen date for the skim is Wednesday, April 6, 2022.
 
@@ -36,16 +34,15 @@ centroids <- st_read(here("zones",
                           "centroids.geojson"))
 ```
 
-#Existing network travel skims
+## Alternative Network Travel Skims
+
+This section of code chunks generates travel time matrices for driving, walking, biking, and transit in the alternative (No driving allowed in Downtown). Time is calculated for travel between census tract centroids. The maximum allowed travel time is two hours. Code chunk titles describe their function.
 
 ```{r setup r5 core}
 alt_core <- here("alternative",
                  "networks") %>%
   setup_r5(verbose = FALSE)
 ```
-
-
-
 
 ```{r alt driving skim}
 car_skim_alt <- travel_time_matrix(alt_core, 
@@ -54,52 +51,55 @@ car_skim_alt <- travel_time_matrix(alt_core,
                      mode = "CAR")
 ```
 
-```{r walking skim}
+```{r alt walking skim}
 walk_skim_alt <- travel_time_matrix(alt_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "WALK")
 ```
 
-```{r biking skim}
+```{r alt biking skim}
 bike_skim_alt <- travel_time_matrix(alt_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "BICYCLE")
 ```
 
-```{r transit skim morning rush}
+```{r alt transit skim morning rush}
 trans_skim_alt_morn <- travel_time_matrix(alt_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "TRANSIT",
                      departure_datetime = ymd_hm("2022-04-06 08:30"),
                      breakdown = TRUE)
-```
 
-# ```{r transit skim evening rush}
-# trans_skim_alt_eve <- travel_time_matrix(existing_core, 
-#                      origins = centroids,
-#                      destinations = centroids,
-#                      mode = "TRANSIT",
-#                      departure_datetime = ymd_hm("2022-04-06 17:15"),
-#                      breakdown = TRUE)
-# ```
+# Additional code for potentially running skims at other times of day
+
+# trans_skim_alt_eve <- travel_time_matrix(existing_core,
+#                       origins = centroids,
+#                       destinations = centroids,
+#                       mode = "TRANSIT",
+#                       departure_datetime = ymd_hm("2022-04-06 17:15"),
+#                       breakdown = TRUE)
 # 
-# ```{r transit skim midday}
-# trans_skim_alt_midday <- travel_time_matrix(existing_core, 
-#                      origins = centroids,
-#                      destinations = centroids,
-#                      mode = "TRANSIT",
-#                      departure_datetime = ymd_hm("2022-04-06 12:30"),
-#                      breakdown = TRUE)
-# ```
+# 
+# trans_skim_alt_midday <- travel_time_matrix(existing_core,
+#                       origins = centroids,
+#                       destinations = centroids,
+#                       mode = "TRANSIT",
+#                       departure_datetime = ymd_hm("2022-04-06 12:30"),
+#                       breakdown = TRUE)
+```
 
 ```{r stop existing core}
 stop_r5()
 ```
 
-```{r}
+## Merge and Save Alternative Skims
+
+This section merges the travel time matrices into a single file and saves it to the Github repository. Travel time variable names are changed to correspond to the correct mode.
+
+```{r rename vars and merge}
 trans_skim_alt_morn <- trans_skim_alt_morn %>%
   filter(n_rides > 0)
 
@@ -119,13 +119,14 @@ all_skims_alt <- full_join(trans_skim_alt_morn, car_skim_alt) %>%
   full_join(walk_skim_alt) %>%
   full_join(bike_skim_alt)
 
-
-
 write_csv(all_skims_alt, here("alternative",
                               "data",
                               "all_skims_alt.csv"))
 ```
 
+## Existing Network Travel Skims
+
+This section of code chunks generates travel time matrices for driving, walking, biking, and transit under existing conditions. As with the previous section time is calculated for travel between census tract centroids. The maximum allowed travel time is two hours. Code chunk titles describe their function.
 
 ```{r setup r5 core}
 ex_core <- here("existing",
@@ -140,21 +141,21 @@ car_skim_ex <- travel_time_matrix(ex_core,
                      mode = "CAR")
 ```
 
-```{r walking skim}
+```{r existing walking skim}
 walk_skim_ex <- travel_time_matrix(ex_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "WALK")
 ```
 
-```{r biking skim}
+```{r existing biking skim}
 bike_skim_ex <- travel_time_matrix(ex_core, 
                      origins = centroids,
                      destinations = centroids,
                      mode = "BICYCLE")
 ```
 
-```{r transit skim morning rush}
+```{r existing transit skim morning rush}
 trans_skim_ex_morn <- travel_time_matrix(ex_core, 
                      origins = centroids,
                      destinations = centroids,
@@ -167,7 +168,11 @@ trans_skim_ex_morn <- travel_time_matrix(ex_core,
 stop_r5()
 ```
 
-```{r}
+## Merge and Save Existing Skims
+
+This section merges the travel time matrices into a single file and saves it to the Github repository, but for the existing conditions. Travel time variable names are changed to correspond to the correct mode.
+
+```{r rename vars and merge}
 trans_skim_ex_morn <- trans_skim_ex_morn %>%
   filter(n_rides > 0)
 
@@ -187,14 +192,18 @@ all_skims_ex <- full_join(trans_skim_ex_morn, car_skim_ex) %>%
   full_join(walk_skim_ex) %>%
   full_join(bike_skim_ex)
 
-
-
 write_csv(all_skims_ex, here("existing",
                              "data",
                              "all_skims_ex.csv"))
 ```
 
-```{r}
+## Convert data for analysis
+
+This section of code sets up the travel time matrices so we can assess whether travel times changed.
+
+```{r loads skims and converts to wide format}
+# These lines only necessary if you didn't just run r5r
+
 all_skims_alt <- read.csv(here("alternative",
                               "data",
                               "all_skims_alt.csv"))
@@ -203,11 +212,17 @@ all_skims_ex <- read.csv(here("existing",
                              "data",
                              "all_skims_ex.csv"))
 
+# Creates wide format matrix for travel time calculations
+
+# Car, existing conditions
+
 car_mat_ex <- all_skims_ex %>% 
   select(fromId, toId, car_time) %>%
   pivot_wider(names_from = toId, 
               values_from = car_time) %>%
   column_to_rownames("fromId")
+
+# Car, alternative conditions
 
 car_mat_alt <- all_skims_alt %>%
   select(fromId, toId, car_time) %>%
@@ -215,32 +230,52 @@ car_mat_alt <- all_skims_alt %>%
               values_from = car_time) %>%
   column_to_rownames("fromId")
 
-# walk_mat_ex <- all_skims_ex %>% 
-#   select(fromId, toId, walk_time) %>%
-#   pivot_wider(names_from = toId, 
-#               values_from = walk_time) %>%
-#   column_to_rownames("fromId")
-# 
+# Walking, existing conditions
+
+walk_mat_ex <- all_skims_ex %>%
+  select(fromId, toId, walk_time) %>%
+  pivot_wider(names_from = toId,
+              values_from = walk_time) %>%
+  column_to_rownames("fromId")
+
+# Biking, existing conditions
+
+bike_mat_ex <- all_skims_ex %>%
+  select(fromId, toId, bike_time) %>%
+  pivot_wider(names_from = toId,
+              values_from = bike_time) %>%
+  column_to_rownames("fromId")
+
+# Transit, existing conditions
+
+trans_mat_ex <- all_skims_ex %>% 
+  select(fromId, toId, transit_time) %>%
+  pivot_wider(names_from = toId, 
+              values_from = transit_time) %>%
+  column_to_rownames("fromId")
+
+# These were initially used to compare walking, biking, and transit travel times. They are unchanged between the existing conditions and alternative, so left commented out.
+
 # walk_mat_alt <- all_skims_alt %>%
 #   select(fromId, toId, walk_time) %>%
 #   pivot_wider(names_from = toId, 
 #               values_from = walk_time) %>%
 #   column_to_rownames("fromId")
-# 
-# bike_mat_ex <- all_skims_ex %>% 
-#   select(fromId, toId, bike_time) %>%
-#   pivot_wider(names_from = toId, 
-#               values_from = bike_time) %>%
-#   column_to_rownames("fromId")
-# 
+#
 # bike_mat_alt <- all_skims_alt %>%
 #   select(fromId, toId, bike_time) %>%
 #   pivot_wider(names_from = toId, 
 #               values_from = bike_time) %>%
 #   column_to_rownames("fromId")
+#
+# trans_mat_alt <- all_skims_alt %>%
+#   select(fromId, toId, transit_time) %>%
+#   pivot_wider(names_from = toId, 
+#               values_from = transit_time) %>%
+#   column_to_rownames("fromId")
 ```
 
-```{r}
+```{r calculate difference in car travel time}
 car_diff <- car_mat_ex - car_mat_alt
 
 total_diff <- car_diff %>%
@@ -248,6 +283,8 @@ total_diff <- car_diff %>%
   mutate(total_diff = rowSums(across())) %>%
   select(total_diff) %>%
   rownames_to_column("GEOID")
+
+# As noted in the previous chunks, no difference in travel time exists for walking, biking, and transit.
 
 # walk_diff <- walk_mat_ex - walk_mat_alt
 # 
@@ -264,14 +301,19 @@ total_diff <- car_diff %>%
 #   mutate(total_diff = rowSums(across())) %>%
 #   select(total_diff) %>%
 #   rownames_to_column("GEOID")
+#
+# trans_diff = trans_mat_ex - trans_mat_alt
+# 
+# total_diff2 <- trans_diff %>%
+#   replace(is.na(.), 0) %>%
+#   mutate(total_diff2 = rowSums(across())) %>%
+#   select(total_diff2) %>%
+#   rownames_to_column("GEOID")
 ```
 
-```{r}
-# zones <- st_read(here("zones",
-#                        "boundaries.geojson"))
-```
+```{r calculate travel time difference for a given destination}
+# first of two downtown census tracts
 
-```{r}
 existing_max_diff <- car_mat_ex %>%
   rownames_to_column("GEOID") %>%
   select(GEOID, `48453001100`) %>%
@@ -282,6 +324,7 @@ alt_max_diff <- car_mat_alt %>%
   select(GEOID, `48453001100`) %>%
   rename(alt = `48453001100`)
 
+# appended to geometry
 
 zones <- here("zones",
               "boundaries.geojson") %>%
@@ -289,6 +332,8 @@ zones <- here("zones",
   inner_join(existing_max_diff) %>%
   inner_join(alt_max_diff) %>%
   mutate(diff = alt - existing)
+
+# same process for second downtown census tract, with the addition of existing travel times for walking, biking, and public transit.
 
 existing_max_diff2 <- car_mat_ex %>%
   rownames_to_column("GEOID") %>%
@@ -300,54 +345,34 @@ alt_max_diff2 <- car_mat_alt %>%
   select(GEOID, `48453000700`) %>%
   rename(alt = `48453000700`)
 
+ex_max_walk2 <- walk_mat_ex %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453000700`) %>%
+  rename(walk_ex = `48453000700`)
+
+ex_max_bike2 <- bike_mat_ex %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453000700`) %>%
+  rename(bike_ex = `48453000700`)
+
+ex_max_trans2 <- trans_mat_ex %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453000700`) %>%
+  rename(trans_ex = `48453000700`)
 
 zones2 <- here("zones",
               "boundaries.geojson") %>%
   st_read() %>%
   inner_join(existing_max_diff2) %>%
   inner_join(alt_max_diff2) %>%
+  inner_join(ex_max_walk2) %>%
+  inner_join(ex_max_bike2) %>%
+  inner_join(ex_max_trans2) %>%
   mutate(diff = alt - existing)
 ```
+## Generate and Save Maps
 
-```{r}
-# existing_max_diff_walk <- walk_mat_ex %>%
-#   rownames_to_column("GEOID") %>%
-#   select(GEOID, `48453001100`) %>%
-#   rename(existing = `48453001100`)
-# 
-# alt_max_diff_walk <- walk_mat_alt %>%
-#   rownames_to_column("GEOID") %>%
-#   select(GEOID, `48453001100`) %>%
-#   rename(alt = `48453001100`)
-# 
-# 
-# zones <- here("zones",
-#               "boundaries.geojson") %>%
-#   st_read() %>%
-#   inner_join(existing_max_diff_walk) %>%
-#   inner_join(alt_max_diff_walk) %>%
-#   mutate(diff = alt - existing)
-```
-
-```{r}
-# existing_max_diff_bike <- bike_mat_ex %>%
-#   rownames_to_column("GEOID") %>%
-#   select(GEOID, `48453001100`) %>%
-#   rename(existing = `48453001100`)
-# 
-# alt_max_diff_bike <- bike_mat_alt %>%
-#   rownames_to_column("GEOID") %>%
-#   select(GEOID, `48453001100`) %>%
-#   rename(alt = `48453001100`)
-# 
-# 
-# zones <- here("zones",
-#               "boundaries.geojson") %>%
-#   st_read() %>%
-#   inner_join(existing_max_diff_bike) %>%
-#   inner_join(alt_max_diff_bike) %>%
-#   mutate(diff = alt - existing)
-```
+This section creates a variety of maps used. For driving, the existing travel time is compared to the travel time in the alternative, for both downtown census tracts affected by the proposed road closures. Images are saved to Github repository.
 
 ```{r}
 library(ggthemes)
@@ -367,12 +392,12 @@ map_existing <- ggplot(zones) +
 
 map_existing
 
-ggsave("ex_car_times_tract1.png",
-       path = here("images",
-                   "a4"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("ex_car_times_tract1.png",
+#        path = here("images",
+#                    "a4"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
 
 ```{r}
@@ -388,12 +413,12 @@ map_alt <- ggplot(zones) +
 
 map_alt
 
-ggsave("alt_car_times_tract1.png",
-       path = here("images",
-                   "a4"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("alt_car_times_tract1.png",
+#        path = here("images",
+#                    "a4"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
 
 ```{r}
@@ -418,7 +443,6 @@ ggsave("dif_car_times_tract1.png",
 ```
 
 ```{r}
-
 map_existing2 <- ggplot(zones2) +
   geom_sf(aes(fill = existing),
           color = NA) +
@@ -474,6 +498,69 @@ map_dif2 <- ggplot(zones2) +
 map_dif2
 
 ggsave("dif_car_times_tract2.png",
+       path = here("images",
+                   "a4"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
+```
+
+```{r}
+map_ex_walk2 <- ggplot(zones2) +
+  geom_sf(aes(fill = walk_ex),
+          color = NA) +
+  geom_sf(data = zones2[zones2$GEOID=="48453000700",],
+          fill = "blue",
+          color = "blue") +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Travel time\n(existing)") +
+  theme_void()
+
+map_ex_walk2
+
+ggsave("ex_walk_times_tract2.png",
+       path = here("images",
+                   "a4"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
+```
+
+```{r}
+map_ex_bike2 <- ggplot(zones2) +
+  geom_sf(aes(fill = bike_ex),
+          color = NA) +
+  geom_sf(data = zones2[zones2$GEOID=="48453000700",],
+          fill = "blue",
+          color = "blue") +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Travel time\n(existing)") +
+  theme_void()
+
+map_ex_bike2
+
+ggsave("ex_bike_times_tract2.png",
+       path = here("images",
+                   "a4"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
+```
+
+```{r}
+map_ex_trans2 <- ggplot(zones2) +
+  geom_sf(aes(fill = trans_ex),
+          color = NA) +
+  geom_sf(data = zones2[zones2$GEOID=="48453000700",],
+          fill = "blue",
+          color = "blue") +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Travel time\n(existing)") +
+  theme_void()
+
+map_ex_trans2
+
+ggsave("ex_trans_times_tract2.png",
        path = here("images",
                    "a4"),
        width = 7.5,
