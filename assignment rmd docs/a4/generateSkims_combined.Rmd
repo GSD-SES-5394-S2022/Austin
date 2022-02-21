@@ -290,7 +290,23 @@ zones <- here("zones",
   inner_join(alt_max_diff) %>%
   mutate(diff = alt - existing)
 
-# Do this for GEOID 48453000700 as well
+existing_max_diff2 <- car_mat_ex %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453000700`) %>%
+  rename(existing = `48453000700`)
+
+alt_max_diff2 <- car_mat_alt %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453000700`) %>%
+  rename(alt = `48453000700`)
+
+
+zones2 <- here("zones",
+              "boundaries.geojson") %>%
+  st_read() %>%
+  inner_join(existing_max_diff2) %>%
+  inner_join(alt_max_diff2) %>%
+  mutate(diff = alt - existing)
 ```
 
 ```{r}
@@ -350,6 +366,13 @@ map_existing <- ggplot(zones) +
   theme_void()
 
 map_existing
+
+ggsave("ex_car_times_tract1.png",
+       path = here("images",
+                   "a4"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
 ```
 
 ```{r}
@@ -364,10 +387,17 @@ map_alt <- ggplot(zones) +
   theme_void()
 
 map_alt
+
+ggsave("alt_car_times_tract1.png",
+       path = here("images",
+                   "a4"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
 ```
 
 ```{r}
-map_alt <- ggplot(zones) +
+map_dif <- ggplot(zones) +
   geom_sf(aes(fill = diff),
           color = NA) +
   geom_sf(data = zones[zones$GEOID=="48453001100",],
@@ -377,5 +407,76 @@ map_alt <- ggplot(zones) +
                        name = "Difference\nin travel times") +
   theme_void()
 
-map_alt
+map_dif
+
+ggsave("dif_car_times_tract1.png",
+       path = here("images",
+                   "a4"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
+```
+
+```{r}
+
+map_existing2 <- ggplot(zones2) +
+  geom_sf(aes(fill = existing),
+          color = NA) +
+  geom_sf(data = zones2[zones2$GEOID=="48453000700",],
+          fill = "blue",
+          color = "blue") +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Travel time\n(existing)") +
+  theme_void()
+
+map_existing2
+
+ggsave("ex_car_times_tract2.png",
+       path = here("images",
+                   "a4"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
+```
+
+```{r}
+map_alt2 <- ggplot(zones2) +
+  geom_sf(aes(fill = alt),
+          color = NA) +
+  geom_sf(data = zones[zones$GEOID=="48453000700",],
+          fill = "blue",
+          color = "blue") +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Travel time\n(alternative)") +
+  theme_void()
+
+map_alt2
+
+ggsave("alt_car_times_tract2.png",
+       path = here("images",
+                   "a4"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
+```
+
+```{r}
+map_dif2 <- ggplot(zones2) +
+  geom_sf(aes(fill = diff),
+          color = NA) +
+  geom_sf(data = zones[zones$GEOID=="48453000700",],
+          fill = "blue",
+          color = "blue") +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Difference\nin travel times") +
+  theme_void()
+
+map_dif2
+
+ggsave("dif_car_times_tract2.png",
+       path = here("images",
+                   "a4"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
 ```
