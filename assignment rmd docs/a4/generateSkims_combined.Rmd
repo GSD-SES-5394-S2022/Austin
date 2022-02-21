@@ -333,7 +333,7 @@ zones <- here("zones",
   inner_join(alt_max_diff) %>%
   mutate(diff = alt - existing)
 
-# same process for second downtown census tract, with the addition of existing travel times for walking, biking, and public transit.
+# same process for second downtown census tract, with the addition of existing travel times for walking, biking, and public transit. These are used for mapping later
 
 existing_max_diff2 <- car_mat_ex %>%
   rownames_to_column("GEOID") %>%
@@ -374,6 +374,8 @@ zones2 <- here("zones",
 
 This section creates a variety of maps used. For driving, the existing travel time is compared to the travel time in the alternative, for both downtown census tracts affected by the proposed road closures. Images are saved to Github repository.
 
+### Existing travel time by car to downtown tract 48453001100
+
 ```{r}
 library(ggthemes)
 library(RColorBrewer)
@@ -392,13 +394,15 @@ map_existing <- ggplot(zones) +
 
 map_existing
 
-# ggsave("ex_car_times_tract1.png",
-#        path = here("images",
-#                    "a4"),
-#        width = 7.5,
-#        height = 7.5,
-#        units = "in")
+ggsave("ex_car_times_tract1.png",
+       path = here("images",
+                   "a4"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
 ```
+
+### Alternative travel time by car to downtown tract 48453001100
 
 ```{r}
 map_alt <- ggplot(zones) +
@@ -413,13 +417,15 @@ map_alt <- ggplot(zones) +
 
 map_alt
 
-# ggsave("alt_car_times_tract1.png",
-#        path = here("images",
-#                    "a4"),
-#        width = 7.5,
-#        height = 7.5,
-#        units = "in")
+ggsave("alt_car_times_tract1.png",
+       path = here("images",
+                   "a4"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
 ```
+
+### Difference in car travel time to downtown tract 48453001100
 
 ```{r}
 map_dif <- ggplot(zones) +
@@ -442,6 +448,8 @@ ggsave("dif_car_times_tract1.png",
        units = "in")
 ```
 
+### Existing travel time by car to downtown tract 48453000700
+
 ```{r}
 map_existing2 <- ggplot(zones2) +
   geom_sf(aes(fill = existing),
@@ -462,6 +470,8 @@ ggsave("ex_car_times_tract2.png",
        height = 7.5,
        units = "in")
 ```
+
+### Alternative travel time by car to downtown tract 48453000700
 
 ```{r}
 map_alt2 <- ggplot(zones2) +
@@ -484,6 +494,8 @@ ggsave("alt_car_times_tract2.png",
        units = "in")
 ```
 
+### Difference in car travel time to downtown tract 48453000700
+
 ```{r}
 map_dif2 <- ggplot(zones2) +
   geom_sf(aes(fill = diff),
@@ -504,6 +516,8 @@ ggsave("dif_car_times_tract2.png",
        height = 7.5,
        units = "in")
 ```
+
+### Existing (and alternative) travel time by walking to tract 48453000700
 
 ```{r}
 map_ex_walk2 <- ggplot(zones2) +
@@ -526,6 +540,8 @@ ggsave("ex_walk_times_tract2.png",
        units = "in")
 ```
 
+### Existing (and alternative) travel time by biking to tract 48453000700
+
 ```{r}
 map_ex_bike2 <- ggplot(zones2) +
   geom_sf(aes(fill = bike_ex),
@@ -546,6 +562,8 @@ ggsave("ex_bike_times_tract2.png",
        height = 7.5,
        units = "in")
 ```
+
+### Existing (and alternative) travel time by transit to tract 48453000700
 
 ```{r}
 map_ex_trans2 <- ggplot(zones2) +
