@@ -4,14 +4,16 @@ This repository consists of code and data that is being used to build a travel d
 
 The goal of this project is compare two alternatives and assess differences in travel patterns. One is a representation of existing conditions, with some simplifications made for tractability. The other is an alternative where streets in a portion of Downtown Austin are closed to private vehicles, though walking, bicycling, and transit may still access them. We hope to observe any changes in overall mobility, VMT, and mode share, as the area with road closures is a major employment hub but is served well by public transit.
 
-Data for this project is contained in the following subfolders:
+Data and scripts for this project are contained in the following subfolders:
 
-* *existing* - population and employment data for the census tracts in the MSA 
-* *alternative* - unchanged from *existing*, as our proposal does not affect population, employment, or land use, only the transportation network
+* *assignment rmd docs* R Markdown files used to generate content used in reports (folder a*x* corresponds to Assignment *x*)
+* *images* - folder for saving visualizations, broken down by assignment
+* *existing* - population and employment data for the census tracts in the MSA, as well as transportation network data (GTFS for Capital Metro and the MSA road network) 
+* *alternative* - population data unchanged from *existing*, as our proposal does not affect population, employment, or land use, only the transportation network. The alternative road network is modified so that private vehicles may not enter Downtown Austin (bounded by I-35, Cesar Chavez St, Lamar Blvd, and Martin Luther King Jr. Blvd)
 * *zones* - spatial data for each of the census tract TAZs
-* *commutes* - additional data on current commuting patterns, so far used in Assignment 2 visualization
+* *commutes* - additional data on current commuting patterns, so far only used in Assignment 2 visualization
 
 The following R Markdown files are used to perform this analysis (list to be updated over the course of the semester):
 
-* *assignment2.Rmd* - generates tract-level TAZs and associated population/employment data
+* *assignment2.Rmd* - generates tract-level TAZs and associated population/employment data, used for Assignment 2
 * *assignment3.Rmd* - 
