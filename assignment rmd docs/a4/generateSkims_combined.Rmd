@@ -256,6 +256,22 @@ trans_mat_ex <- all_skims_ex %>%
               values_from = transit_time) %>%
   column_to_rownames("fromId")
 
+# Transit access, existing conditions
+
+access_mat_ex <- all_skims_ex %>% 
+  select(fromId, toId, access_time) %>%
+  pivot_wider(names_from = toId, 
+              values_from = access_time) %>%
+  column_to_rownames("fromId")
+
+# Transit wait, existing conditions
+
+wait_mat_ex <- all_skims_ex %>% 
+  select(fromId, toId, wait_time) %>%
+  pivot_wider(names_from = toId, 
+              values_from = wait_time) %>%
+  column_to_rownames("fromId")
+
 # These were initially used to compare walking, biking, and transit travel times. They are unchanged between the existing conditions and alternative, so left commented out.
 
 # walk_mat_alt <- all_skims_alt %>%
@@ -362,6 +378,16 @@ ex_max_trans2 <- trans_mat_ex %>%
   select(GEOID, `48453000700`) %>%
   rename(trans_ex = `48453000700`)
 
+ex_max_access2 <- access_mat_ex %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453000700`) %>%
+  rename(access_ex = `48453000700`)
+
+ex_max_wait2 <- wait_mat_ex %>%
+  rownames_to_column("GEOID") %>%
+  select(GEOID, `48453000700`) %>%
+  rename(wait_ex = `48453000700`)
+
 zones2 <- here("zones",
               "boundaries.geojson") %>%
   st_read() %>%
@@ -370,6 +396,8 @@ zones2 <- here("zones",
   inner_join(ex_max_walk2) %>%
   inner_join(ex_max_bike2) %>%
   inner_join(ex_max_trans2) %>%
+  inner_join(ex_max_access2) %>%
+  inner_join(ex_max_wait2) %>%
   mutate(diff = alt - existing)
 ```
 ## Generate and Save Maps
