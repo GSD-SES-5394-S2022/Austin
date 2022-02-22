@@ -351,7 +351,7 @@ zones <- here("zones",
   inner_join(alt_max_diff) %>%
   mutate(diff = alt - existing)
 
-# same process for second downtown census tract, with the addition of existing travel times for walking, biking, and public transit. These are used for mapping later
+# same process for second downtown census tract, with the addition of existing travel times for walking, biking, and public transit. Transit access and wait times are included too. These are used for mapping later
 
 existing_max_diff2 <- car_mat_ex %>%
   rownames_to_column("GEOID") %>%
