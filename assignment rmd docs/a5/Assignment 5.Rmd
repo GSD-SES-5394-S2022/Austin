@@ -17,7 +17,7 @@ We have 4 modes - driving, transit, biking, and walking.
 
 ```{r load libraries}
 #giving it a bit extra memory to compensate for my old and slow CPU
-options(java.parameters = '-Xmx4G')
+options(java.parameters = '-Xmx8G')
 
 library(r5r)
 library(here)
