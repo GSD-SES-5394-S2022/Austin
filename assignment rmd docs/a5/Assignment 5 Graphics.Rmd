@@ -26,62 +26,99 @@ car_existing <- read_csv(
   here("assignment rmd docs","a5",
   "car_access_existing.csv")
   ) %>%
-  mutate(from_id = as.character(from_id))
+  select(from_id, accessibility) %>%
+  mutate(from_id = as.character(from_id)) %>%
+  rename("car_access" = accessibility)
 
 bike_existing <- read_csv(
   here("assignment rmd docs","a5",
   "bike_access_existing.csv")
   ) %>%
-  mutate(from_id = as.character(from_id))
+  select(from_id, accessibility) %>%
+  mutate(from_id = as.character(from_id)) %>%
+  rename("bike_access" = accessibility)
 
 walk_existing <- read_csv(
   here("assignment rmd docs","a5",
   "walk_access_existing.csv")
   ) %>%
-  mutate(from_id = as.character(from_id))
+  select(from_id, accessibility) %>%
+  mutate(from_id = as.character(from_id)) %>%
+  rename("walk_access" = accessibility)
 
 transit_existing <- read_csv(
   here("assignment rmd docs","a5",
   "transit_access_existing.csv")
   ) %>%
-  mutate(from_id = as.character(from_id))
+  select(from_id, accessibility) %>%
+  mutate(from_id = as.character(from_id)) %>%
+  rename("transit access" = accessibility)
 
 #Now the alts
 car_alt <- read_csv(
   here("assignment rmd docs","a5",
   "car_access_alt.csv")
   ) %>%
-  mutate(from_id = as.character(from_id))
+  select(from_id, accessibility) %>%
+  mutate(from_id = as.character(from_id)) %>%
+  rename("car_access" = accessibility)
 
 bike_alt <- read_csv(
   here("assignment rmd docs","a5",
   "bike_access_alt.csv")
   ) %>%
-  mutate(from_id = as.character(from_id))
+  select(from_id, accessibility) %>%
+  mutate(from_id = as.character(from_id)) %>%
+  rename("bike_access" = accessibility)
 
 walk_alt <- read_csv(
   here("assignment rmd docs","a5",
   "walk_access_alt.csv")
   ) %>%
-  mutate(from_id = as.character(from_id))
+  select(from_id, accessibility) %>%
+  mutate(from_id = as.character(from_id)) %>%
+  rename("walk_access" = accessibility)
 
 transit_alt <- read_csv(
   here("assignment rmd docs","a5",
   "transit_access_alt.csv")
   ) %>%
-  mutate(from_id = as.character(from_id))
+  select(from_id, accessibility) %>%
+  mutate(from_id = as.character(from_id)) %>%
+  rename("transit_access" = accessibility)
 
 #Now the ratios
 access_compare_existing = read_csv(here("existing", 
                                       "data",
                                       "access_compare.csv")) %>%
-  mutate(GEOID = as.character(GEOID))
+  select(GEOID, ratio) %>%
+  mutate(GEOID = as.character(GEOID)) %>%
+  rename("car_trans_ratio" = ratio)
 
 access_compare_alt = read_csv(here("alternative", 
                                       "data",
                                       "access_compare.csv")) %>%
-  mutate(GEOID = as.character(GEOID))
+  select(GEOID, ratio) %>%
+  mutate(GEOID = as.character(GEOID)) %>%
+  rename("car_trans_ratio" = ratio)
 ```
+```{r join tables}
+all_access_existing <- left_join(car_existing, bike_existing) %>%
+  left_join(walk_existing) %>%
+  left_join(transit_existing) %>%
+  left_join(access_compare_existing, by = c("from_id" = "GEOID"))
+
+all_access_alt <- left_join(car_alt, bike_alt) %>%
+  left_join(walk_alt) %>%
+  left_join(transit_alt) %>%
+  left_join(access_compare_alt, by = c("from_id" = "GEOID"))
+```
+
+Chris - you still should add in the geojson and join that so we have spatial data. Thanks!
+
+
+
+##Map notes
 Alright, here are the maps we need, at minimum:
 Chloropeth maps for accessibility by tract for each mode for each network condition
 (8 maps minimum)
@@ -95,3 +132,7 @@ Histograms
 Transit/car ratio vs. car accessibility
 
 Should we have an absolute scale that holds across modes?
+
+
+
+
