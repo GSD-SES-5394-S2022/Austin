@@ -17,7 +17,7 @@ We have 4 modes - driving, transit, biking, and walking.
 
 ```{r load libraries}
 #giving it a bit extra memory to compensate for my old and slow CPU
-options(java.parameters = '-Xmx8G')
+options(java.parameters = '-Xmx4G')
 
 library(r5r)
 library(here)
@@ -92,7 +92,8 @@ bike_access_existing <- accessibility(existing_core,
                                      mode = "BICYCLE",
                                      decay_function = "logistic",
                                      cutoffs = 25,
-                                     decay_value = 4, 
+                                     decay_value = 4,
+                                     bike_speed = 16,
                                      verbose = FALSE)
 ```
 
@@ -107,9 +108,10 @@ walk_access_existing <- accessibility(existing_core,
                                      destinations = centroids,
                                      opportunities_colname = 'total_emp',
                                      mode = "WALK",
-                                     decay_function = "linear",
-                                     cutoffs = 35,
-                                     decay_value = 30, 
+                                     decay_function = "logistic",
+                                     cutoffs = 15,
+                                     decay_value = 4,
+                                     walk_speed = 4.8,
                                      verbose = FALSE)
 ```
 
@@ -191,7 +193,8 @@ bike_access_alt <- accessibility(existing_core,
                                      mode = "BICYCLE",
                                      decay_function = "logistic",
                                      cutoffs = 25,
-                                     decay_value = 4, 
+                                     decay_value = 4,
+                                     bike_speed = 16,
                                      verbose = FALSE)
 ```
 
@@ -201,9 +204,10 @@ walk_access_alt <- accessibility(existing_core,
                                      destinations = centroids,
                                      opportunities_colname = 'total_emp',
                                      mode = "WALK",
-                                     decay_function = "linear",
-                                     cutoffs = 35,
-                                     decay_value = 30, 
+                                     decay_function = "logistic",
+                                     cutoffs = 15,
+                                     decay_value = 4,
+                                     walk_speed = 4.8,
                                      verbose = FALSE)
 ```
 
