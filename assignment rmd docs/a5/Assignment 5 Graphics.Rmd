@@ -113,9 +113,17 @@ all_access_alt <- left_join(car_alt, bike_alt) %>%
   left_join(transit_alt) %>%
   left_join(access_compare_alt, by = c("from_id" = "GEOID"))
 ```
+```{r join with spatial data}
+zones <- st_read(here("zones", "boundaries.geojson"))
 
-Chris - you still should add in the geojson and join that so we have spatial data. Thanks!
-
+all_access_existing <- left_join(all_access_existing, 
+                                 zones, 
+                                 by = c("from_id" = "GEOID"))
+  
+all_access_alt <- left_join(all_access_alt, 
+                                 zones, 
+                                 by = c("from_id" = "GEOID"))
+```
 
 
 ##Map notes
