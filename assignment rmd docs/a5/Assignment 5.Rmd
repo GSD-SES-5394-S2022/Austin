@@ -299,4 +299,4 @@ write_csv(access_compare_alt, file = here("alternative",
 
 
 #Graphics
-now we need graphics
+now we need graphics - that will be in a different document in the same folder.
