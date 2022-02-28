@@ -1,0 +1,54 @@
+---
+title: "Assignment 5"
+author: "Reuven Herzog"
+date: "2/27/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Calculate accessibility
+We are calculating accesibility to jobs from each census tract.
+
+We have 4 modes - driving, transit, biking, and walking.
+2 network conditions - existing, and with downtown blocked off.
+
+```{r load libraries}
+#giving it a bit extra memory to compensate for my old and slow CPU
+options(java.parameters = '-Xmx4G')
+
+library(r5r)
+library(here)
+library(tidyverse)
+library(sf)
+library(lubridate)
+```
+
+We're loading up our data. Even though we have disaggregated employment measures,
+we'll only use the total number of jobs for this stage. Since we are using jobs
+as a proxy for activity, the type of activity isn't so relevant.
+
+```{r load centroids}
+jobs <- read_csv(
+  here("existing", "data", "zone_data.csv"
+       )
+  ) %>%
+  select(GEOID, total_emp) %>%
+  mutate(GEOID = as.character(GEOID))
+
+jobs <- here("existing",
+             "data",
+             "zone_data.csv") %>%
+  read_csv() %>%
+  select(GEOID, total_emp) %>%
+  mutate(GEOID = as.character(GEOID))
+
+centroids <- here("zones",
+                  "centroids.geojson") %>%
+  st_read() %>%
+  left_join(jobs) %>%
+  rename(id = GEOID)
+```
+
