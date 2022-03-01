@@ -362,10 +362,10 @@ car_trans_change <- ggplot(all_access_alt) +
 
 car_trans_change
 
-# ggsave("ratio_ex.png",
-#        path = here("images",
-#                    "a5"),
-#        width = 7.5,
-#        height = 7.5,
-#        units = "in")
+ggsave("ratio_change.png",
+       path = here("images",
+                   "a5"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
 ```
