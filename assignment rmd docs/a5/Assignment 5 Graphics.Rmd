@@ -18,6 +18,7 @@ library(here)
 library(sf)
 library(ggthemes)
 library(RColorBrewer)
+library(PNWColors)
 ```
 
 Now we need to pull our data from csv form
@@ -142,12 +143,14 @@ Transit/car ratio vs. car accessibility
 Should we have an absolute scale that holds across modes?
 
 ```{r}
-map_palette <- brewer.pal(5, "YlOrBr")
+car_pal <- pnw_palette(name = "Moth", 
+                           n = 5, 
+                           type = "continuous")
 
 car_access_ex <- ggplot(all_access_existing) +
   geom_sf(aes(fill = car_access),
           color = NA) +
-  scale_fill_gradientn(colours = map_palette,
+  scale_fill_gradientn(colours = car_pal,
                        name = "Job Accessibility \nby Driving (Existing)",
                        breaks = size_brks <- seq(0, 1000000, by = 200000),
                        labels = formatC(size_brks, format = "d", big.mark = ",")) +
@@ -155,38 +158,42 @@ car_access_ex <- ggplot(all_access_existing) +
 
 car_access_ex
 
-# ggsave("ex_trans_times_tract2.png",
-#        path = here("images",
-#                    "a4"),
-#        width = 7.5,
-#        height = 7.5,
-#        units = "in")
+ggsave("car_access_ex.png",
+       path = here("images",
+                   "a5"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
 ```
 ```{r}
+tr_pal <- pnw_palette(name = "Starfish", 
+                           n = 5, 
+                           type = "continuous")
+
 trans_access_ex <- ggplot(all_access_existing) +
-  geom_sf(aes(fill = transit access),
+  geom_sf(aes(fill = transit_access),
           color = NA) +
-  scale_fill_gradientn(colours = map_palette,
+  scale_fill_gradientn(colours = tr_pal,
                        name = "Job Accessibility \nby Transit (Existing)",
-                       breaks = size_brks <- seq(0, 1000000, by = 200000),
+                       breaks = size_brks <- seq(0, 125000, by = 25000),
                        labels = formatC(size_brks, format = "d", big.mark = ",")) +
   theme_void()
 
 trans_access_ex
 
-# ggsave("ex_trans_times_tract2.png",
-#        path = here("images",
-#                    "a4"),
-#        width = 7.5,
-#        height = 7.5,
-#        units = "in")
+ggsave("trans_access_ex.png",
+       path = here("images",
+                   "a5"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
 ```
 
 ```{r}
 car_access_alt <- ggplot(all_access_alt) +
   geom_sf(aes(fill = car_access),
           color = NA) +
-  scale_fill_gradientn(colours = map_palette,
+  scale_fill_gradientn(colours = car_pal,
                        name = "Job Accessibility \nby Driving (Alternative)",
                        breaks = size_brks <- seq(0, 1000000, by = 200000),
                        labels = formatC(size_brks, format = "d", big.mark = ",")) +
@@ -194,31 +201,114 @@ car_access_alt <- ggplot(all_access_alt) +
 
 car_access_alt
 
-# ggsave("ex_trans_times_tract2.png",
-#        path = here("images",
-#                    "a4"),
-#        width = 7.5,
-#        height = 7.5,
-#        units = "in")
+ggsave("car_access_alt.png",
+       path = here("images",
+                   "a5"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
 ```
 ```{r}
-car_access_alt <- ggplot(all_access_alt) +
-  geom_sf(aes(fill = car_access),
+trans_access_alt <- ggplot(all_access_alt) +
+  geom_sf(aes(fill = transit_access),
           color = NA) +
-  scale_fill_gradientn(colours = map_palette,
-                       name = "Job Accessibility \nby Driving (Alternative)",
-                       breaks = size_brks <- seq(0, 1000000, by = 200000),
+  scale_fill_gradientn(colours = tr_pal,
+                       name = "Job Accessibility \nby Transit (Alternative)",
+                       breaks = size_brks <- seq(0, 125000, by = 25000),
                        labels = formatC(size_brks, format = "d", big.mark = ",")) +
   theme_void()
 
-car_access_alt
+trans_access_alt
 
-# ggsave("ex_trans_times_tract2.png",
-#        path = here("images",
-#                    "a4"),
-#        width = 7.5,
-#        height = 7.5,
-#        units = "in")
+ggsave("trans_access_alt.png",
+       path = here("images",
+                   "a5"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
+```
+```{r}
+bk_pal <- pnw_palette(name = "Sunset2", 
+                           n = 5, 
+                           type = "continuous")
+
+bike_access_ex <- ggplot(all_access_existing) +
+  geom_sf(aes(fill = bike_access),
+          color = NA) +
+  scale_fill_gradientn(colours = act_pal,
+                       name = "Job Accessibility \nby Bicycle (Existing)",
+                       breaks = size_brks <- seq(0, 250000, by = 50000),
+                       labels = formatC(size_brks, format = "d", big.mark = ",")) +
+  theme_void()
+
+bike_access_ex
+
+ggsave("bike_access_ex.png",
+       path = here("images",
+                   "a5"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
+```
+```{r}
+bike_access_alt <- ggplot(all_access_alt) +
+  geom_sf(aes(fill = bike_access),
+          color = NA) +
+  scale_fill_gradientn(colours = bk_pal,
+                       name = "Job Accessibility \nby Bicycle (Alternative)",
+                       breaks = size_brks <- seq(0, 250000, by = 50000),
+                       labels = formatC(size_brks, format = "d", big.mark = ",")) +
+  theme_void()
+
+bike_access_ex
+
+ggsave("bike_access_alt.png",
+       path = here("images",
+                   "a5"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
 ```
 
+```{r}
+walk_pal <- pnw_palette(name = "Bay", 
+                           n = 5, 
+                           type = "continuous")
 
+walk_access_ex <- ggplot(all_access_existing) +
+  geom_sf(aes(fill = walk_access),
+          color = NA) +
+  scale_fill_gradientn(colours = walk_pal,
+                       name = "Job Accessibility \nby Walking (Existing)",
+                       breaks = size_brks <- seq(0, 100000, by = 20000),
+                       labels = formatC(size_brks, format = "d", big.mark = ",")) +
+  theme_void()
+
+walk_access_ex
+
+ggsave("walk_access_ex.png",
+       path = here("images",
+                   "a5"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
+```
+```{r}
+walk_access_alt <- ggplot(all_access_alt) +
+  geom_sf(aes(fill = walk_access),
+          color = NA) +
+  scale_fill_gradientn(colours = walk_pal,
+                       name = "Job Accessibility \nby Walking (Alternative)",
+                       breaks = size_brks <- seq(0, 100000, by = 20000),
+                       labels = formatC(size_brks, format = "d", big.mark = ",")) +
+  theme_void()
+
+walk_access_alt
+
+ggsave("walk_access_alt.png",
+       path = here("images",
+                   "a5"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
+```
