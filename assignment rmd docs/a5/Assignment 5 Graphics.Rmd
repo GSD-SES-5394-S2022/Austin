@@ -334,7 +334,23 @@ ggsave("ratio_ex.png",
        height = 7.5,
        units = "in")
 ```
+```{r}
+ratio_alt <- ggplot(all_access_alt) +
+  geom_sf(aes(fill = car_trans_ratio_alt),
+          color = NA) +
+  scale_fill_gradientn(colours = ratio_pal,
+                       name = "Transit/Driving Access \nRatio (Alternative)") +
+  theme_void()
 
+ratio_alt
+
+ggsave("ratio_alt.png",
+       path = here("images",
+                   "a5"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
+```
 ```{r}
 car_trans_change <- ggplot(all_access_alt) +
   geom_sf(aes(fill = ratio_change),
