@@ -94,14 +94,14 @@ access_compare_existing = read_csv(here("existing",
                                       "access_compare.csv")) %>%
   select(GEOID, ratio) %>%
   mutate(GEOID = as.character(GEOID)) %>%
-  rename("car_trans_ratio" = ratio)
+  rename("car_trans_ratio_ex" = ratio)
 
 access_compare_alt = read_csv(here("alternative", 
                                       "data",
                                       "access_compare.csv")) %>%
   select(GEOID, ratio) %>%
   mutate(GEOID = as.character(GEOID)) %>%
-  rename("car_trans_ratio" = ratio)
+  rename("car_trans_ratio_alt" = ratio)
 ```
 ```{r join tables}
 all_access_existing <- left_join(car_existing, bike_existing) %>%
@@ -123,7 +123,9 @@ all_access_existing <- left_join(zones,
   
 all_access_alt <- left_join(zones,
                             all_access_alt,
-                            by = c("GEOID" = "from_id"))
+                            by = c("GEOID" = "from_id")) %>%
+  left_join(access_compare_existing) %>%
+  mutate(ratio_change = (car_trans_ratio_alt - car_trans_ratio_ex) / car_trans_ratio_ex)
 ```
 
 
@@ -235,7 +237,7 @@ bk_pal <- pnw_palette(name = "Sunset2",
 bike_access_ex <- ggplot(all_access_existing) +
   geom_sf(aes(fill = bike_access),
           color = NA) +
-  scale_fill_gradientn(colours = act_pal,
+  scale_fill_gradientn(colours = bk_pal,
                        name = "Job Accessibility \nby Bicycle (Existing)",
                        breaks = size_brks <- seq(0, 250000, by = 50000),
                        labels = formatC(size_brks, format = "d", big.mark = ",")) +
@@ -311,4 +313,43 @@ ggsave("walk_access_alt.png",
        width = 7.5,
        height = 7.5,
        units = "in")
+```
+
+```{r}
+ratio_pal <- brewer.pal(5, "YlOrBr")
+
+ratio_ex <- ggplot(all_access_existing) +
+  geom_sf(aes(fill = car_trans_ratio_ex),
+          color = NA) +
+  scale_fill_gradientn(colours = ratio_pal,
+                       name = "Transit/Driving Access \nRatio (Existing)") +
+  theme_void()
+
+ratio_ex
+
+ggsave("ratio_ex.png",
+       path = here("images",
+                   "a5"),
+       width = 7.5,
+       height = 7.5,
+       units = "in")
+```
+
+```{r}
+car_trans_change <- ggplot(all_access_alt) +
+  geom_sf(aes(fill = ratio_change),
+          color = NA) +
+  scale_fill_gradientn(colours = ratio_pal,
+                       name = "Change in Transit/Driving \nAccess Ratio",
+                       labels = scales::percent) +
+  theme_void()
+
+car_trans_change
+
+# ggsave("ratio_ex.png",
+#        path = here("images",
+#                    "a5"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
