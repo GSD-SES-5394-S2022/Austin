@@ -141,22 +141,22 @@ stop_r5()
 aaaand save our work
 ```{r save results}
 write_csv(car_access_existing, here(
-  "assignment rmd docs", "a5",
+  "assignment rmd docs", "a5", "csvs",
   "car_access_existing.csv")
   )
 
 write_csv(bike_access_existing, here(
-  "assignment rmd docs", "a5",
+  "assignment rmd docs", "a5", "csvs",
   "bike_access_existing.csv")
   )
 
 write_csv(walk_access_existing, here(
-  "assignment rmd docs", "a5",
+  "assignment rmd docs", "a5", "csvs",
   "walk_access_existing.csv")
   )
 
 write_csv(transit_access_existing, here(
-  "assignment rmd docs", "a5",
+  "assignment rmd docs", "a5", "csvs",
   "transit_access_existing.csv")
   )
 ```
@@ -234,22 +234,22 @@ stop_r5()
 
 ```{r save results}
 write_csv(car_access_alt, here(
-  "assignment rmd docs", "a5",
+  "assignment rmd docs", "a5", "csvs",
   "car_access_alt.csv")
   )
 
 write_csv(bike_access_alt, here(
-  "assignment rmd docs", "a5",
+  "assignment rmd docs", "a5", "csvs",
   "bike_access_alt.csv")
   )
 
 write_csv(walk_access_alt, here(
-  "assignment rmd docs", "a5",
+  "assignment rmd docs", "a5", "csvs",
   "walk_access_alt.csv")
   )
 
 write_csv(transit_access_alt, here(
-  "assignment rmd docs", "a5",
+  "assignment rmd docs", "a5", "csvs",
   "transit_access_alt.csv")
   )
 ```

@@ -24,7 +24,7 @@ library(PNWColors)
 Now we need to pull our data from csv form
 ```{r load data}
 car_existing <- read_csv(
-  here("assignment rmd docs","a5",
+  here("assignment rmd docs","a5", "csvs",
   "car_access_existing.csv")
   ) %>%
   select(from_id, accessibility) %>%
@@ -32,7 +32,7 @@ car_existing <- read_csv(
   rename("car_access" = accessibility)
 
 bike_existing <- read_csv(
-  here("assignment rmd docs","a5",
+  here("assignment rmd docs","a5", "csvs",
   "bike_access_existing.csv")
   ) %>%
   select(from_id, accessibility) %>%
@@ -40,7 +40,7 @@ bike_existing <- read_csv(
   rename("bike_access" = accessibility)
 
 walk_existing <- read_csv(
-  here("assignment rmd docs","a5",
+  here("assignment rmd docs","a5", "csvs",
   "walk_access_existing.csv")
   ) %>%
   select(from_id, accessibility) %>%
@@ -48,7 +48,7 @@ walk_existing <- read_csv(
   rename("walk_access" = accessibility)
 
 transit_existing <- read_csv(
-  here("assignment rmd docs","a5",
+  here("assignment rmd docs","a5", "csvs",
   "transit_access_existing.csv")
   ) %>%
   select(from_id, accessibility) %>%
@@ -57,7 +57,7 @@ transit_existing <- read_csv(
 
 #Now the alts
 car_alt <- read_csv(
-  here("assignment rmd docs","a5",
+  here("assignment rmd docs","a5", "csvs",
   "car_access_alt.csv")
   ) %>%
   select(from_id, accessibility) %>%
@@ -65,7 +65,7 @@ car_alt <- read_csv(
   rename("car_access" = accessibility)
 
 bike_alt <- read_csv(
-  here("assignment rmd docs","a5",
+  here("assignment rmd docs","a5", "csvs",
   "bike_access_alt.csv")
   ) %>%
   select(from_id, accessibility) %>%
@@ -73,7 +73,7 @@ bike_alt <- read_csv(
   rename("bike_access" = accessibility)
 
 walk_alt <- read_csv(
-  here("assignment rmd docs","a5",
+  here("assignment rmd docs","a5", "csvs",
   "walk_access_alt.csv")
   ) %>%
   select(from_id, accessibility) %>%
@@ -81,7 +81,7 @@ walk_alt <- read_csv(
   rename("walk_access" = accessibility)
 
 transit_alt <- read_csv(
-  here("assignment rmd docs","a5",
+  here("assignment rmd docs","a5", "csvs",
   "transit_access_alt.csv")
   ) %>%
   select(from_id, accessibility) %>%
