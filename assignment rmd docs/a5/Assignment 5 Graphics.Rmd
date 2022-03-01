@@ -130,7 +130,7 @@ all_access_alt <- left_join(zones,
   mutate(ratio_change = (car_trans_ratio_alt - car_trans_ratio_ex) / car_trans_ratio_ex)
 ```
 
-The following code chunks all have the same structure: define a palette (one for each mode), create map in ggplot, and save it as a png to the repo. For each mode, maps are made for the existing conditions and the alternative. Car/transit accessibility ratios are compared as well. 
+The following code chunks all have the same structure: define a palette (one for each mode), create map in ggplot, and save it as a png to the repo. For each mode, maps are made for the existing conditions and the alternative. Car/transit accessibility ratios are compared as well. There are no changes in job accessibility for any modes other than driving, though this does result in changes to the access ratios.
 
 ```{r car accessibility in the existing conditions}
 car_pal <- pnw_palette(name = "Moth", 
