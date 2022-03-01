@@ -52,7 +52,7 @@ transit_existing <- read_csv(
   ) %>%
   select(from_id, accessibility) %>%
   mutate(from_id = as.character(from_id)) %>%
-  rename("transit access" = accessibility)
+  rename("transit_access" = accessibility)
 
 #Now the alts
 car_alt <- read_csv(
@@ -116,13 +116,13 @@ all_access_alt <- left_join(car_alt, bike_alt) %>%
 ```{r join with spatial data}
 zones <- st_read(here("zones", "boundaries.geojson"))
 
-all_access_existing <- left_join(all_access_existing, 
-                                 zones, 
-                                 by = c("from_id" = "GEOID"))
+all_access_existing <- left_join(zones, 
+                                 all_access_existing, 
+                                 by = c("GEOID" = "from_id"))
   
-all_access_alt <- left_join(all_access_alt, 
-                                 zones, 
-                                 by = c("from_id" = "GEOID"))
+all_access_alt <- left_join(zones,
+                            all_access_alt,
+                            by = c("GEOID" = "from_id"))
 ```
 
 
@@ -141,6 +141,84 @@ Transit/car ratio vs. car accessibility
 
 Should we have an absolute scale that holds across modes?
 
+```{r}
+map_palette <- brewer.pal(5, "YlOrBr")
 
+car_access_ex <- ggplot(all_access_existing) +
+  geom_sf(aes(fill = car_access),
+          color = NA) +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Job Accessibility \nby Driving (Existing)",
+                       breaks = size_brks <- seq(0, 1000000, by = 200000),
+                       labels = formatC(size_brks, format = "d", big.mark = ",")) +
+  theme_void()
+
+car_access_ex
+
+# ggsave("ex_trans_times_tract2.png",
+#        path = here("images",
+#                    "a4"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
+```
+```{r}
+trans_access_ex <- ggplot(all_access_existing) +
+  geom_sf(aes(fill = transit access),
+          color = NA) +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Job Accessibility \nby Transit (Existing)",
+                       breaks = size_brks <- seq(0, 1000000, by = 200000),
+                       labels = formatC(size_brks, format = "d", big.mark = ",")) +
+  theme_void()
+
+trans_access_ex
+
+# ggsave("ex_trans_times_tract2.png",
+#        path = here("images",
+#                    "a4"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
+```
+
+```{r}
+car_access_alt <- ggplot(all_access_alt) +
+  geom_sf(aes(fill = car_access),
+          color = NA) +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Job Accessibility \nby Driving (Alternative)",
+                       breaks = size_brks <- seq(0, 1000000, by = 200000),
+                       labels = formatC(size_brks, format = "d", big.mark = ",")) +
+  theme_void()
+
+car_access_alt
+
+# ggsave("ex_trans_times_tract2.png",
+#        path = here("images",
+#                    "a4"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
+```
+```{r}
+car_access_alt <- ggplot(all_access_alt) +
+  geom_sf(aes(fill = car_access),
+          color = NA) +
+  scale_fill_gradientn(colours = map_palette,
+                       name = "Job Accessibility \nby Driving (Alternative)",
+                       breaks = size_brks <- seq(0, 1000000, by = 200000),
+                       labels = formatC(size_brks, format = "d", big.mark = ",")) +
+  theme_void()
+
+car_access_alt
+
+# ggsave("ex_trans_times_tract2.png",
+#        path = here("images",
+#                    "a4"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
+```
 
 
