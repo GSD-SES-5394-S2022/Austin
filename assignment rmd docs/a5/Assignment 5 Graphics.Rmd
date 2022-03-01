@@ -114,6 +114,8 @@ all_access_alt <- left_join(car_alt, bike_alt) %>%
   left_join(transit_alt) %>%
   left_join(access_compare_alt, by = c("from_id" = "GEOID"))
 ```
+Now to combine the accessibility calculations with our TAZ boundaries. The last bit of code in this chunk calculates the percentage change in car vs. transit accessibility ratios.
+
 ```{r join with spatial data}
 zones <- st_read(here("zones", "boundaries.geojson"))
 
@@ -128,23 +130,9 @@ all_access_alt <- left_join(zones,
   mutate(ratio_change = (car_trans_ratio_alt - car_trans_ratio_ex) / car_trans_ratio_ex)
 ```
 
+The following code chunks all have the same structure: define a palette (one for each mode), create map in ggplot, and save it as a png to the repo. For each mode, maps are made for the existing conditions and the alternative. Car/transit accessibility ratios are compared as well. 
 
-##Map notes
-Alright, here are the maps we need, at minimum:
-Chloropeth maps for accessibility by tract for each mode for each network condition
-(8 maps minimum)
-Plus maps that show transit/car ratio
-Total 10 maps
-
-Any more maps as we think of them
-
-Graphs?
-Histograms
-Transit/car ratio vs. car accessibility
-
-Should we have an absolute scale that holds across modes?
-
-```{r}
+```{r car accessibility in the existing conditions}
 car_pal <- pnw_palette(name = "Moth", 
                            n = 5, 
                            type = "continuous")
@@ -167,7 +155,7 @@ ggsave("car_access_ex.png",
        height = 7.5,
        units = "in")
 ```
-```{r}
+```{r transit accessibility in the existing conditions}
 tr_pal <- pnw_palette(name = "Starfish", 
                            n = 5, 
                            type = "continuous")
@@ -191,7 +179,7 @@ ggsave("trans_access_ex.png",
        units = "in")
 ```
 
-```{r}
+```{r car accessibility in the alternative}
 car_access_alt <- ggplot(all_access_alt) +
   geom_sf(aes(fill = car_access),
           color = NA) +
@@ -210,7 +198,7 @@ ggsave("car_access_alt.png",
        height = 7.5,
        units = "in")
 ```
-```{r}
+```{r transit accessibility in the alternative}
 trans_access_alt <- ggplot(all_access_alt) +
   geom_sf(aes(fill = transit_access),
           color = NA) +
@@ -229,7 +217,7 @@ ggsave("trans_access_alt.png",
        height = 7.5,
        units = "in")
 ```
-```{r}
+```{r bike accessibility in existing conditions}
 bk_pal <- pnw_palette(name = "Sunset2", 
                            n = 5, 
                            type = "continuous")
@@ -252,7 +240,7 @@ ggsave("bike_access_ex.png",
        height = 7.5,
        units = "in")
 ```
-```{r}
+```{r bike accessibility in alternative}
 bike_access_alt <- ggplot(all_access_alt) +
   geom_sf(aes(fill = bike_access),
           color = NA) +
@@ -272,7 +260,7 @@ ggsave("bike_access_alt.png",
        units = "in")
 ```
 
-```{r}
+```{r walking accessibility in the existing conditions}
 walk_pal <- pnw_palette(name = "Bay", 
                            n = 5, 
                            type = "continuous")
@@ -295,7 +283,7 @@ ggsave("walk_access_ex.png",
        height = 7.5,
        units = "in")
 ```
-```{r}
+```{r walking accessibility in the alternative}
 walk_access_alt <- ggplot(all_access_alt) +
   geom_sf(aes(fill = walk_access),
           color = NA) +
@@ -315,7 +303,7 @@ ggsave("walk_access_alt.png",
        units = "in")
 ```
 
-```{r}
+```{r ratio of car to transit accessibility, existing conditions}
 ratio_pal <- brewer.pal(5, "YlOrBr")
 
 ratio_ex <- ggplot(all_access_existing) +
@@ -334,7 +322,7 @@ ggsave("ratio_ex.png",
        height = 7.5,
        units = "in")
 ```
-```{r}
+```{r ratio of car to transit accessibility, alternative}
 ratio_alt <- ggplot(all_access_alt) +
   geom_sf(aes(fill = car_trans_ratio_alt),
           color = NA) +
@@ -351,7 +339,7 @@ ggsave("ratio_alt.png",
        height = 7.5,
        units = "in")
 ```
-```{r}
+```{r change in access ratios}
 car_trans_change <- ggplot(all_access_alt) +
   geom_sf(aes(fill = ratio_change),
           color = NA) +
