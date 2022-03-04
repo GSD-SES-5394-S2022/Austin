@@ -50,12 +50,16 @@ OSM-related code blocks commented out to avoid wasting our time by accidentally 
 # # Creates a copy of the "existing" OSM map, prepares it for editing in JSOM,
 # # and outputs it to the "alternative" folder
 # 
-# old_network <- read_lines("existing/networks/streets.osm")
+# old_network <- read_lines(here("existing",
+#                                "networks", 
+#                                "streets.osm"))
 # 
 # new_network <- osm_prep_network(old_network)
 # 
-# write_lines(new_network, 
-#             file = "alternative/networks/streets.osm")
+# write_lines(new_network,
+#             file = here("alternative",
+#                         "networks",
+#                         "streets.osm"))
 ```
 
 ```{r pull GTFS data}
