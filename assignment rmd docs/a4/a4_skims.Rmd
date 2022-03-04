@@ -48,22 +48,23 @@ alt_core <- here("alternative",
 car_skim_alt <- travel_time_matrix(alt_core, 
                      origins = centroids,
                      destinations = centroids,
-                     mode = "CAR",
-                     max_walk_dist = 80.45)
+                     mode = "CAR")
 ```
 
 ```{r walking skim}
 walk_skim_alt <- travel_time_matrix(alt_core, 
                      origins = centroids,
                      destinations = centroids,
-                     mode = "WALK")
+                     mode = "WALK",
+                     walk_speed = 4.828)
 ```
 
 ```{r biking skim}
 bike_skim_alt <- travel_time_matrix(alt_core, 
                      origins = centroids,
                      destinations = centroids,
-                     mode = "BICYCLE")
+                     mode = "BICYCLE",
+                     bike_speed = 16.09)
 ```
 
 ```{r alt transit skim morning rush}
@@ -72,7 +73,8 @@ trans_skim_alt_morn <- travel_time_matrix(alt_core,
                      destinations = centroids,
                      mode = "TRANSIT",
                      departure_datetime = ymd_hm("2022-04-06 08:30"),
-                     breakdown = TRUE)
+                     breakdown = TRUE,
+                     walk_speed = 4.828)
 
 # Additional code for potentially running skims at other times of day
 
@@ -139,22 +141,23 @@ ex_core <- here("existing",
 car_skim_ex <- travel_time_matrix(ex_core, 
                      origins = centroids,
                      destinations = centroids,
-                     mode = "CAR",
-                     max_walk_dist = 80.45)
+                     mode = "CAR")
 ```
 
 ```{r existing walking skim}
 walk_skim_ex <- travel_time_matrix(ex_core, 
                      origins = centroids,
                      destinations = centroids,
-                     mode = "WALK")
+                     mode = "WALK",
+                     walk_speed = 4.828)
 ```
 
 ```{r existing biking skim}
 bike_skim_ex <- travel_time_matrix(ex_core, 
                      origins = centroids,
                      destinations = centroids,
-                     mode = "BICYCLE")
+                     mode = "BICYCLE",
+                     bike_speed = 16.09)
 ```
 
 ```{r existing transit skim morning rush}
@@ -163,7 +166,8 @@ trans_skim_ex_morn <- travel_time_matrix(ex_core,
                      destinations = centroids,
                      mode = "TRANSIT",
                      departure_datetime = ymd_hm("2022-04-06 08:30"),
-                     breakdown = TRUE)
+                     breakdown = TRUE,
+                     walk_speed = 4.828)
 ```
 
 ```{r stop existing core}
