@@ -91,9 +91,9 @@ bike_access_existing <- accessibility(existing_core,
                                      opportunities_colname = 'total_emp',
                                      mode = "BICYCLE",
                                      decay_function = "logistic",
-                                     cutoffs = 25,
-                                     decay_value = 4,
-                                     bike_speed = 16,
+                                     cutoffs = 30,
+                                     decay_value = 9,
+                                     bike_speed = 16.09,
                                      verbose = FALSE)
 ```
 
@@ -109,9 +109,9 @@ walk_access_existing <- accessibility(existing_core,
                                      opportunities_colname = 'total_emp',
                                      mode = "WALK",
                                      decay_function = "logistic",
-                                     cutoffs = 15,
-                                     decay_value = 4,
-                                     walk_speed = 4.8,
+                                     cutoffs = 30,
+                                     decay_value = 9,
+                                     walk_speed = 4.828,
                                      verbose = FALSE)
 ```
 
@@ -192,9 +192,9 @@ bike_access_alt <- accessibility(existing_core,
                                      opportunities_colname = 'total_emp',
                                      mode = "BICYCLE",
                                      decay_function = "logistic",
-                                     cutoffs = 25,
-                                     decay_value = 4,
-                                     bike_speed = 16,
+                                     cutoffs = 30,
+                                     decay_value = 9,
+                                     bike_speed = 16.09,
                                      verbose = FALSE)
 ```
 
@@ -205,9 +205,9 @@ walk_access_alt <- accessibility(existing_core,
                                      opportunities_colname = 'total_emp',
                                      mode = "WALK",
                                      decay_function = "logistic",
-                                     cutoffs = 15,
-                                     decay_value = 4,
-                                     walk_speed = 4.8,
+                                     cutoffs = 30,
+                                     decay_value = 9,
+                                     walk_speed = 4.828,
                                      verbose = FALSE)
 ```
 
@@ -284,7 +284,7 @@ transit_access_alt <- transit_access_alt %>%
          transit_access = accessibility)
 
 access_compare_alt <- left_join(car_access_alt, transit_access_alt) %>%
-  mutate(ratio = transit_access_alt / car_access_alt)
+  mutate(ratio = transit_access / car_access)
 ```
 
 ```{r save compares}

@@ -148,12 +148,12 @@ car_access_ex <- ggplot(all_access_existing) +
 
 car_access_ex
 
-ggsave("car_access_ex.png",
-       path = here("images",
-                   "a5"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("car_access_ex.png",
+#        path = here("images",
+#                    "a5"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
 ```{r transit accessibility in the existing conditions}
 tr_pal <- pnw_palette(name = "Starfish", 
@@ -171,12 +171,12 @@ trans_access_ex <- ggplot(all_access_existing) +
 
 trans_access_ex
 
-ggsave("trans_access_ex.png",
-       path = here("images",
-                   "a5"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("trans_access_ex.png",
+#        path = here("images",
+#                    "a5"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
 
 ```{r car accessibility in the alternative}
@@ -191,12 +191,12 @@ car_access_alt <- ggplot(all_access_alt) +
 
 car_access_alt
 
-ggsave("car_access_alt.png",
-       path = here("images",
-                   "a5"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("car_access_alt.png",
+#        path = here("images",
+#                    "a5"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
 ```{r transit accessibility in the alternative}
 trans_access_alt <- ggplot(all_access_alt) +
@@ -210,12 +210,12 @@ trans_access_alt <- ggplot(all_access_alt) +
 
 trans_access_alt
 
-ggsave("trans_access_alt.png",
-       path = here("images",
-                   "a5"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("trans_access_alt.png",
+#        path = here("images",
+#                    "a5"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
 ```{r bike accessibility in existing conditions}
 bk_pal <- pnw_palette(name = "Sunset2", 
@@ -233,12 +233,12 @@ bike_access_ex <- ggplot(all_access_existing) +
 
 bike_access_ex
 
-ggsave("bike_access_ex.png",
-       path = here("images",
-                   "a5"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("bike_access_ex.png",
+#        path = here("images",
+#                    "a5"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
 ```{r bike accessibility in alternative}
 bike_access_alt <- ggplot(all_access_alt) +
@@ -250,14 +250,14 @@ bike_access_alt <- ggplot(all_access_alt) +
                        labels = formatC(size_brks, format = "d", big.mark = ",")) +
   theme_void()
 
-bike_access_ex
+bike_access_alt
 
-ggsave("bike_access_alt.png",
-       path = here("images",
-                   "a5"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("bike_access_alt.png",
+#        path = here("images",
+#                    "a5"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
 
 ```{r walking accessibility in the existing conditions}
@@ -270,18 +270,18 @@ walk_access_ex <- ggplot(all_access_existing) +
           color = NA) +
   scale_fill_gradientn(colours = walk_pal,
                        name = "Job Accessibility \nby Walking (Existing)",
-                       breaks = size_brks <- seq(0, 100000, by = 20000),
+                       breaks = size_brks <- seq(0, 150000, by = 25000),
                        labels = formatC(size_brks, format = "d", big.mark = ",")) +
   theme_void()
 
 walk_access_ex
 
-ggsave("walk_access_ex.png",
-       path = here("images",
-                   "a5"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("walk_access_ex.png",
+#        path = here("images",
+#                    "a5"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
 ```{r walking accessibility in the alternative}
 walk_access_alt <- ggplot(all_access_alt) +
@@ -289,18 +289,18 @@ walk_access_alt <- ggplot(all_access_alt) +
           color = NA) +
   scale_fill_gradientn(colours = walk_pal,
                        name = "Job Accessibility \nby Walking (Alternative)",
-                       breaks = size_brks <- seq(0, 100000, by = 20000),
+                       breaks = size_brks <- seq(0, 150000, by = 25000),
                        labels = formatC(size_brks, format = "d", big.mark = ",")) +
   theme_void()
 
 walk_access_alt
 
-ggsave("walk_access_alt.png",
-       path = here("images",
-                   "a5"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("walk_access_alt.png",
+#        path = here("images",
+#                    "a5"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
 
 ```{r ratio of car to transit accessibility, existing conditions}
@@ -315,12 +315,12 @@ ratio_ex <- ggplot(all_access_existing) +
 
 ratio_ex
 
-ggsave("ratio_ex.png",
-       path = here("images",
-                   "a5"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("ratio_ex.png",
+#        path = here("images",
+#                    "a5"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
 ```{r ratio of car to transit accessibility, alternative}
 ratio_alt <- ggplot(all_access_alt) +
@@ -332,12 +332,12 @@ ratio_alt <- ggplot(all_access_alt) +
 
 ratio_alt
 
-ggsave("ratio_alt.png",
-       path = here("images",
-                   "a5"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("ratio_alt.png",
+#        path = here("images",
+#                    "a5"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
 ```{r change in access ratios}
 car_trans_change <- ggplot(all_access_alt) +
@@ -350,10 +350,10 @@ car_trans_change <- ggplot(all_access_alt) +
 
 car_trans_change
 
-ggsave("ratio_change.png",
-       path = here("images",
-                   "a5"),
-       width = 7.5,
-       height = 7.5,
-       units = "in")
+# ggsave("ratio_change.png",
+#        path = here("images",
+#                    "a5"),
+#        width = 7.5,
+#        height = 7.5,
+#        units = "in")
 ```
