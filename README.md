@@ -20,3 +20,4 @@ The following R Markdown files are used to perform this analysis (list to be upd
 * *a4_skims.Rmd* - calculates travel time by mode between TAZ centroids with maps comparing existing conditions to the alternative (assignment rmd docs/a4)
 * *a5_access* - calculates job accessibility by mode for each TAZ in existing conditions and alternative scenario; saves them in *csvs* sub-folder (assignment rmd docs/a5)
 * *a5_graphics* - mapping and visualization for assignment 5
+* *a6_model* - creates model to estimate change in number of zero-car households in the alternative, as well as visualizations 
