@@ -54,6 +54,10 @@ model_data <- left_join(zones, access) %>%
 
 ## estimate regression model
 
+initial thoughts on variables to include:
+percent low-/high-income, percent big (3+) households, percent young/old (under 18/over 65), accessibility ratio(s), avg. workers per household, commute time (?), jobs-housing ratio, residential density, ...?
+We don't have this in the original variable list but perhaps homeownership percentages?
+
 ```{r}
 # once vars selected, update with ours
 
