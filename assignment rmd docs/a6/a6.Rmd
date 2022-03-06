@@ -9,3 +9,87 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## load packages required for analysis
+
+```{r, results = 'hide', message = FALSE, warning = FALSE}
+library(here)
+library(tidyverse)
+library(sf)
+library(modelr)
+library(jtools)
+```
+
+## load data for analysis
+
+```{r}
+access <- here("existing",
+               "data",
+               "access_compare.csv") %>%
+  read_csv()
+
+zones <- here("existing",
+               "data",
+               "zone_data.csv") %>%
+  read_csv()
+```
+
+## select variables used in model
+
+```{r}
+# just copied from resources page; update with our own vars
+
+model_data <- left_join(zones, access) %>%
+  mutate(pct_big_hh = (hh_3personE + hh_4person_plusE) / total_hhsE,
+         pct_lo_inc = inc_quint_1 / total_hhsE,
+         pct_hi_inc = inc_quint_5 / total_hhsE,
+         pct_no_veh = no_vehE / total_hhsE) %>%
+  select(GEOID, pct_big_hh, pct_lo_inc, pct_hi_inc, ratio, pct_no_veh)
+```
+
+## exploratory analysis and visualization
+
+```{r}
+# this should include plots showing correlations between variables
+```
+
+## estimate regression model
+
+```{r}
+# once vars selected, update with ours
+
+# iterate with model specification, ideally aiming for parsimony
+
+model1 <- lm(pct_no_veh ~ pct_big_hh + pct_lo_inc + pct_hi_inc + ratio, data = model_data)
+
+export_summs(model1)
+```
+
+### apply the model to make predictions
+
+```{r}
+# once again, just copied from the resources page; needs updates to work for us
+
+alt_access <- here("alternative",
+               "data",
+               "access_compare.csv") %>%
+  read_csv()
+
+alt_zones <- here("alternative",
+               "data",
+               "zone_data.csv") %>%
+  read_csv() %>%
+  left_join(access) %>%
+  mutate(pct_big_hh = (hh_3personE + hh_4person_plusE) / total_hhsE,
+         pct_lo_inc = inc_quint_1 / total_hhsE,
+         pct_hi_inc = inc_quint_5 / total_hhsE,
+         pct_no_veh = no_vehE / total_hhsE) %>%
+  add_predictions(model = model2) %>%
+  mutate(pct_no_veh = pred) %>%
+  mutate(no_vehE = round(total_hhsE * pct_no_veh)) 
+```
+
+## predicted accessibility visualization
+
+```{r}
+# this section will be for visualization of our predicted accessibility
+```
