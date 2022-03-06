@@ -91,5 +91,5 @@ alt_zones <- here("alternative",
 ## predicted accessibility visualization
 
 ```{r}
-# this section will be for visualization of our predicted accessibility
+# this section will be for visualization
 ```
