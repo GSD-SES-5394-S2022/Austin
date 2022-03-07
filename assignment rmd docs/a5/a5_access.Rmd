@@ -254,6 +254,50 @@ write_csv(transit_access_alt, here(
   )
 ```
 
+```{r}
+# for loading the accessibility calcs if you don't want to re-run the skims
+
+bike_access_alt <- read.csv(here("assignment rmd docs", 
+                                 "a5", 
+                                 "csvs",
+                                 "bike_access_alt.csv"))
+
+bike_access_existing <- read.csv(here("assignment rmd docs", 
+                                 "a5", 
+                                 "csvs",
+                                 "bike_access_existing.csv"))
+
+car_access_alt <- read.csv(here("assignment rmd docs", 
+                                 "a5", 
+                                 "csvs",
+                                 "car_access_alt.csv"))
+
+car_access_existing <- read.csv(here("assignment rmd docs", 
+                                 "a5", 
+                                 "csvs",
+                                 "car_access_existing.csv"))
+
+transit_access_alt <- read.csv(here("assignment rmd docs", 
+                                 "a5", 
+                                 "csvs",
+                                 "transit_access_alt.csv"))
+
+transit_access_existing <- read.csv(here("assignment rmd docs", 
+                                 "a5", 
+                                 "csvs",
+                                 "transit_access_existing.csv"))
+
+walk_access_alt <- read.csv(here("assignment rmd docs", 
+                                 "a5", 
+                                 "csvs",
+                                 "walk_access_alt.csv"))
+
+walk_access_existing <- read.csv(here("assignment rmd docs", 
+                                 "a5", 
+                                 "csvs",
+                                 "walk_access_existing.csv"))
+```
+
 
 #Comparisons
 
@@ -268,8 +312,22 @@ transit_access_existing <- transit_access_existing %>%
   rename(GEOID = from_id,
          transit_access = accessibility)
 
+bike_access_existing <- bike_access_existing %>%
+  select(from_id, accessibility) %>%
+  rename(GEOID = from_id,
+         bike_access = accessibility)
+
+walk_access_existing <- walk_access_existing %>%
+  select(from_id, accessibility) %>%
+  rename(GEOID = from_id,
+         walk_access = accessibility)
+
 access_compare <- left_join(car_access_existing, transit_access_existing) %>%
-  mutate(ratio = transit_access / car_access)
+  left_join(bike_access_existing) %>%
+  left_join(walk_access_existing) %>%
+  mutate(transit_car_ratio = transit_access / car_access,
+         bike_car_ratio = bike_access / car_access,
+         walk_car_ratio = walk_access / car_access)
 ```
 
 ```{r car/transit ratio alt}
@@ -283,8 +341,22 @@ transit_access_alt <- transit_access_alt %>%
   rename(GEOID = from_id,
          transit_access = accessibility)
 
+bike_access_alt <- bike_access_alt %>%
+  select(from_id, accessibility) %>%
+  rename(GEOID = from_id,
+         bike_access = accessibility)
+
+walk_access_alt <- walk_access_alt %>%
+  select(from_id, accessibility) %>%
+  rename(GEOID = from_id,
+         walk_access = accessibility)
+
 access_compare_alt <- left_join(car_access_alt, transit_access_alt) %>%
-  mutate(ratio = transit_access / car_access)
+  left_join(bike_access_alt) %>%
+  left_join(walk_access_alt) %>%
+  mutate(transit_car_ratio = transit_access / car_access,
+         bike_car_ratio = bike_access / car_access,
+         walk_car_ratio = walk_access / car_access)
 ```
 
 ```{r save compares}
@@ -294,7 +366,7 @@ write_csv(access_compare, file = here("existing",
 
 write_csv(access_compare_alt, file = here("alternative", 
                                       "data",
-                                      "access_compare.csv"))
+                                      "access_compare_alt.csv"))
 ```
 
 

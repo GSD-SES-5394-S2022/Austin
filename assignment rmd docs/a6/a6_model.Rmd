@@ -12,11 +12,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ## load packages required for analysis
 
 ```{r, results = 'hide', message = FALSE, warning = FALSE}
-library(here)
-library(tidyverse)
-library(sf)
-library(modelr)
-library(jtools)
+library(here, quietly = TRUE)
+library(tidyverse, quietly = TRUE)
+library(sf, quietly = TRUE)
+library(modelr, quietly = TRUE)
+library(jtools, quietly = TRUE)
 ```
 
 ## load data for analysis
@@ -25,12 +25,12 @@ library(jtools)
 access <- here("existing",
                "data",
                "access_compare.csv") %>%
-  read_csv()
+  read_csv(show_col_types = FALSE)
 
 zones <- here("existing",
                "data",
                "zone_data.csv") %>%
-  read_csv()
+  read_csv(show_col_types = FALSE)
 ```
 
 ## select variables used in model
@@ -39,11 +39,11 @@ zones <- here("existing",
 # just copied from resources page; update with our own vars
 
 model_data <- left_join(zones, access) %>%
-  mutate(pct_big_hh = (hh_3personE + hh_4person_plusE) / total_hhsE,
-         pct_lo_inc = inc_quint_1 / total_hhsE,
-         pct_hi_inc = inc_quint_5 / total_hhsE,
-         pct_no_veh = no_vehE / total_hhsE) %>%
-  select(GEOID, pct_big_hh, pct_lo_inc, pct_hi_inc, ratio, pct_no_veh)
+  mutate(pct_big_hh = (hh_3person + hh_4person_plus) / hh_total,
+         pct_no_veh = hh_no_veh / hh_total,
+         pct_under_18 = pop_under_18 / pop_total,
+         pct_over_65 = pop_over_65 / pop_total) %>%
+  select(GEOID, pct_big_hh, pct_low_inc, pct_high_inc, ratio, pct_no_veh)
 ```
 
 ## exploratory analysis and visualization
@@ -63,7 +63,7 @@ We don't have this in the original variable list but perhaps homeownership perce
 
 # iterate with model specification, ideally aiming for parsimony
 
-model1 <- lm(pct_no_veh ~ pct_big_hh + pct_lo_inc + pct_hi_inc + ratio, data = model_data)
+model1 <- lm(pct_no_veh ~ pct_big_hh + pct_low_inc + pct_high_inc + ratio, data = model_data)
 
 export_summs(model1)
 ```
