@@ -17,6 +17,8 @@ library(tidyverse, quietly = TRUE)
 library(sf, quietly = TRUE)
 library(modelr, quietly = TRUE)
 library(jtools, quietly = TRUE)
+library(gapminder, quietly = TRUE)
+library(ggplot2)
 ```
 
 ## load data for analysis
@@ -36,14 +38,29 @@ zones <- here("existing",
 ## select variables used in model
 
 ```{r}
-# just copied from resources page; update with our own vars
+# just copied from resources page; updated with our own vars
 
 model_data <- left_join(zones, access) %>%
-  mutate(pct_big_hh = (hh_3person + hh_4person_plus) / hh_total,
-         pct_no_veh = hh_no_veh / hh_total,
-         pct_under_18 = pop_under_18 / pop_total,
-         pct_over_65 = pop_over_65 / pop_total) %>%
-  select(GEOID, pct_big_hh, pct_low_inc, pct_high_inc, ratio, pct_no_veh)
+  mutate(pct_big_hh = (hh_3personE + hh_4person_plusE) / hh_totalE,
+         pct_no_veh = hh_no_vehE / hh_totalE,
+         pct_under_18 = pop_under_18E / pop_totalE,
+         pct_over_65 = pop_over_65E / pop_totalE) %>%
+  select(GEOID, 
+         pct_big_hh, 
+         pct_low_inc, 
+         pct_high_inc,
+         pct_under_18,
+         pct_over_65,
+         transit_car_ratio, 
+         bike_car_ratio, 
+         walk_car_ratio, 
+         pct_no_veh,
+         avg_commute_time,
+         res_density,
+         job_density,
+         job_home_ratio)
+
+model_data$GEOID <- as.character(model_data$GEOID)
 ```
 
 ## exploratory analysis and visualization
@@ -63,9 +80,20 @@ We don't have this in the original variable list but perhaps homeownership perce
 
 # iterate with model specification, ideally aiming for parsimony
 
-model1 <- lm(pct_no_veh ~ pct_big_hh + pct_low_inc + pct_high_inc + ratio, data = model_data)
+model1 <- lm(pct_no_veh ~ pct_big_hh + pct_low_inc + pct_high_inc + 
+                          pct_under_18 + pct_over_65 + transit_car_ratio + 
+                          bike_car_ratio + walk_car_ratio + avg_commute_time + 
+                          res_density + job_density + job_home_ratio, 
+             data = model_data)
 
 export_summs(model1)
+```
+```{r}
+model2 <- lm(pct_no_veh ~ pct_low_inc + transit_car_ratio + walk_car_ratio + 
+                          avg_commute_time + res_density, 
+             data = model_data)
+
+export_summs(model2)
 ```
 
 ### apply the model to make predictions
@@ -82,18 +110,48 @@ alt_zones <- here("alternative",
                "data",
                "zone_data.csv") %>%
   read_csv() %>%
-  left_join(access) %>%
-  mutate(pct_big_hh = (hh_3personE + hh_4person_plusE) / total_hhsE,
-         pct_lo_inc = inc_quint_1 / total_hhsE,
-         pct_hi_inc = inc_quint_5 / total_hhsE,
-         pct_no_veh = no_vehE / total_hhsE) %>%
+  left_join(alt_access) %>%
+  mutate(pct_big_hh = (hh_3personE + hh_4person_plusE) / hh_totalE,
+         pct_no_veh_ex = hh_no_vehE / hh_totalE) %>%
   add_predictions(model = model2) %>%
   mutate(pct_no_veh = pred) %>%
-  mutate(no_vehE = round(total_hhsE * pct_no_veh)) 
+  mutate(hh_no_vehE = round(hh_totalE * pct_no_veh))
+
+alt_zones$GEOID <- as.character(alt_zones$GEOID)
 ```
 
 ## predicted accessibility visualization
 
 ```{r}
 # this section will be for visualization
+zone_boundaries <- st_read(here("zones",
+                                "boundaries.geojson"))
+
+zones <- zone_boundaries %>%
+  left_join(model_data)
+
+
+ggplot(zones) +
+  geom_sf(aes(fill = pct_no_veh),
+          color = NA)
+```
+
+```{r}
+pred_zones <- zone_boundaries %>%
+  left_join(alt_zones) %>%
+  mutate(pct_no_veh = ifelse(pct_no_veh < 0, 0, pct_no_veh))
+
+
+ggplot(pred_zones) +
+  geom_sf(aes(fill = pct_no_veh),
+          color = NA)
+```
+
+```{r}
+pred_zones <- pred_zones %>%
+  mutate(change_no_veh = pct_no_veh - pct_no_veh_ex)
+
+ggplot(pred_zones) +
+  geom_sf(aes(fill = change_no_veh),
+          color = NA)
 ```
