@@ -210,13 +210,6 @@ export_summs(model5)
 
 ```
 
-```{r}
-#we should rename these
-export_summs(model1, model2, model3, model4, model5,
-             model.names = c("Kitchen Sink","Refined","Just Land Use",
-                             "Just Demo","Another Attempt"))
-```
-
 
 
 Well anyway I have no idea what to make of this.
@@ -235,6 +228,26 @@ model6 <- lm(pct_no_veh ~ pct_big_hh + pct_low_inc + pct_high_inc +
              data = filtered_data)
 
 export_summs(model6)
+```
+
+
+```{r}
+#one last stab
+model7 <- lm(pct_no_veh ~ pct_big_hh + pct_low_inc + pct_high_inc +
+                          pct_under_18 +
+                          transit_car_ratio + walk_car_ratio,
+             data = filtered_data)
+
+export_summs(model7, model.names = "Last Attempt")
+```
+
+
+```{r}
+#we should rename these
+export_summs(model1, model2, model3, model4, model5, model6, model7,
+             model.names = c("Kitchen Sink","Refined","Just Land Use",
+                             "Just Demo","Another Attempt",
+                             "W/O Transit Ratio", "Last Attempt"))
 ```
 
 ### apply the model to make predictions
