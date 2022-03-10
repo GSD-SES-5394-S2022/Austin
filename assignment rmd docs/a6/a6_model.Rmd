@@ -65,9 +65,42 @@ model_data <- left_join(zones, access) %>%
          pct_basic_emp,
          pct_service_emp,
          pct_retail_emp)
+        
+#%>% filter(GEOID != 48453001750)
 
 model_data$GEOID <- as.character(model_data$GEOID)
 ```
+
+```{r Check Outliers}
+#Defining outliers as more than 3 stdevs from the mean
+
+factornames <- colnames(select(model_data,-c("GEOID")))
+all_outliers <- data.frame("GEOID" = character())
+
+for (fac in factornames) {
+  outlier_test <- select(model_data, c("GEOID", fac))
+  outlier_test <- outlier_test %>%
+    mutate(not_inf = is.finite(outlier_test[[2]])) %>%
+    filter(not_inf == TRUE) %>%
+    select(-c("not_inf"))
+  
+  mn <- mean(outlier_test[[2]])
+  stdev <- sd(outlier_test[[2]])
+  Tmin <- mn - 3*stdev
+  Tmax <- mn + 3*stdev
+  #there are no outliers no the left side
+  outliers <- filter(outlier_test, outlier_test[[2]] > Tmax)
+  
+  all_outliers <- all_outliers %>%
+    full_join(outliers)  
+}
+
+
+
+
+```
+
+
 
 ## exploratory analysis and visualization
 
