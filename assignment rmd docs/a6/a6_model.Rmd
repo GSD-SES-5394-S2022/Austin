@@ -95,11 +95,25 @@ for (fac in factornames) {
     full_join(outliers)  
 }
 
+#how do we filter out our outliers?
+#I want to say if it is an outlier in at least 2 categories
 
+all_outliers <- all_outliers %>%
+  mutate(count_outs = (ncol(all_outliers) - 1) - rowSums(is.na(all_outliers)))
+
+legit_outliers <- all_outliers %>%
+  filter(count_outs >= 2)
 
 
 ```
 
+Now we'll filter out our outliers and see if that makes a difference
+
+```{r filter outliers}
+filtered_data <- model_data %>%
+  filter(!(GEOID %in% legit_outliers[["GEOID"]]))
+
+```
 
 
 ## exploratory analysis and visualization
