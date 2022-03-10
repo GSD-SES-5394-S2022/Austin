@@ -44,7 +44,10 @@ model_data <- left_join(zones, access) %>%
   mutate(pct_big_hh = (hh_3personE + hh_4person_plusE) / hh_totalE,
          pct_no_veh = hh_no_vehE / hh_totalE,
          pct_under_18 = pop_under_18E / pop_totalE,
-         pct_over_65 = pop_over_65E / pop_totalE) %>%
+         pct_over_65 = pop_over_65E / pop_totalE,
+         pct_basic_emp = basic_emp / total_emp,
+         pct_retail_emp = retail_emp / total_emp,
+         pct_service_emp = service_emp / total_emp) %>%
   select(GEOID, 
          pct_big_hh, 
          pct_low_inc, 
@@ -58,7 +61,10 @@ model_data <- left_join(zones, access) %>%
          avg_commute_time,
          res_density,
          job_density,
-         job_home_ratio)
+         job_home_ratio,
+         pct_basic_emp,
+         pct_service_emp,
+         pct_retail_emp)
 
 model_data$GEOID <- as.character(model_data$GEOID)
 ```
@@ -101,7 +107,8 @@ We don't have this in the original variable list but perhaps homeownership perce
 model1 <- lm(pct_no_veh ~ pct_big_hh + pct_low_inc + pct_high_inc + 
                           pct_under_18 + pct_over_65 + transit_car_ratio + 
                           bike_car_ratio + walk_car_ratio + avg_commute_time + 
-                          res_density + job_density + job_home_ratio, 
+                          res_density + job_density + job_home_ratio +
+                          pct_service_emp + pct_retail_emp, 
              data = model_data)
 
 export_summs(model1)
@@ -115,6 +122,44 @@ model2 <- lm(pct_no_veh ~ pct_low_inc + transit_car_ratio + walk_car_ratio +
 
 export_summs(model2)
 ```
+
+```{r}
+#only land use variables
+
+model3 <- lm(pct_no_veh ~ transit_car_ratio + 
+                          bike_car_ratio + walk_car_ratio + avg_commute_time + 
+                          res_density + job_density + job_home_ratio, 
+             data = model_data)
+
+export_summs(model3)
+```
+
+```{r}
+#only demographics data
+model4 <- lm(pct_no_veh ~ pct_big_hh + pct_low_inc + pct_high_inc + 
+                          pct_under_18 + pct_over_65 + pct_service_emp + pct_retail_emp, 
+             data = model_data)
+
+export_summs(model4)
+```
+
+```{r}
+#take the best from each category
+
+model5 <- lm(pct_no_veh ~ pct_big_hh + pct_low_inc + pct_high_inc + 
+                          pct_under_18 + pct_over_65 + transit_car_ratio + 
+                          walk_car_ratio +
+                          pct_service_emp + pct_retail_emp, 
+             data = model_data)
+
+export_summs(model5)
+
+
+```
+
+
+Well anyway I have no idea what to make of this.
+
 
 ### apply the model to make predictions
 
