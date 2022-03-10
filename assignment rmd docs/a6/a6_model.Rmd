@@ -157,6 +157,12 @@ export_summs(model5)
 
 ```
 
+```{r}
+#we should rename these
+export_summs(model1, model2, model3, model4, model5)
+```
+
+
 
 Well anyway I have no idea what to make of this.
 
