@@ -19,6 +19,7 @@ library(modelr, quietly = TRUE)
 library(jtools, quietly = TRUE)
 library(gapminder, quietly = TRUE)
 library(ggplot2)
+library(GGally)
 ```
 
 ## load data for analysis
@@ -108,7 +109,7 @@ legit_outliers <- all_outliers %>%
 ```
 
 Now we'll filter out our outliers and see if that makes a difference
-Three options below, choose which to use by commenting out the other ones
+Four options below, choose which to use by commenting out the other ones
 
 ```{r filter outliers}
 # filtered_data <- model_data %>%
@@ -117,7 +118,10 @@ Three options below, choose which to use by commenting out the other ones
 # filtered_data <- model_data %>%
 #   filter(!(GEOID %in% all_outliers[["GEOID"]]))
 
-filtered_data <- model_data
+# filtered_data <- model_data
+
+filtered_data <- model_data %>%
+  filter(GEOID != 48453001750)
 
 ```
 
@@ -138,10 +142,16 @@ for (col in colnames) {
     labs(x = col)
   print(plot)
 }
+```
 
+```{r}
+ggplot(data = filtered_data, aes(x = transit_car_ratio, y = pct_no_veh)) +
+  geom_point() +
+  labs(x = "Transit-Car Accessibility Ratio", y = "% Without Car Access") +
+  geom_smooth(size = 0.5, lty = "dashed", color = "blue", method = "lm") +
+  theme_light()
 
-
-
+ggsave(here("images", "a6", "transitratio.png"))
 ```
 
 ## estimate regression model
@@ -247,7 +257,10 @@ export_summs(model7, model.names = "Last Attempt")
 export_summs(model1, model2, model3, model4, model5, model6, model7,
              model.names = c("Kitchen Sink","Refined","Just Land Use",
                              "Just Demo","Another Attempt",
-                             "W/O Transit Ratio", "Last Attempt"))
+                             "W/O Transit Ratio", "Last Attempt"),
+             to.file = "html",
+             file.name = "full_reg_table.html",
+             error_pos = "right")
 ```
 
 ### apply the model to make predictions
@@ -264,10 +277,11 @@ alt_zones <- here("alternative",
                "data",
                "zone_data.csv") %>%
   read_csv() %>%
-  left_join(alt_access) %>%
   mutate(pct_big_hh = (hh_3personE + hh_4person_plusE) / hh_totalE,
-         pct_no_veh_ex = hh_no_vehE / hh_totalE) %>%
-  add_predictions(model = model2) %>%
+         pct_no_veh_ex = hh_no_vehE / hh_totalE,
+         pct_under_18 = pop_under_18E / pop_totalE) %>%
+  left_join(alt_access) %>%
+  add_predictions(model = model7) %>%
   mutate(pct_no_veh = pred) %>%
   mutate(hh_no_vehE = round(hh_totalE * pct_no_veh))
 
@@ -287,7 +301,11 @@ zones <- zone_boundaries %>%
 
 ggplot(zones) +
   geom_sf(aes(fill = pct_no_veh),
-          color = NA)
+          color = NA) + 
+  labs(fill = "% Without Vehicle \nAccess (Existing)") +
+  theme_void()
+
+ggsave(here("images", "a6", "act_zones.png"))
 ```
 
 ```{r}
@@ -298,7 +316,11 @@ pred_zones <- zone_boundaries %>%
 
 ggplot(pred_zones) +
   geom_sf(aes(fill = pct_no_veh),
-          color = NA)
+          color = NA) +
+  labs(fill = "% Without Vehicle \nAccess (Predicted)") +
+  theme_void()
+
+ggsave(here("images", "a6", "pred_zones.png"))
 ```
 
 ```{r}
@@ -307,5 +329,9 @@ pred_zones <- pred_zones %>%
 
 ggplot(pred_zones) +
   geom_sf(aes(fill = change_no_veh),
-          color = NA)
+          color = NA) + 
+  labs(fill = "Change in % Without \nVehicle Access") +
+  theme_void()
+
+ggsave(here("images", "a6", "change.png"))
 ```
