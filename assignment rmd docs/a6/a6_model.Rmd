@@ -20,6 +20,8 @@ library(jtools, quietly = TRUE)
 library(gapminder, quietly = TRUE)
 library(ggplot2)
 library(GGally)
+library(PNWColors)
+library(RColorBrewer)
 ```
 
 ## load data for analysis
@@ -298,10 +300,18 @@ zone_boundaries <- st_read(here("zones",
 zones <- zone_boundaries %>%
   left_join(model_data)
 
+pal1 <- brewer.pal(5, "YlOrBr")
+
+pal2 <- pnw_palette(name = "Bay", 
+                           n = 5, 
+                           type = "continuous")
+
 
 ggplot(zones) +
   geom_sf(aes(fill = pct_no_veh),
-          color = NA) + 
+          color = NA) +
+  scale_fill_gradientn(colours = pal1,
+                       labels = scales::percent) + 
   labs(fill = "% Without Vehicle \nAccess (Existing)") +
   theme_void()
 
@@ -317,6 +327,8 @@ pred_zones <- zone_boundaries %>%
 ggplot(pred_zones) +
   geom_sf(aes(fill = pct_no_veh),
           color = NA) +
+  scale_fill_gradientn(colours = pal1,
+                       labels = scales::percent) +
   labs(fill = "% Without Vehicle \nAccess (Predicted)") +
   theme_void()
 
@@ -328,8 +340,10 @@ pred_zones <- pred_zones %>%
   mutate(change_no_veh = pct_no_veh - pct_no_veh_ex)
 
 ggplot(pred_zones) +
-  geom_sf(aes(fill = change_no_veh),
-          color = NA) + 
+  geom_sf(aes(fill = pct_no_veh),
+          color = NA) +
+  scale_fill_gradientn(colours = pal2,
+                       labels = scales::percent) + 
   labs(fill = "Change in % Without \nVehicle Access") +
   theme_void()
 
