@@ -41,3 +41,6 @@ vignettes/*.pdf
 
 #osm files
 *.osm
+
+#miscellaneous folder to store extraneous data
+/Large datasets/
