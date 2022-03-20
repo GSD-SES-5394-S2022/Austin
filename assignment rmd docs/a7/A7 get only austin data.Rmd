@@ -1,0 +1,83 @@
+---
+title: "A7 get only Austin data"
+author: "Reuven Herzog"
+date: "3/20/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load libraries}
+library(tidyverse)
+```
+
+
+This doc is just to pull in the NHTS data and filter it for the Austin MSA,
+so the smaller files can be stored on Github.
+
+```{r bring in NHTS data}
+trips <- read_csv(here("Large datasets",
+                       "NHTS data",
+                       "trippub.csv")
+                  )
+
+hhs <- read_csv(here("Large datasets",
+                       "NHTS data",
+                       "hhpub.csv")
+                  )
+
+persons <- read_csv(here("Large datasets",
+                       "NHTS data",
+                       "perpub.csv")
+                  )
+
+vehs <- read_csv(here("Large datasets",
+                       "NHTS data",
+                       "vehpub.csv")
+                  )
+```
+
+Now to filter it down.
+Austin MSA's FIPS code is 12420
+
+```{r filtering}
+austin_trips <- trips %>%
+  filter(HH_CBSA == '12420')
+
+austin_hhs <- hhs %>%
+  filter(HH_CBSA == '12420')
+
+austin_persons <- persons %>%
+  filter(HH_CBSA == '12420')
+
+austin_vehs <- vehs %>%
+  filter(HH_CBSA == '12420')
+```
+
+And to write out the files
+
+```{r write out files}
+write_csv(austin_trips, here(
+  "assignment rmd docs",
+  "a7",
+  "austin_trips.csv"))
+
+write_csv(austin_hhs, here(
+  "assignment rmd docs",
+  "a7",
+  "austin_hhs.csv"))
+
+write_csv(austin_persons, here(
+  "assignment rmd docs",
+  "a7",
+  "austin_persons.csv"))
+
+write_csv(austin_vehs, here(
+  "assignment rmd docs",
+  "a7",
+  "austin_vehs.csv"))
+```
+
+

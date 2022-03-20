@@ -1,0 +1,41 @@
+---
+title: "Assignment 7"
+author: "Reuven Herzog"
+date: "3/20/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load libraries}
+library(here)
+library(tidyverse)
+library(survey)
+library(srvyr)
+library(naniar)
+library(jtools)
+library(knitr)
+```
+
+
+First we need to bring in our National Household Travel Survey data.
+(Obtained from https://nhts.ornl.gov/)
+
+We already filtered the complete dataset to only Austin data, so it could
+fit on our Github repo.
+(See adjacent "A7 get only austin data.rmd")
+
+```{r bring in NHTS data}
+austin_trips <- read_csv(here(
+                        "assignment rmd docs",
+                        "a7",
+                        "austin_trips.csv"))
+
+austin_hhs <- read_csv(here(
+                      "assignment rmd docs",
+                      "a7",
+                      "austin_hhs.csv"))
+```
+
