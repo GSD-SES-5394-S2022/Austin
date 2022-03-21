@@ -86,7 +86,7 @@ trips_by_purpose <- trips_by_purpose %>%
 ```
 
 ```{r}
-hh_trips <- left_join(buffalo_hhs, trips_by_purpose) %>%
+hh_trips <- left_join(austin_hhs, trips_by_purpose) %>%
   replace_na(list(HBW = 0,
                   HBO = 0,
                   NHB = 0))
@@ -104,4 +104,13 @@ export_summs(HBO_model1,
              error_pos = "right", 
              error_format = "(p = {p.value})",
              model.names = "Full model")
+```
+
+```{r}
+HBO_model2 <- svyglm(HBO ~ size_, svy_trips)
+
+export_summs(HBO_model1, HBO_model2,
+             error_pos = "right", 
+             error_format = "(p = {p.value})",
+             model.names = c("Full model", "Reduced model"))
 ```
