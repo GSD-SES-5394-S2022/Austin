@@ -39,7 +39,7 @@ austin_hhs <- read_csv(here(
                       "austin_hhs.csv"))
 ```
 
-Code blocks copied from skills page - need to adapt for Austin
+Code blocks adapted from skills page. This first one creates the variables for HH income quintiles, HH sizes, and vehicle availability.
 
 ```{r}
 austin_hhs <- austin_hhs %>%
@@ -59,10 +59,14 @@ austin_hhs <- austin_hhs %>%
                               HHSIZE == 2 ~ "two",
                               HHSIZE == 3 ~ "three",
                               TRUE ~ "four_plus")) %>%
+  mutate(children_ = case_when(HHSIZE > NUMADLT ~ "yes",
+                               TRUE ~ "no")) %>%
   mutate(zero_veh_ = (HHVEHCNT == 0)) %>%
   replace_with_na(list(inc_quint_ = "NA")) %>%
-  select(HOUSEID, zero_veh_, size_, inc_quint_, WTHHFIN) 
+  select(HOUSEID, zero_veh_, size_, children_, inc_quint_, WTHHFIN) 
 ```
+
+The following block creates variables for home-based and work-based trips, then groups them so we know the number of trip types by each household in the survey.
 
 ```{r}
 trips_by_purpose <- austin_trips %>%
@@ -85,6 +89,8 @@ trips_by_purpose <- trips_by_purpose %>%
   pivot_wider(names_from = "purpose", values_from = "n") 
 ```
 
+Dealing with lots of "NA" entries and replacing them with zeros.
+
 ```{r}
 hh_trips <- left_join(austin_hhs, trips_by_purpose) %>%
   replace_na(list(HBW = 0,
@@ -97,19 +103,92 @@ svy_trips <- hh_trips %>%
   as_survey(weights = WTHHFIN)
 ```
 
-```{r}
-HBO_model1 <- svyglm(HBO ~ zero_veh_ + size_ + inc_quint_, svy_trips)
+First HBO model. Same result as the skills page example; only HH size seems to be significant. Added presence of children (members of HH under 18) to the model as well, since we can get that easily in the ACS (in terms of HHs with children)
 
-export_summs(HBO_model1, 
-             error_pos = "right", 
-             error_format = "(p = {p.value})",
-             model.names = "Full model")
+```{r}
+HBO_model1 <- svyglm(HBO ~ zero_veh_ + size_ + inc_quint_ + children_, svy_trips)
+
+# export_summs(HBO_model1, 
+#              error_pos = "right", 
+#              error_format = "(p = {p.value})",
+#              model.names = "Full model")
 ```
+
+Model attempt #2: now with only HH size. Compared with the first model as well.
 
 ```{r}
 HBO_model2 <- svyglm(HBO ~ size_, svy_trips)
 
 export_summs(HBO_model1, HBO_model2,
+             error_pos = "right", 
+             error_format = "(p = {p.value})",
+             model.names = c("Full model", "Reduced model"))
+```
+
+
+
+```{r}
+vars <- c(hh_children = 'B09005_001')
+
+counties <- c("Travis", 
+              "Bastrop", 
+              "Hays", 
+              "Caldwell", 
+              "Williamson")
+
+census_data <- get_acs(geography = "tract",
+                       state = "TX",
+                       variables = vars,
+                       county = counties,
+                       output = "wide",
+                       geometry = FALSE) %>%
+  select(GEOID, hh_childrenE)
+
+census_data$GEOID <- as.numeric(census_data$GEOID)
+
+existing_zones <- here("existing",
+                       "data",
+                       "zone_data.csv") %>%
+  read_csv() %>%
+  left_join(census_data, by = "GEOID")
+
+write.csv(existing_zones, here("existing",
+                               "data",
+                               "zone_data.csv"))
+```
+
+```{r}
+existing_zones <- here("existing",
+                       "data",
+                       "zone_data.csv") %>%
+  read_csv() %>%
+  mutate(hbo_prod = hh_totalE * HBO_model2$coefficients["(Intercept)"] +
+                    hh_1personE * HBO_model2$coefficients["size_one"] +
+                    hh_2personE * HBO_model2$coefficients["size_two"] +
+                    hh_3personE * HBO_model2$coefficients["size_three"])
+```
+
+Repeating the model process for HBW trips. HH size matters as before, as does the presence of household members under the age of 18. 
+
+```{r}
+HBW_model1 <- svyglm(HBW ~ zero_veh_ + size_ + inc_quint_ + children_, svy_trips)
+
+HBW_model2 <- svyglm(HBW ~ size_ + children_, svy_trips)
+
+export_summs(HBW_model1, HBW_model2,
+             error_pos = "right", 
+             error_format = "(p = {p.value})",
+             model.names = c("Full model", "Reduced model"))
+```
+
+Presence of children in the surveyed HHs does not appear to matter here for NHB trips, but income does. Though the coefficient on the 2nd income quintile is statistically insignificant, it is only marginally so.
+
+```{r}
+NHB_model1 <- svyglm(NHB ~ zero_veh_ + size_ + inc_quint_ + children_, svy_trips)
+
+NHB_model2 <- svyglm(NHB ~ size_ + inc_quint_, svy_trips)
+
+export_summs(NHB_model1, NHB_model2,
              error_pos = "right", 
              error_format = "(p = {p.value})",
              model.names = c("Full model", "Reduced model"))
