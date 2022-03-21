@@ -242,7 +242,7 @@ existing_zones <- existing_zones %>%
 
 ## Balancing Trip Production and Attraction
 
-So far just for HBO trips. Still need HBW and NHB.
+### HBO Trip Balancing
 
 ```{r}
 trip_end_summary <- tibble(Purpose = c("HBO"),
@@ -266,6 +266,62 @@ trip_end_summary <- tibble(Purpose = c("HBO"),
                            Attractions = c(sum(existing_zones$hbo_attr_bal)),
                            Difference = c(sum(existing_zones$hbo_attr_bal) - 
                                             sum(existing_zones$hbo_prod)))
+
+kable(trip_end_summary, format.args = list(big.mark = ","))
+```
+
+### HBW Trip Balancing
+
+```{r}
+trip_end_summary <- tibble(Purpose = c("HBW"),
+                           Productions = c(sum(existing_zones$hbw_prod)),
+                           Attractions = c(sum(existing_zones$hbw_attr)),
+                           Difference = c(sum(existing_zones$hbw_attr) - 
+                                            sum(existing_zones$hbw_prod)))
+
+kable(trip_end_summary, format.args = list(big.mark = ","))
+```
+
+```{r}
+existing_zones <- existing_zones %>%
+  mutate(hbw_attr_bal = hbw_attr * 
+           sum(existing_zones$hbw_prod) / sum(existing_zones$hbw_attr))
+```
+
+```{r}
+trip_end_summary <- tibble(Purpose = c("HBW"),
+                           Productions = c(sum(existing_zones$hbw_prod)),
+                           Attractions = c(sum(existing_zones$hbw_attr_bal)),
+                           Difference = c(sum(existing_zones$hbw_attr_bal) - 
+                                            sum(existing_zones$hbw_prod)))
+
+kable(trip_end_summary, format.args = list(big.mark = ","))
+```
+
+### NHB Trip Balancing
+
+```{r}
+trip_end_summary <- tibble(Purpose = c("NHB"),
+                           Productions = c(sum(existing_zones$nhb_prod)),
+                           Attractions = c(sum(existing_zones$nhb_attr)),
+                           Difference = c(sum(existing_zones$nhb_attr) - 
+                                            sum(existing_zones$nhb_prod)))
+
+kable(trip_end_summary, format.args = list(big.mark = ","))
+```
+
+```{r}
+existing_zones <- existing_zones %>%
+  mutate(nhb_attr_bal = nhb_attr * 
+           sum(existing_zones$nhb_prod) / sum(existing_zones$nhb_attr))
+```
+
+```{r}
+trip_end_summary <- tibble(Purpose = c("NHB"),
+                           Productions = c(sum(existing_zones$nhb_prod)),
+                           Attractions = c(sum(existing_zones$nhb_attr_bal)),
+                           Difference = c(sum(existing_zones$nhb_attr_bal) - 
+                                            sum(existing_zones$nhb_prod)))
 
 kable(trip_end_summary, format.args = list(big.mark = ","))
 ```
