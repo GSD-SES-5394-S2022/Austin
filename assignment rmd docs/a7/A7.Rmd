@@ -229,8 +229,41 @@ existing_zones <- existing_zones %>%
   replace_na(list(basic_emp = 0,
                   retail_emp = 0, 
                   service_emp = 0)) %>%
-  mutate(hbo_attr = 0.7 * total_hhsE +
+  mutate(hbo_attr = 0.7 * hh_totalE +
                     0.7 * basic_emp +
                     8.4 * retail_emp +
-                    3.5 * service_emp)
+                    3.5 * service_emp,
+         hbw_attr = 1.2 * total_emp,
+         nhb_attr = 0.6 * hh_totalE +
+                    0.5 * basic_emp +
+                    4.7 * retail_emp +
+                    1.4 * service_emp)
+```
+
+## Balancing Trip Production and Attraction
+
+```{r}
+trip_end_summary <- tibble(Purpose = c("HBO"),
+                           Productions = c(sum(existing_zones$hbo_prod)),
+                           Attractions = c(sum(existing_zones$hbo_attr)),
+                           Difference = c(sum(existing_zones$hbo_attr) - 
+                                            sum(existing_zones$hbo_prod)))
+
+kable(trip_end_summary, format.args = list(big.mark = ","))
+```
+
+```{r}
+existing_zones <- existing_zones %>%
+  mutate(hbo_attr_bal = hbo_attr * 
+           sum(existing_zones$hbo_prod) / sum(existing_zones$hbo_attr))
+```
+
+```{r}
+trip_end_summary <- tibble(Purpose = c("HBO"),
+                           Productions = c(sum(existing_zones$hbo_prod)),
+                           Attractions = c(sum(existing_zones$hbo_attr_bal)),
+                           Difference = c(sum(existing_zones$hbo_attr_bal) - 
+                                            sum(existing_zones$hbo_prod)))
+
+kable(trip_end_summary, format.args = list(big.mark = ","))
 ```
