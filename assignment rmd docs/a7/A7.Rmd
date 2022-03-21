@@ -19,6 +19,7 @@ library(jtools)
 library(knitr)
 ```
 
+## Data Import and Manipulation
 
 First we need to bring in our National Household Travel Survey data.
 (Obtained from https://nhts.ornl.gov/)
@@ -103,6 +104,8 @@ svy_trips <- hh_trips %>%
   as_survey(weights = WTHHFIN)
 ```
 
+## Trip Production
+
 First HBO model. Same result as the skills page example; only HH size seems to be significant. Added presence of children (members of HH under 18) to the model as well, since we can get that easily in the ACS (in terms of HHs with children)
 
 ```{r}
@@ -125,37 +128,39 @@ export_summs(HBO_model1, HBO_model2,
              model.names = c("Full model", "Reduced model"))
 ```
 
-
+This next code block just adds the number of households with children to our zone data and saves it to the repo. No need to run it after the first time.
 
 ```{r}
-vars <- c(hh_children = 'B09005_001')
-
-counties <- c("Travis", 
-              "Bastrop", 
-              "Hays", 
-              "Caldwell", 
-              "Williamson")
-
-census_data <- get_acs(geography = "tract",
-                       state = "TX",
-                       variables = vars,
-                       county = counties,
-                       output = "wide",
-                       geometry = FALSE) %>%
-  select(GEOID, hh_childrenE)
-
-census_data$GEOID <- as.numeric(census_data$GEOID)
-
-existing_zones <- here("existing",
-                       "data",
-                       "zone_data.csv") %>%
-  read_csv() %>%
-  left_join(census_data, by = "GEOID")
-
-write.csv(existing_zones, here("existing",
-                               "data",
-                               "zone_data.csv"))
+# vars <- c(hh_children = 'B09005_001')
+# 
+# counties <- c("Travis", 
+#               "Bastrop", 
+#               "Hays", 
+#               "Caldwell", 
+#               "Williamson")
+# 
+# census_data <- get_acs(geography = "tract",
+#                        state = "TX",
+#                        variables = vars,
+#                        county = counties,
+#                        output = "wide",
+#                        geometry = FALSE) %>%
+#   select(GEOID, hh_childrenE)
+# 
+# census_data$GEOID <- as.numeric(census_data$GEOID)
+# 
+# existing_zones <- here("existing",
+#                        "data",
+#                        "zone_data.csv") %>%
+#   read_csv() %>%
+#   left_join(census_data, by = "GEOID")
+# 
+# write.csv(existing_zones, here("existing",
+#                                "data",
+#                                "zone_data.csv"))
 ```
+
+Apply trip production model to zone data for HBO trips. Because our alternative does not change any of the underlying factors in the trip production model, we do not need to repeat this process and can use the same estimates. 
 
 ```{r}
 existing_zones <- here("existing",
@@ -181,6 +186,17 @@ export_summs(HBW_model1, HBW_model2,
              model.names = c("Full model", "Reduced model"))
 ```
 
+Applying the trip production model to our zone data for HBW trips.
+
+```{r}
+existing_zones <- existing_zones %>%
+mutate(hbw_prod = hh_totalE * HBW_model2$coefficients["(Intercept)"] +
+                  hh_1personE * HBW_model2$coefficients["size_one"] +
+                  hh_2personE * HBW_model2$coefficients["size_two"] +
+                  hh_3personE * HBW_model2$coefficients["size_three"] +
+                  hh_childrenE * HBW_model2$coefficients["children_yes"])
+```
+
 Presence of children in the surveyed HHs does not appear to matter here for NHB trips, but income does. Though the coefficient on the 2nd income quintile is statistically insignificant, it is only marginally so.
 
 ```{r}
@@ -192,4 +208,29 @@ export_summs(NHB_model1, NHB_model2,
              error_pos = "right", 
              error_format = "(p = {p.value})",
              model.names = c("Full model", "Reduced model"))
+```
+
+```{r}
+existing_zones <- existing_zones %>%
+mutate(nhb_prod = hh_totalE * NHB_model2$coefficients["(Intercept)"] +
+                  hh_1personE * NHB_model2$coefficients["size_one"] +
+                  hh_2personE * NHB_model2$coefficients["size_two"] +
+                  hh_3personE * NHB_model2$coefficients["size_three"] +
+                  inc_quint_2 * NHB_model2$coefficients["inc_quint_2nd"] +
+                  inc_quint_3 * NHB_model2$coefficients["inc_quint_3rd"] +
+                  inc_quint_4 * NHB_model2$coefficients["inc_quint_4th"] +
+                  inc_quint_5 * NHB_model2$coefficients["inc_quint_5th"])
+```
+
+## Trip Attraction
+
+```{r}
+existing_zones <- existing_zones %>%
+  replace_na(list(basic_emp = 0,
+                  retail_emp = 0, 
+                  service_emp = 0)) %>%
+  mutate(hbo_attr = 0.7 * total_hhsE +
+                    0.7 * basic_emp +
+                    8.4 * retail_emp +
+                    3.5 * service_emp)
 ```
