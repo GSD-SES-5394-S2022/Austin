@@ -242,6 +242,8 @@ existing_zones <- existing_zones %>%
 
 ## Balancing Trip Production and Attraction
 
+So far just for HBO trips. Still need HBW and NHB.
+
 ```{r}
 trip_end_summary <- tibble(Purpose = c("HBO"),
                            Productions = c(sum(existing_zones$hbo_prod)),
