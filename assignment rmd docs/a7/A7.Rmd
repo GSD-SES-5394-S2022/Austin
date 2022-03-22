@@ -17,6 +17,8 @@ library(srvyr)
 library(naniar)
 library(jtools)
 library(knitr)
+library(huxtable)
+library(sf)
 ```
 
 ## Data Import and Manipulation
@@ -91,6 +93,9 @@ trips_by_purpose <- trips_by_purpose %>%
 ```
 
 Dealing with lots of "NA" entries and replacing them with zeros.
+(Note: whereas Carole's tutorial specifically uses a left join to drop trips
+outside the Austin MSA, we did this separately already. Nevertheless, a
+left join is a perfectly good join to use here.)
 
 ```{r}
 hh_trips <- left_join(austin_hhs, trips_by_purpose) %>%
@@ -111,10 +116,11 @@ First HBO model. Same result as the skills page example; only HH size seems to b
 ```{r}
 HBO_model1 <- svyglm(HBO ~ zero_veh_ + size_ + inc_quint_ + children_, svy_trips)
 
-# export_summs(HBO_model1, 
-#              error_pos = "right", 
-#              error_format = "(p = {p.value})",
-#              model.names = "Full model")
+export_summs(HBO_model1,
+             error_pos = "right",
+             error_format = "(p = {p.value})",
+             model.names = "Full model") %>%
+  quick_rtf(file = "HBO Full Model.rtf")
 ```
 
 Model attempt #2: now with only HH size. Compared with the first model as well.
@@ -125,7 +131,8 @@ HBO_model2 <- svyglm(HBO ~ size_, svy_trips)
 export_summs(HBO_model1, HBO_model2,
              error_pos = "right", 
              error_format = "(p = {p.value})",
-             model.names = c("Full model", "Reduced model"))
+             model.names = c("Full model", "Reduced model")) %>%
+  quick_rtf(file = "HBO both models.rtf")
 ```
 
 This next code block just adds the number of households with children to our zone data and saves it to the repo. No need to run it after the first time.
@@ -183,7 +190,8 @@ HBW_model2 <- svyglm(HBW ~ size_ + children_, svy_trips)
 export_summs(HBW_model1, HBW_model2,
              error_pos = "right", 
              error_format = "(p = {p.value})",
-             model.names = c("Full model", "Reduced model"))
+             model.names = c("Full model", "Reduced model")) %>%
+  quick_rtf(file = "HBW model compare.rtf")
 ```
 
 Applying the trip production model to our zone data for HBW trips.
@@ -207,7 +215,8 @@ NHB_model2 <- svyglm(NHB ~ size_ + inc_quint_, svy_trips)
 export_summs(NHB_model1, NHB_model2,
              error_pos = "right", 
              error_format = "(p = {p.value})",
-             model.names = c("Full model", "Reduced model"))
+             model.names = c("Full model", "Reduced model")) %>%
+  quick_rtf(file = "NHB model compare.rtf")
 ```
 
 ```{r}
