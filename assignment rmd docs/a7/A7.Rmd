@@ -843,7 +843,7 @@ ggsave(filename = here("images",
 ```{r hbo prod/attr}
 hbo_rat_map <- ggplot(trips_map) +
   geom_sf(aes(fill = hbo_rat_bin_jenks), color = NA) +
-  scale_fill_viridis_d("Production/Attraction Ratio,\nHome-Based Work Trips",
+  scale_fill_viridis_d("Production/Attraction Ratio,\nHome-Based Other Trips",
                        #labels = c("< 0", "< 2.11", "< 5.32", "< 11.75", "< 24.35", "< 52.77", "< 114.01"),
                        option = "A") +
   theme_void()
