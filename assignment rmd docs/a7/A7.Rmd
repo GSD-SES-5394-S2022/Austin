@@ -20,6 +20,8 @@ library(knitr)
 library(huxtable)
 library(sf)
 library(ggplot2)
+library(BAMMtools)
+library(scales)
 ```
 
 ## Data Import and Manipulation
@@ -373,22 +375,22 @@ Let's make the dot density maps
 ```{r make densities}
 
 hbw_p_pts <- st_sample(trips_map,
-                       size = ceiling(trips_map$hbw_prod/500))
+                       size = ceiling(trips_map$hbw_prod/1000))
 
 hbo_p_pts <- st_sample(trips_map,
-                       size = ceiling(trips_map$hbo_prod/500))
+                       size = ceiling(trips_map$hbo_prod/1000))
 
 nhb_p_pts <- st_sample(trips_map,
-                       size = ceiling(trips_map$nhb_prod/500))
+                       size = ceiling(trips_map$nhb_prod/1000))
 
 hbw_a_pts <- st_sample(trips_map,
-                       size = ceiling(trips_map$hbw_attr/500))
+                       size = ceiling(trips_map$hbw_attr/1000))
 
 hbo_a_pts <- st_sample(trips_map,
-                       size = ceiling(trips_map$hbo_attr/500))
+                       size = ceiling(trips_map$hbo_attr/1000))
 
 nhb_a_pts <- st_sample(trips_map,
-                       size = ceiling(trips_map$nhb_attr/500))
+                       size = ceiling(trips_map$nhb_attr/1000))
 ```
 
 
@@ -418,6 +420,10 @@ trips_all_pts <- rbind(hbw_p_pts_df, hbo_p_pts_df, nhb_p_pts_df,
 trips_prod_pts <- rbind(hbw_p_pts_df, hbo_p_pts_df, nhb_p_pts_df)
 trips_attr_pts <- rbind(hbw_a_pts_df, hbo_a_pts_df, nhb_a_pts_df)
 
+trips_both_hbw <- rbind(hbw_p_pts_df, hbw_a_pts_df)
+trips_both_hbo <- rbind(hbo_p_pts_df, hbo_a_pts_df)
+trips_both_nhb <- rbind(nhb_p_pts_df, nhb_a_pts_df)
+
 ```
 
 
@@ -437,21 +443,53 @@ hbw_dens_map
 
 ```
 
-```{r all productions}
+```{r comparing prod and attr}
 
-prod_dens_map <- ggplot(zone_sf) +
+hbw_dens_map <- ggplot(zone_sf) +
   geom_sf(color = "white") +
-  geom_sf(data = trips_prod_pts,
+  geom_sf(data = trips_both_hbw,
           aes(color = trip_type),
           alpha = 0.3,
-          size = 0.1) +
+          size = 0.75) +
   scale_color_brewer("Trip Type", palette = "Set1") +
   theme_void() +
   guides(color = guide_legend(override.aes = list(size = 5, alpha = 0.6)))
 
-prod_dens_map
+hbw_dens_map
 
 ```
+```{r comparing prod and attr}
+
+hbo_dens_map <- ggplot(zone_sf) +
+  geom_sf(color = "white") +
+  geom_sf(data = trips_both_hbo,
+          aes(color = trip_type),
+          alpha = 0.3,
+          size = 0.75) +
+  scale_color_brewer("Trip Type", palette = "Set1") +
+  theme_void() +
+  guides(color = guide_legend(override.aes = list(size = 5, alpha = 0.6)))
+
+hbo_dens_map
+
+```
+
+```{r comparing prod and attr}
+
+nhb_dens_map <- ggplot(zone_sf) +
+  geom_sf(color = "white") +
+  geom_sf(data = trips_both_nhb,
+          aes(color = trip_type),
+          alpha = 0.3,
+          size = 0.75) +
+  scale_color_brewer("Trip Type", palette = "Set1") +
+  theme_void() +
+  guides(color = guide_legend(override.aes = list(size = 5, alpha = 0.6)))
+
+nhb_dens_map
+
+```
+
 
 Well, that should have been predictable.
 
@@ -733,3 +771,100 @@ ggsave(filename = here("images",
                        "NHB Difference Map.png"))
 ```
 
+Other visualization:
+Share of each type of trip by zone
+
+## Ratio (not absolute) of Prod/Attr
+
+Let's first generate the ratio, and then bin them
+
+```{r generate ratios and bins}
+
+trips_map <- trips_map %>%
+  mutate(hbw_rat = hbw_prod/hbw_attr_bal,
+         hbo_rat = hbo_prod/hbo_attr_bal,
+         nhb_rat = nhb_prod/nhb_attr_bal)
+
+
+hbw_breaks <- getJenksBreaks(var = trips_map$hbw_rat, k = 7)
+hbo_breaks <- getJenksBreaks(var = trips_map$hbo_rat, k = 7)
+nhb_breaks <- getJenksBreaks(var = trips_map$nhb_rat, k = 7)
+
+trips_map <- trips_map %>%
+  mutate(hbw_rat_bin_jenks = case_when(
+            hbw_rat > hbw_breaks[7] ~ paste("< ", round(max(hbw_rat),2)),
+            hbw_rat > hbw_breaks[6] ~ paste("< ", round(hbw_breaks[7],2)),
+            hbw_rat > hbw_breaks[5] ~ paste("< ", round(hbw_breaks[6],2)),
+            hbw_rat > hbw_breaks[4] ~ paste("< ", round(hbw_breaks[5],2)),
+            hbw_rat > hbw_breaks[3] ~ paste("< ", round(hbw_breaks[4],2)),
+            hbw_rat > hbw_breaks[2] ~ paste("< ", round(hbw_breaks[3],2)),
+            hbw_rat > hbw_breaks[1] ~ paste("< ", round(hbw_breaks[2],2)),
+            TRUE ~ paste("< ", round(hbw_breaks[1],2))),
+         hbo_rat_bin_jenks = case_when(
+            hbo_rat > hbo_breaks[7] ~ paste("< ", round(max(hbo_rat),2)),
+            hbo_rat > hbo_breaks[6] ~ paste("< ", round(hbo_breaks[7],2)),
+            hbo_rat > hbo_breaks[5] ~ paste("< ", round(hbo_breaks[6],2)),
+            hbo_rat > hbo_breaks[4] ~ paste("< ", round(hbo_breaks[5],2)),
+            hbo_rat > hbo_breaks[3] ~ paste("< ", round(hbo_breaks[4],2)),
+            hbo_rat > hbo_breaks[2] ~ paste("< ", round(hbo_breaks[3],2)),
+            hbo_rat > hbo_breaks[1] ~ paste("< ", round(hbo_breaks[2],2)),
+            TRUE ~ paste("< ", round(hbo_breaks[1],2))),
+         nhb_rat_bin_jenks = case_when(
+            nhb_rat > nhb_breaks[7] ~ paste("< ", round(max(nhb_rat),2)),
+            nhb_rat > nhb_breaks[6] ~ paste("< ", round(nhb_breaks[7],2)),
+            nhb_rat > nhb_breaks[5] ~ paste("< ", round(nhb_breaks[6],2)),
+            nhb_rat > nhb_breaks[4] ~ paste("< ", round(nhb_breaks[5],2)),
+            nhb_rat > nhb_breaks[3] ~ paste("< ", round(nhb_breaks[4],2)),
+            nhb_rat > nhb_breaks[2] ~ paste("< ", round(nhb_breaks[3],2)),
+            nhb_rat > nhb_breaks[1] ~ paste("< ", round(nhb_breaks[2],2)),
+            TRUE ~ paste("< ", round(nhb_breaks[1],2))))
+
+
+
+```
+
+
+
+```{r HBW prod/attr}
+hbw_rat_map <- ggplot(trips_map) +
+  geom_sf(aes(fill = hbw_rat_bin_jenks), color = NA) +
+  scale_fill_viridis_d("Production/Attraction Ratio,\nHome-Based Work Trips",
+                       labels = c("< 0", "< 2.11", "< 5.32", "< 11.75", "< 24.35", "< 52.77", "< 114.01"),
+                       option = "A") +
+  theme_void()
+
+hbw_rat_map
+ggsave(filename = here("images",
+                       "a7",
+                       "HBW Ratio Map.png"))
+```
+
+
+```{r hbo prod/attr}
+hbo_rat_map <- ggplot(trips_map) +
+  geom_sf(aes(fill = hbo_rat_bin_jenks), color = NA) +
+  scale_fill_viridis_d("Production/Attraction Ratio,\nHome-Based Work Trips",
+                       #labels = c("< 0", "< 2.11", "< 5.32", "< 11.75", "< 24.35", "< 52.77", "< 114.01"),
+                       option = "A") +
+  theme_void()
+
+hbo_rat_map
+ggsave(filename = here("images",
+                       "a7",
+                       "hbo Ratio Map.png"))
+```
+
+
+```{r nhb prod/attr}
+nhb_rat_map <- ggplot(trips_map) +
+  geom_sf(aes(fill = nhb_rat_bin_jenks), color = NA) +
+  scale_fill_viridis_d("Production/Attraction Ratio,\nHome-Based Work Trips",
+                       labels = c("< 0", "< 2.11", "< 5.32", "< 11.75", "< 24.35", "< 52.77", "< 114.01"),
+                       option = "A") +
+  theme_void()
+
+nhb_rat_map
+ggsave(filename = here("images",
+                       "a7",
+                       "nhb Ratio Map.png"))
+```
