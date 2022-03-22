@@ -19,6 +19,7 @@ library(jtools)
 library(knitr)
 library(huxtable)
 library(sf)
+library(ggplot2)
 ```
 
 ## Data Import and Manipulation
@@ -177,7 +178,8 @@ existing_zones <- here("existing",
   mutate(hbo_prod = hh_totalE * HBO_model2$coefficients["(Intercept)"] +
                     hh_1personE * HBO_model2$coefficients["size_one"] +
                     hh_2personE * HBO_model2$coefficients["size_two"] +
-                    hh_3personE * HBO_model2$coefficients["size_three"])
+                    hh_3personE * HBO_model2$coefficients["size_three"]) %>%
+  mutate(GEOID = as.character(GEOID))
 ```
 
 Repeating the model process for HBW trips. HH size matters as before, as does the presence of household members under the age of 18. 
@@ -334,3 +336,140 @@ trip_end_summary <- tibble(Purpose = c("NHB"),
 
 kable(trip_end_summary, format.args = list(big.mark = ","))
 ```
+
+
+# Data Viz
+
+Let's make chloropeth maps for trip attractions and productions.
+Lol no we're gonna make dot density maps, because tract size varies enough.
+
+First lets turn our data into a spatial object.
+
+```{r}
+zone_sf <- read_sf(here("zones",
+                        "boundaries.geojson")
+                   ) %>%
+  mutate(GEOID = as.character(GEOID))
+
+trips_map <- full_join(zone_sf, existing_zones) %>%
+  select(GEOID, geometry, hbo_prod, hbw_prod, nhb_prod,
+         hbo_attr, hbw_attr, nhb_attr,
+         hbo_attr_bal, hbw_attr_bal, nhb_attr_bal)
+```
+
+Let's make the dot density maps
+
+```{r make densities}
+
+hbw_p_pts <- st_sample(trips_map,
+                       size = ceiling(trips_map$hbw_prod/500))
+
+hbo_p_pts <- st_sample(trips_map,
+                       size = ceiling(trips_map$hbo_prod/500))
+
+nhb_p_pts <- st_sample(trips_map,
+                       size = ceiling(trips_map$nhb_prod/500))
+
+hbw_a_pts <- st_sample(trips_map,
+                       size = ceiling(trips_map$hbw_attr/500))
+
+hbo_a_pts <- st_sample(trips_map,
+                       size = ceiling(trips_map$hbo_attr/500))
+
+nhb_a_pts <- st_sample(trips_map,
+                       size = ceiling(trips_map$nhb_attr/500))
+```
+
+
+```{r make density spatial objects}
+
+hbw_p_pts_df <- tibble(trip_type = rep("hbw_prod",length(hbw_p_pts))) %>%
+  st_sf(geom = hbw_p_pts)
+
+hbo_p_pts_df <- tibble(trip_type = rep("hbo_prod",length(hbo_p_pts))) %>%
+  st_sf(geom = hbo_p_pts)
+
+nhb_p_pts_df <- tibble(trip_type = rep("nhb_prod",length(nhb_p_pts))) %>%
+  st_sf(geom = nhb_p_pts)
+
+hbw_a_pts_df <- tibble(trip_type = rep("hbw_attr",length(hbw_a_pts))) %>%
+  st_sf(geom = hbw_a_pts)
+
+hbo_a_pts_df <- tibble(trip_type = rep("hbo_attr",length(hbo_a_pts))) %>%
+  st_sf(geom = hbo_a_pts)
+
+nhb_a_pts_df <- tibble(trip_type = rep("nhb_attr",length(nhb_a_pts))) %>%
+  st_sf(geom = nhb_a_pts)
+
+trips_all_pts <- rbind(hbw_p_pts_df, hbo_p_pts_df, nhb_p_pts_df,
+                       hbw_a_pts_df, hbo_a_pts_df, nhb_a_pts_df)
+
+trips_prod_pts <- rbind(hbw_p_pts_df, hbo_p_pts_df, nhb_p_pts_df)
+trips_attr_pts <- rbind(hbw_a_pts_df, hbo_a_pts_df, nhb_a_pts_df)
+
+```
+
+
+##now to actually visualize them
+
+```{r HBW prod}
+hbw_dens_map <- ggplot(zone_sf) +
+  geom_sf(color = "white") +
+  geom_sf(data = hbw_p_pts,
+          color = "blue",
+          alpha = 0.3,
+          size = 0.1) +
+  
+  theme_void()
+
+hbw_dens_map
+
+```
+
+```{r all productions}
+
+prod_dens_map <- ggplot(zone_sf) +
+  geom_sf(color = "white") +
+  geom_sf(data = trips_prod_pts,
+          aes(color = trip_type),
+          alpha = 0.3,
+          size = 0.1) +
+  scale_color_brewer("Trip Type", palette = "Set1") +
+  theme_void() +
+  guides(color = guide_legend(override.aes = list(size = 5, alpha = 0.6)))
+
+prod_dens_map
+
+```
+
+Well, that should have been predictable.
+
+
+```{r HBW}
+hbw_map <- ggplot(trips_map) +
+  geom_sf(aes(fill = hbw_prod), color = NA) +
+  scale_fill_viridis_c()
+
+hbw_map
+```
+
+```{r HBO}
+hbo_map <- ggplot(trips_map) +
+  geom_sf(aes(fill = hbo_prod), color = NA) +
+  scale_fill_viridis_c()
+
+hbo_map
+```
+
+
+```{r NHB}
+nhb_map <- ggplot(trips_map) +
+  geom_sf(aes(fill = nhb_prod), color = NA) +
+  scale_fill_viridis_c()
+
+nhb_map
+```
+
+Hm...not so easy to read. What if we normalized by area?
+
+
