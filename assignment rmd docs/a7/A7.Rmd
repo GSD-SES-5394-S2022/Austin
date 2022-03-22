@@ -121,7 +121,9 @@ export_summs(HBO_model1,
              error_pos = "right",
              error_format = "(p = {p.value})",
              model.names = "Full model") %>%
-  quick_rtf(file = "HBO Full Model.rtf")
+  quick_rtf(file = here("images",
+                       "a7",
+                       "HBO Full Model.rtf"))
 ```
 
 Model attempt #2: now with only HH size. Compared with the first model as well.
@@ -133,7 +135,9 @@ export_summs(HBO_model1, HBO_model2,
              error_pos = "right", 
              error_format = "(p = {p.value})",
              model.names = c("Full model", "Reduced model")) %>%
-  quick_rtf(file = "HBO both models.rtf")
+  quick_rtf(file = here("images",
+                       "a7",
+                       "HBO both models.rtf"))
 ```
 
 This next code block just adds the number of households with children to our zone data and saves it to the repo. No need to run it after the first time.
@@ -193,7 +197,9 @@ export_summs(HBW_model1, HBW_model2,
              error_pos = "right", 
              error_format = "(p = {p.value})",
              model.names = c("Full model", "Reduced model")) %>%
-  quick_rtf(file = "HBW model compare.rtf")
+  quick_rtf(file = here("images",
+                       "a7",
+                       "HBW model compare.rtf"))
 ```
 
 Applying the trip production model to our zone data for HBW trips.
@@ -218,7 +224,9 @@ export_summs(NHB_model1, NHB_model2,
              error_pos = "right", 
              error_format = "(p = {p.value})",
              model.names = c("Full model", "Reduced model")) %>%
-  quick_rtf(file = "NHB model compare.rtf")
+  quick_rtf(file = here("images",
+                       "a7",
+                       "NHB model compare.rtf"))
 ```
 
 ```{r}
@@ -351,8 +359,11 @@ zone_sf <- read_sf(here("zones",
                    ) %>%
   mutate(GEOID = as.character(GEOID))
 
+zone_sf <- mutate(zone_sf, area_m2 = unclass(st_area(zone_sf)))
+
 trips_map <- full_join(zone_sf, existing_zones) %>%
-  select(GEOID, geometry, hbo_prod, hbw_prod, nhb_prod,
+  select(GEOID, geometry, area_m2,
+         hbo_prod, hbw_prod, nhb_prod,
          hbo_attr, hbw_attr, nhb_attr,
          hbo_attr_bal, hbw_attr_bal, nhb_attr_bal)
 ```
@@ -473,3 +484,167 @@ nhb_map
 Hm...not so easy to read. What if we normalized by area?
 
 
+```{r HBW density}
+hbw_map_dens <- ggplot(trips_map) +
+  geom_sf(aes(fill = hbw_prod/area_m2), color = NA) +
+  scale_fill_viridis_c("Home-based Work Trips\n(Normalized by Tract Area)", option = "B", guide = "none") +
+  theme_void()
+
+hbw_map_dens
+ggsave(filename = here("images",
+                       "a7",
+                       "HBW Map.png"))
+```
+(That's better)
+
+```{r HBW density}
+hbo_map_dens <- ggplot(trips_map) +
+  geom_sf(aes(fill = hbo_prod/area_m2), color = NA) +
+  scale_fill_viridis_c("Home-based Other Trips\n(Normalized by Tract Area)", option = "B", guide = "none") +
+  theme_void()
+
+hbo_map_dens
+ggsave(filename = here("images",
+                       "a7",
+                       "HBO Map.png"))
+```
+
+```{r HBW density}
+nhb_map_dens <- ggplot(trips_map) +
+  geom_sf(aes(fill = nhb_prod/area_m2), color = NA) +
+  scale_fill_viridis_c("Non-Home Based Trips\n(Normalized by Tract Area)", option = "B", guide = "none") +
+  theme_void()
+
+nhb_map_dens
+ggsave(filename = here("images",
+                       "a7",
+                       "NHB Map.png"))
+```
+
+##Trip attractions
+
+```{r HBW density}
+hbw_a_map_dens <- ggplot(trips_map) +
+  geom_sf(aes(fill = hbw_attr/area_m2), color = NA) +
+  scale_fill_viridis_c("Home-based Work Trips\n(Normalized by Tract Area)", option = "D", guide = "none") +
+  theme_void()
+
+hbw_a_map_dens
+ggsave(filename = here("images",
+                       "a7",
+                       "HBW_A Map.png"))
+```
+
+
+```{r HBW density}
+hbo_a_map_dens <- ggplot(trips_map) +
+  geom_sf(aes(fill = hbo_attr/area_m2), color = NA) +
+  scale_fill_viridis_c("Home-based Other Trips\n(Normalized by Tract Area)", option = "D", guide = "none") +
+  theme_void()
+
+hbo_a_map_dens
+ggsave(filename = here("images",
+                       "a7",
+                       "HBO_A Map.png"))
+```
+
+```{r HBW density}
+nhb_a_map_dens <- ggplot(trips_map) +
+  geom_sf(aes(fill = nhb_attr/area_m2), color = NA) +
+  scale_fill_viridis_c("Non-Home Based Trips\n(Normalized by Tract Area)", option = "D", guide = "none") +
+  theme_void()
+
+nhb_a_map_dens
+ggsave(filename = here("images",
+                       "a7",
+                       "NHB_A Map.png"))
+```
+
+
+
+
+
+##Prod-Attr Comparisonss
+What about comparing trip productions and attractions?
+
+
+```{r HBW prod-attr}
+hbw_dif_map <- ggplot(trips_map) +
+  geom_sf(aes(fill = hbw_prod - hbw_attr_bal), color = NA) +
+  scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Work Trips",
+                       option = "C", limits = c(-20000,NA)) +
+  theme_void()
+
+hbw_dif_map
+ggsave(filename = here("images",
+                       "a7",
+                       "HBW Difference Map.png"))
+```
+
+```{r HBO prod-attr}
+hbo_dif_map <- ggplot(trips_map) +
+  geom_sf(aes(fill = hbo_prod - hbo_attr_bal), color = NA) +
+  scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Other Trips",
+                       option = "C", limits = c(-100000,NA)) +
+  theme_void()
+
+hbo_dif_map
+ggsave(filename = here("images",
+                       "a7",
+                       "HBO Difference Map.png"))
+```
+
+```{r HBW prod-attr}
+nhb_dif_map <- ggplot(trips_map) +
+  geom_sf(aes(fill = nhb_prod - nhb_attr_bal), color = NA) +
+  scale_fill_viridis_c("Production/Attraction Difference,\nNon Home-Based",
+                       option = "C", limits = c(-50000,NA)) +
+  theme_void()
+
+nhb_dif_map
+ggsave(filename = here("images",
+                       "a7",
+                       "NHB Difference Map.png"))
+```
+
+
+What if I take these and normalize _them_ by area?
+
+```{r HBW prod-attr}
+hbw_dif_map <- ggplot(trips_map) +
+  geom_sf(aes(fill = (hbw_prod - hbw_attr_bal)/area_m2), color = NA) +
+  scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Work Trips",
+                       option = "A") +
+  theme_void()
+
+hbw_dif_map
+ggsave(filename = here("images",
+                       "a7",
+                       "HBW Difference Map normalized.png"))
+```
+
+```{r HBO prod-attr}
+hbo_dif_map <- ggplot(trips_map) +
+  geom_sf(aes(fill = (hbo_prod - hbo_attr_bal)/area_m2), color = NA) +
+  scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Other Trips",
+                       option = "A") +
+  theme_void()
+
+hbo_dif_map
+ggsave(filename = here("images",
+                       "a7",
+                       "HBO Difference Map normalized.png"))
+```
+
+```{r HBW prod-attr}
+nhb_dif_map <- ggplot(trips_map) +
+  geom_sf(aes(fill = (nhb_prod - nhb_attr_bal)/area_m2), color = NA) +
+  scale_fill_viridis_c("Production/Attraction Difference,\nNon Home-Based",
+                       option = "A") +
+  theme_void()
+
+nhb_dif_map
+ggsave(filename = here("images",
+                       "a7",
+                       "NHB Difference Map normalized.png"))
+```
