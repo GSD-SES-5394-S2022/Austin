@@ -915,17 +915,22 @@ trip_types_full <- c('Home-Based Work - Production', 'Home-Based Other - Product
                      'Non-Home Based - Production', 'Home-Based Work - Attraction',
                      'Home-Based Other - Attraction', 'Non-Home Based - Attraction')
 
+i = 1
+
 for (tt in trip_types){
   temp_map <- trips_map %>%
     mutate(temp_col = st_drop_geometry(trips_map[tt])[[1]] / trips_map$total_trips_combined)
   this_map <- ggplot(temp_map) +
     geom_sf(aes(fill = temp_col),
             color = NA) +
-    scale_fill_viridis_c(paste("Home-based Work Trips\n(Normalized by Tract Area)"), option = "B") +
+    scale_fill_viridis_c(paste0("Share of All Trips:\n",trip_types_full[i]),
+                         option = "B", limits = c(0, 0.65)) +
     geom_sf(data = urban_bounds_sf, aes(color = "Urban Area"), fill = NA) +
-    scale_color_manual(name = "", values = c('Urban Area' = 'steelblue4')) +
+    scale_color_manual(name = "", values = c('Urban Area' = 'skyblue')) +
     theme_void()
-
+  
+  i = i+1
+  
   print(this_map)
   ggsave(filename = here("images",
                          "a7",
@@ -936,4 +941,32 @@ for (tt in trip_types){
 
 ```
 
+Now without normalizing on the scale
+
+```{r}
+i = 1
+
+for (tt in trip_types){
+  temp_map <- trips_map %>%
+    mutate(temp_col = st_drop_geometry(trips_map[tt])[[1]] / trips_map$total_trips_combined)
+  this_map <- ggplot(temp_map) +
+    geom_sf(aes(fill = temp_col),
+            color = NA) +
+    scale_fill_viridis_c(paste0("Share of All Trips:\n",trip_types_full[i]),
+                         option = "B") +
+    geom_sf(data = urban_bounds_sf, aes(color = "Urban Area"), fill = NA) +
+    scale_color_manual(name = "", values = c('Urban Area' = 'skyblue')) +
+    theme_void()
+  
+  i = i+1
+  
+  print(this_map)
+  ggsave(filename = here("images",
+                         "a7",
+                         "share maps",
+                         "individual scales",
+                         paste(tt, "Share Map.png")))
+}
+
+```
 
