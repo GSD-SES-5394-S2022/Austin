@@ -347,8 +347,35 @@ trip_end_summary <- tibble(Purpose = c("NHB"),
 kable(trip_end_summary, format.args = list(big.mark = ","))
 ```
 
+## Save zone data
 
-# Data Viz
+```{r}
+write.csv(existing_zones, here("existing", "data", "zone_data.csv"))
+
+copied_data <- existing_zones %>%
+  select(GEOID,
+         hh_childrenE,
+         hbo_prod,
+         hbw_prod,
+         nhb_prod,
+         hbo_attr,
+         hbw_attr,
+         nhb_attr,
+         hbo_attr_bal,
+         hbw_attr_bal,
+         nhb_attr_bal)
+
+alternative_zones <- read.csv(here("alternative", "data", "zone_data.csv"))
+
+alternative_zones$GEOID <- as.character(alternative_zones$GEOID)
+
+alternative_zones <- alternative_zones %>%
+  left_join(copied_data, by = "GEOID")
+
+write.csv(alternative_zones, here("alternative", "data", "zone_data.csv"))
+```
+
+## Data Viz
 
 Let's make chloropeth maps for trip attractions and productions.
 Lol no we're gonna make dot density maps, because tract size varies enough.

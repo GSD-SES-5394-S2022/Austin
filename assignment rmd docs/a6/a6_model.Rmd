@@ -284,7 +284,7 @@ alt_zones <- here("alternative",
          pct_under_18 = pop_under_18E / pop_totalE) %>%
   left_join(alt_access) %>%
   add_predictions(model = model7) %>%
-  mutate(pct_no_veh = pred) %>%
+  mutate(pct_no_veh = ifelse(pred < 0, 0, pred)) %>%
   mutate(hh_no_vehE = round(hh_totalE * pct_no_veh))
 
 alt_zones$GEOID <- as.character(alt_zones$GEOID)
