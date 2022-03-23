@@ -370,59 +370,69 @@ trips_map <- full_join(zone_sf, existing_zones) %>%
          hbo_attr_bal, hbw_attr_bal, nhb_attr_bal)
 ```
 
+Adding in the urban areas boundaries for map legibility
+```{r}
+urban_bounds_sf <- read_sf(here("zones",
+                           "urban areas.geojson")) %>%
+  filter(UATYP10 == "U") %>%
+  st_transform(crs = st_crs(zone_sf))
+```
+
+
+
 Let's make the dot density maps
 
 ```{r make densities}
 
-hbw_p_pts <- st_sample(trips_map,
-                       size = ceiling(trips_map$hbw_prod/1000))
-
-hbo_p_pts <- st_sample(trips_map,
-                       size = ceiling(trips_map$hbo_prod/1000))
-
-nhb_p_pts <- st_sample(trips_map,
-                       size = ceiling(trips_map$nhb_prod/1000))
-
-hbw_a_pts <- st_sample(trips_map,
-                       size = ceiling(trips_map$hbw_attr/1000))
-
-hbo_a_pts <- st_sample(trips_map,
-                       size = ceiling(trips_map$hbo_attr/1000))
-
-nhb_a_pts <- st_sample(trips_map,
-                       size = ceiling(trips_map$nhb_attr/1000))
+# hbw_p_pts <- st_sample(trips_map,
+#                        size = ceiling(trips_map$hbw_prod/1000))
+# 
+# hbo_p_pts <- st_sample(trips_map,
+#                        size = ceiling(trips_map$hbo_prod/1000))
+# 
+# nhb_p_pts <- st_sample(trips_map,
+#                        size = ceiling(trips_map$nhb_prod/1000))
+# 
+# hbw_a_pts <- st_sample(trips_map,
+#                        size = ceiling(trips_map$hbw_attr/1000))
+# 
+# hbo_a_pts <- st_sample(trips_map,
+#                        size = ceiling(trips_map$hbo_attr/1000))
+# 
+# nhb_a_pts <- st_sample(trips_map,
+#                        size = ceiling(trips_map$nhb_attr/1000))
 ```
 
 
 ```{r make density spatial objects}
-
-hbw_p_pts_df <- tibble(trip_type = rep("hbw_prod",length(hbw_p_pts))) %>%
-  st_sf(geom = hbw_p_pts)
-
-hbo_p_pts_df <- tibble(trip_type = rep("hbo_prod",length(hbo_p_pts))) %>%
-  st_sf(geom = hbo_p_pts)
-
-nhb_p_pts_df <- tibble(trip_type = rep("nhb_prod",length(nhb_p_pts))) %>%
-  st_sf(geom = nhb_p_pts)
-
-hbw_a_pts_df <- tibble(trip_type = rep("hbw_attr",length(hbw_a_pts))) %>%
-  st_sf(geom = hbw_a_pts)
-
-hbo_a_pts_df <- tibble(trip_type = rep("hbo_attr",length(hbo_a_pts))) %>%
-  st_sf(geom = hbo_a_pts)
-
-nhb_a_pts_df <- tibble(trip_type = rep("nhb_attr",length(nhb_a_pts))) %>%
-  st_sf(geom = nhb_a_pts)
-
-trips_all_pts <- rbind(hbw_p_pts_df, hbo_p_pts_df, nhb_p_pts_df,
-                       hbw_a_pts_df, hbo_a_pts_df, nhb_a_pts_df)
-
-trips_prod_pts <- rbind(hbw_p_pts_df, hbo_p_pts_df, nhb_p_pts_df)
-trips_attr_pts <- rbind(hbw_a_pts_df, hbo_a_pts_df, nhb_a_pts_df)
-
-trips_both_hbw <- rbind(hbw_p_pts_df, hbw_a_pts_df)
-trips_both_hbo <- rbind(hbo_p_pts_df, hbo_a_pts_df)
-trips_both_nhb <- rbind(nhb_p_pts_df, nhb_a_pts_df)
+# 
+# hbw_p_pts_df <- tibble(trip_type = rep("hbw_prod",length(hbw_p_pts))) %>%
+#   st_sf(geom = hbw_p_pts)
+# 
+# hbo_p_pts_df <- tibble(trip_type = rep("hbo_prod",length(hbo_p_pts))) %>%
+#   st_sf(geom = hbo_p_pts)
+# 
+# nhb_p_pts_df <- tibble(trip_type = rep("nhb_prod",length(nhb_p_pts))) %>%
+#   st_sf(geom = nhb_p_pts)
+# 
+# hbw_a_pts_df <- tibble(trip_type = rep("hbw_attr",length(hbw_a_pts))) %>%
+#   st_sf(geom = hbw_a_pts)
+# 
+# hbo_a_pts_df <- tibble(trip_type = rep("hbo_attr",length(hbo_a_pts))) %>%
+#   st_sf(geom = hbo_a_pts)
+# 
+# nhb_a_pts_df <- tibble(trip_type = rep("nhb_attr",length(nhb_a_pts))) %>%
+#   st_sf(geom = nhb_a_pts)
+# 
+# trips_all_pts <- rbind(hbw_p_pts_df, hbo_p_pts_df, nhb_p_pts_df,
+#                        hbw_a_pts_df, hbo_a_pts_df, nhb_a_pts_df)
+# 
+# trips_prod_pts <- rbind(hbw_p_pts_df, hbo_p_pts_df, nhb_p_pts_df)
+# trips_attr_pts <- rbind(hbw_a_pts_df, hbo_a_pts_df, nhb_a_pts_df)
+# 
+# trips_both_hbw <- rbind(hbw_p_pts_df, hbw_a_pts_df)
+# trips_both_hbo <- rbind(hbo_p_pts_df, hbo_a_pts_df)
+# trips_both_nhb <- rbind(nhb_p_pts_df, nhb_a_pts_df)
 
 ```
 
@@ -430,63 +440,63 @@ trips_both_nhb <- rbind(nhb_p_pts_df, nhb_a_pts_df)
 ##now to actually visualize them
 
 ```{r HBW prod}
-hbw_dens_map <- ggplot(zone_sf) +
-  geom_sf(color = "white") +
-  geom_sf(data = hbw_p_pts,
-          color = "blue",
-          alpha = 0.3,
-          size = 0.1) +
-  
-  theme_void()
-
-hbw_dens_map
-
-```
-
-```{r comparing prod and attr}
-
-hbw_dens_map <- ggplot(zone_sf) +
-  geom_sf(color = "white") +
-  geom_sf(data = trips_both_hbw,
-          aes(color = trip_type),
-          alpha = 0.3,
-          size = 0.75) +
-  scale_color_brewer("Trip Type", palette = "Set1") +
-  theme_void() +
-  guides(color = guide_legend(override.aes = list(size = 5, alpha = 0.6)))
-
-hbw_dens_map
-
-```
-```{r comparing prod and attr}
-
-hbo_dens_map <- ggplot(zone_sf) +
-  geom_sf(color = "white") +
-  geom_sf(data = trips_both_hbo,
-          aes(color = trip_type),
-          alpha = 0.3,
-          size = 0.75) +
-  scale_color_brewer("Trip Type", palette = "Set1") +
-  theme_void() +
-  guides(color = guide_legend(override.aes = list(size = 5, alpha = 0.6)))
-
-hbo_dens_map
+# hbw_dens_map <- ggplot(zone_sf) +
+#   geom_sf(color = "white") +
+#   geom_sf(data = hbw_p_pts,
+#           color = "blue",
+#           alpha = 0.3,
+#           size = 0.1) +
+#   
+#   theme_void()
+# 
+# hbw_dens_map
 
 ```
 
 ```{r comparing prod and attr}
+# 
+# hbw_dens_map <- ggplot(zone_sf) +
+#   geom_sf(color = "white") +
+#   geom_sf(data = trips_both_hbw,
+#           aes(color = trip_type),
+#           alpha = 0.3,
+#           size = 0.75) +
+#   scale_color_brewer("Trip Type", palette = "Set1") +
+#   theme_void() +
+#   guides(color = guide_legend(override.aes = list(size = 5, alpha = 0.6)))
+# 
+# hbw_dens_map
 
-nhb_dens_map <- ggplot(zone_sf) +
-  geom_sf(color = "white") +
-  geom_sf(data = trips_both_nhb,
-          aes(color = trip_type),
-          alpha = 0.3,
-          size = 0.75) +
-  scale_color_brewer("Trip Type", palette = "Set1") +
-  theme_void() +
-  guides(color = guide_legend(override.aes = list(size = 5, alpha = 0.6)))
+```
+```{r comparing prod and attr}
+# 
+# hbo_dens_map <- ggplot(zone_sf) +
+#   geom_sf(color = "white") +
+#   geom_sf(data = trips_both_hbo,
+#           aes(color = trip_type),
+#           alpha = 0.3,
+#           size = 0.75) +
+#   scale_color_brewer("Trip Type", palette = "Set1") +
+#   theme_void() +
+#   guides(color = guide_legend(override.aes = list(size = 5, alpha = 0.6)))
+# 
+# hbo_dens_map
 
-nhb_dens_map
+```
+
+```{r comparing prod and attr}
+# 
+# nhb_dens_map <- ggplot(zone_sf) +
+#   geom_sf(color = "white") +
+#   geom_sf(data = trips_both_nhb,
+#           aes(color = trip_type),
+#           alpha = 0.3,
+#           size = 0.75) +
+#   scale_color_brewer("Trip Type", palette = "Set1") +
+#   theme_void() +
+#   guides(color = guide_legend(override.aes = list(size = 5, alpha = 0.6)))
+# 
+# nhb_dens_map
 
 ```
 
@@ -525,7 +535,9 @@ Hm...not so easy to read. What if we normalized by area?
 ```{r HBW density}
 hbw_map_dens <- ggplot(trips_map) +
   geom_sf(aes(fill = hbw_prod/area_m2), color = NA) +
-  scale_fill_viridis_c("Home-based Work Trips\n(Normalized by Tract Area)", option = "B", guide = "none") +
+  scale_fill_viridis_c("Home-based Work Trips\n(Normalized by Tract Area)", option = "B", guide = "legend") +
+  geom_sf(data = urban_bounds_sf, aes(color = "Urban Area"), fill = NA) +
+  scale_color_manual(name = "", values = c('Urban Area' = 'steelblue4')) +
   theme_void()
 
 hbw_map_dens
@@ -538,7 +550,9 @@ ggsave(filename = here("images",
 ```{r HBW density}
 hbo_map_dens <- ggplot(trips_map) +
   geom_sf(aes(fill = hbo_prod/area_m2), color = NA) +
-  scale_fill_viridis_c("Home-based Other Trips\n(Normalized by Tract Area)", option = "B", guide = "none") +
+  scale_fill_viridis_c("Home-based Other Trips\n(Normalized by Tract Area)", option = "B", guide = "legend") +
+  geom_sf(data = urban_bounds_sf, aes(color = "Urban Area"), fill = NA) +
+  scale_color_manual(name = "", values = c('Urban Area' = 'steelblue4')) +
   theme_void()
 
 hbo_map_dens
@@ -550,7 +564,9 @@ ggsave(filename = here("images",
 ```{r HBW density}
 nhb_map_dens <- ggplot(trips_map) +
   geom_sf(aes(fill = nhb_prod/area_m2), color = NA) +
-  scale_fill_viridis_c("Non-Home Based Trips\n(Normalized by Tract Area)", option = "B", guide = "none") +
+  scale_fill_viridis_c("Non-Home Based Trips\n(Normalized by Tract Area)", option = "B", guide = "legend") +
+  geom_sf(data = urban_bounds_sf, aes(color = "Urban Area"), fill = NA) +
+  scale_color_manual(name = "", values = c('Urban Area' = 'steelblue4')) +
   theme_void()
 
 nhb_map_dens
@@ -564,7 +580,10 @@ ggsave(filename = here("images",
 ```{r HBW density}
 hbw_a_map_dens <- ggplot(trips_map) +
   geom_sf(aes(fill = hbw_attr/area_m2), color = NA) +
-  scale_fill_viridis_c("Home-based Work Trips\n(Normalized by Tract Area)", option = "D", guide = "none") +
+  scale_fill_viridis_c("Home-based Work Trips\n(Normalized by Tract Area)",
+                       option = "E", guide = "legend") +
+  geom_sf(data = urban_bounds_sf, aes(color = "Urban Area"), fill = NA) +
+  scale_color_manual(name = "", values = c('Urban Area' = 'steelblue4')) +
   theme_void()
 
 hbw_a_map_dens
@@ -577,7 +596,10 @@ ggsave(filename = here("images",
 ```{r HBW density}
 hbo_a_map_dens <- ggplot(trips_map) +
   geom_sf(aes(fill = hbo_attr/area_m2), color = NA) +
-  scale_fill_viridis_c("Home-based Other Trips\n(Normalized by Tract Area)", option = "D", guide = "none") +
+  scale_fill_viridis_c("Home-based Other Trips\n(Normalized by Tract Area)",
+                       option = "E", guide = "legend") +
+  geom_sf(data = urban_bounds_sf, aes(color = "Urban Area"), fill = NA) +
+  scale_color_manual(name = "", values = c('Urban Area' = 'steelblue4')) +
   theme_void()
 
 hbo_a_map_dens
@@ -589,7 +611,10 @@ ggsave(filename = here("images",
 ```{r HBW density}
 nhb_a_map_dens <- ggplot(trips_map) +
   geom_sf(aes(fill = nhb_attr/area_m2), color = NA) +
-  scale_fill_viridis_c("Non-Home Based Trips\n(Normalized by Tract Area)", option = "D", guide = "none") +
+  scale_fill_viridis_c("Non-Home Based Trips\n(Normalized by Tract Area)",
+                       option = "E", guide = "legend") +
+  geom_sf(data = urban_bounds_sf, aes(color = "Urban Area"), fill = NA) +
+  scale_color_manual(name = "", values = c('Urban Area' = 'steelblue4')) +
   theme_void()
 
 nhb_a_map_dens
@@ -607,84 +632,84 @@ What about comparing trip productions and attractions?
 
 
 ```{r HBW prod-attr}
-hbw_dif_map <- ggplot(trips_map) +
-  geom_sf(aes(fill = hbw_prod - hbw_attr_bal), color = NA) +
-  scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Work Trips",
-                       option = "C", limits = c(-20000,NA)) +
-  theme_void()
-
-hbw_dif_map
-ggsave(filename = here("images",
-                       "a7",
-                       "HBW Difference Map.png"))
+# hbw_dif_map <- ggplot(trips_map) +
+#   geom_sf(aes(fill = hbw_prod - hbw_attr_bal), color = NA) +
+#   scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Work Trips",
+#                        option = "C", limits = c(-20000,NA)) +
+#   theme_void()
+# 
+# hbw_dif_map
+# ggsave(filename = here("images",
+#                        "a7",
+#                        "HBW Difference Map.png"))
 ```
 
 ```{r HBO prod-attr}
-hbo_dif_map <- ggplot(trips_map) +
-  geom_sf(aes(fill = hbo_prod - hbo_attr_bal), color = NA) +
-  scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Other Trips",
-                       option = "C", limits = c(-100000,NA)) +
-  theme_void()
-
-hbo_dif_map
-ggsave(filename = here("images",
-                       "a7",
-                       "HBO Difference Map.png"))
+# hbo_dif_map <- ggplot(trips_map) +
+#   geom_sf(aes(fill = hbo_prod - hbo_attr_bal), color = NA) +
+#   scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Other Trips",
+#                        option = "C", limits = c(-100000,NA)) +
+#   theme_void()
+# 
+# hbo_dif_map
+# ggsave(filename = here("images",
+#                        "a7",
+#                        "HBO Difference Map.png"))
 ```
 
 ```{r HBW prod-attr}
-nhb_dif_map <- ggplot(trips_map) +
-  geom_sf(aes(fill = nhb_prod - nhb_attr_bal), color = NA) +
-  scale_fill_viridis_c("Production/Attraction Difference,\nNon Home-Based",
-                       option = "C", limits = c(-50000,NA)) +
-  theme_void()
-
-nhb_dif_map
-ggsave(filename = here("images",
-                       "a7",
-                       "NHB Difference Map.png"))
+# nhb_dif_map <- ggplot(trips_map) +
+#   geom_sf(aes(fill = nhb_prod - nhb_attr_bal), color = NA) +
+#   scale_fill_viridis_c("Production/Attraction Difference,\nNon Home-Based",
+#                        option = "C", limits = c(-50000,NA)) +
+#   theme_void()
+# 
+# nhb_dif_map
+# ggsave(filename = here("images",
+#                        "a7",
+#                        "NHB Difference Map.png"))
 ```
 
 
 What if I take these and normalize _them_ by area?
 
 ```{r HBW prod-attr}
-hbw_dif_map <- ggplot(trips_map) +
-  geom_sf(aes(fill = (hbw_prod - hbw_attr_bal)/area_m2), color = NA) +
-  scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Work Trips",
-                       option = "A") +
-  theme_void()
-
-hbw_dif_map
-ggsave(filename = here("images",
-                       "a7",
-                       "HBW Difference Map normalized.png"))
+# hbw_dif_map <- ggplot(trips_map) +
+#   geom_sf(aes(fill = (hbw_prod - hbw_attr_bal)/area_m2), color = NA) +
+#   scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Work Trips",
+#                        option = "A") +
+#   theme_void()
+# 
+# hbw_dif_map
+# ggsave(filename = here("images",
+#                        "a7",
+#                        "HBW Difference Map normalized.png"))
 ```
 
 ```{r HBO prod-attr}
-hbo_dif_map <- ggplot(trips_map) +
-  geom_sf(aes(fill = (hbo_prod - hbo_attr_bal)/area_m2), color = NA) +
-  scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Other Trips",
-                       option = "A") +
-  theme_void()
-
-hbo_dif_map
-ggsave(filename = here("images",
-                       "a7",
-                       "HBO Difference Map normalized.png"))
+# hbo_dif_map <- ggplot(trips_map) +
+#   geom_sf(aes(fill = (hbo_prod - hbo_attr_bal)/area_m2), color = NA) +
+#   scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Other Trips",
+#                        option = "A") +
+#   theme_void()
+# 
+# hbo_dif_map
+# ggsave(filename = here("images",
+#                        "a7",
+#                        "HBO Difference Map normalized.png"))
 ```
 
 ```{r HBW prod-attr}
-nhb_dif_map <- ggplot(trips_map) +
-  geom_sf(aes(fill = (nhb_prod - nhb_attr_bal)/area_m2), color = NA) +
-  scale_fill_viridis_c("Production/Attraction Difference,\nNon Home-Based",
-                       option = "A") +
-  theme_void()
-
-nhb_dif_map
-ggsave(filename = here("images",
-                       "a7",
-                       "NHB Difference Map normalized.png"))
+# nhb_dif_map <- ggplot(trips_map) +
+#   geom_sf(aes(fill = (nhb_prod - nhb_attr_bal)/area_m2), color = NA) +
+#   scale_fill_viridis_c("Production/Attraction Difference,\nNon Home-Based",
+#                        option = "A") +
+#   theme_void()
+# 
+# nhb_dif_map
+# ggsave(filename = here("images",
+#                        "a7",
+#                        "NHB Difference Map normalized.png"))
 ```
 
 
@@ -692,83 +717,83 @@ Now I'm curious about if we separate into prod-surplus and attr-surplus
 
 Production surplus
 ```{r HBW prod-attr}
-hbw_dif_map_prod <- ggplot(trips_map) +
-  geom_sf(aes(fill = hbw_prod - hbw_attr_bal), color = NA) +
-  scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Work Trips",
-                       option = "C", limits = c(0,NA)) +
-  theme_void()
-
-hbw_dif_map_prod
-ggsave(filename = here("images",
-                       "a7",
-                       "HBW Difference Map - prod surplus.png"))
+# hbw_dif_map_prod <- ggplot(trips_map) +
+#   geom_sf(aes(fill = hbw_prod - hbw_attr_bal), color = NA) +
+#   scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Work Trips",
+#                        option = "C", limits = c(0,NA)) +
+#   theme_void()
+# 
+# hbw_dif_map_prod
+# ggsave(filename = here("images",
+#                        "a7",
+#                        "HBW Difference Map - prod surplus.png"))
 ```
 
 ```{r HBO prod-attr}
-hbo_dif_map_prod <- ggplot(trips_map) +
-  geom_sf(aes(fill = hbo_prod - hbo_attr_bal), color = NA) +
-  scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Other Trips",
-                       option = "C", limits = c(0,NA)) +
-  theme_void()
-
-hbo_dif_map_prod
-ggsave(filename = here("images",
-                       "a7",
-                       "HBO Difference Map - prod surplus.png"))
+# hbo_dif_map_prod <- ggplot(trips_map) +
+#   geom_sf(aes(fill = hbo_prod - hbo_attr_bal), color = NA) +
+#   scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Other Trips",
+#                        option = "C", limits = c(0,NA)) +
+#   theme_void()
+# 
+# hbo_dif_map_prod
+# ggsave(filename = here("images",
+#                        "a7",
+#                        "HBO Difference Map - prod surplus.png"))
 ```
 
 ```{r HBW prod-attr}
-nhb_dif_map_prod <- ggplot(trips_map) +
-  geom_sf(aes(fill = nhb_prod - nhb_attr_bal), color = NA) +
-  scale_fill_viridis_c("Production/Attraction Difference,\nNon Home-Based",
-                       option = "C", limits = c(0,NA)) +
-  theme_void()
-
-nhb_dif_map_prod
-ggsave(filename = here("images",
-                       "a7",
-                       "NHB Difference Map - prod surplus.png"))
+# nhb_dif_map_prod <- ggplot(trips_map) +
+#   geom_sf(aes(fill = nhb_prod - nhb_attr_bal), color = NA) +
+#   scale_fill_viridis_c("Production/Attraction Difference,\nNon Home-Based",
+#                        option = "C", limits = c(0,NA)) +
+#   theme_void()
+# 
+# nhb_dif_map_prod
+# ggsave(filename = here("images",
+#                        "a7",
+#                        "NHB Difference Map - prod surplus.png"))
 ```
 
 
 And now attraction-surplus
 ```{r HBW prod-attr}
-hbw_dif_map_attr <- ggplot(trips_map) +
-  geom_sf(aes(fill = hbw_prod - hbw_attr_bal), color = NA) +
-  scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Work Trips",
-                       option = "C", limits = c(NA,0)) +
-  theme_void()
-
-hbw_dif_map_attr
-ggsave(filename = here("images",
-                       "a7",
-                       "HBW Difference Map.png"))
+# hbw_dif_map_attr <- ggplot(trips_map) +
+#   geom_sf(aes(fill = hbw_prod - hbw_attr_bal), color = NA) +
+#   scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Work Trips",
+#                        option = "C", limits = c(NA,0)) +
+#   theme_void()
+# 
+# hbw_dif_map_attr
+# ggsave(filename = here("images",
+#                        "a7",
+#                        "HBW Difference Map.png"))
 ```
 
 ```{r HBO prod-attr}
-hbo_dif_map_attr <- ggplot(trips_map) +
-  geom_sf(aes(fill = hbo_prod - hbo_attr_bal), color = NA) +
-  scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Other Trips",
-                       option = "C", limits = c(NA,0)) +
-  theme_void()
-
-hbo_dif_map_attr
-ggsave(filename = here("images",
-                       "a7",
-                       "HBO Difference Map.png"))
+# hbo_dif_map_attr <- ggplot(trips_map) +
+#   geom_sf(aes(fill = hbo_prod - hbo_attr_bal), color = NA) +
+#   scale_fill_viridis_c("Production/Attraction Difference,\nHome-Based Other Trips",
+#                        option = "C", limits = c(NA,0)) +
+#   theme_void()
+# 
+# hbo_dif_map_attr
+# ggsave(filename = here("images",
+#                        "a7",
+#                        "HBO Difference Map.png"))
 ```
 
 ```{r HBW prod-attr}
-nhb_dif_map_attr <- ggplot(trips_map) +
-  geom_sf(aes(fill = nhb_prod - nhb_attr_bal), color = NA) +
-  scale_fill_viridis_c("Production/Attraction Difference,\nNon Home-Based",
-                       option = "C", limits = c(NA,0)) +
-  theme_void()
-
-nhb_dif_map_attr
-ggsave(filename = here("images",
-                       "a7",
-                       "NHB Difference Map.png"))
+# nhb_dif_map_attr <- ggplot(trips_map) +
+#   geom_sf(aes(fill = nhb_prod - nhb_attr_bal), color = NA) +
+#   scale_fill_viridis_c("Production/Attraction Difference,\nNon Home-Based",
+#                        option = "C", limits = c(NA,0)) +
+#   theme_void()
+# 
+# nhb_dif_map_attr
+# ggsave(filename = here("images",
+#                        "a7",
+#                        "NHB Difference Map.png"))
 ```
 
 Other visualization:
@@ -826,11 +851,16 @@ trips_map <- trips_map %>%
 
 
 ```{r HBW prod/attr}
+ordered_hbw_rat <- factor(trips_map$hbw_rat_bin_jenks,
+                            levels = c("<  0", "<  2.11", "<  5.32", "<  11.75",
+                                       "<  24.35", "<  52.77", "<  114.01"))
+
 hbw_rat_map <- ggplot(trips_map) +
-  geom_sf(aes(fill = hbw_rat_bin_jenks), color = NA) +
+  geom_sf(aes(fill = ordered_hbw_rat), color = NA) +
   scale_fill_viridis_d("Production/Attraction Ratio,\nHome-Based Work Trips",
-                       labels = c("< 0", "< 2.11", "< 5.32", "< 11.75", "< 24.35", "< 52.77", "< 114.01"),
                        option = "A") +
+  geom_sf(data = urban_bounds_sf, aes(color = "Urban Area"), fill = NA) +
+  scale_color_manual(name = "", values = c('Urban Area' = 'skyblue')) +
   theme_void()
 
 hbw_rat_map
@@ -846,6 +876,8 @@ hbo_rat_map <- ggplot(trips_map) +
   scale_fill_viridis_d("Production/Attraction Ratio,\nHome-Based Other Trips",
                        #labels = c("< 0", "< 2.11", "< 5.32", "< 11.75", "< 24.35", "< 52.77", "< 114.01"),
                        option = "A") +
+  geom_sf(data = urban_bounds_sf, aes(color = "Urban Area"), fill = NA) +
+  scale_color_manual(name = "", values = c('Urban Area' = 'skyblue')) +
   theme_void()
 
 hbo_rat_map
@@ -858,9 +890,11 @@ ggsave(filename = here("images",
 ```{r nhb prod/attr}
 nhb_rat_map <- ggplot(trips_map) +
   geom_sf(aes(fill = nhb_rat_bin_jenks), color = NA) +
-  scale_fill_viridis_d("Production/Attraction Ratio,\nHome-Based Work Trips",
-                       labels = c("< 0", "< 2.11", "< 5.32", "< 11.75", "< 24.35", "< 52.77", "< 114.01"),
+  scale_fill_viridis_d("Production/Attraction Ratio,\nNon-Home-Based Trips",
+                       #labels = c("< 0", "< 2.11", "< 5.32", "< 11.75", "< 24.35", "< 52.77", "< 114.01"),
                        option = "A") +
+  geom_sf(data = urban_bounds_sf, aes(color = "Urban Area"), fill = NA) +
+  scale_color_manual(name = "", values = c('Urban Area' = 'skyblue')) +
   theme_void()
 
 nhb_rat_map
@@ -868,3 +902,38 @@ ggsave(filename = here("images",
                        "a7",
                        "nhb Ratio Map.png"))
 ```
+
+## How each area breaks down
+
+```{r}
+trips_map <- trips_map %>%
+  mutate(total_trips_combined = hbw_prod + hbo_prod + nhb_prod +
+                             hbw_attr_bal + hbo_attr_bal + nhb_attr_bal)
+
+trip_types <- c('hbw_prod', 'hbo_prod', 'nhb_prod', 'hbw_attr_bal', 'hbo_attr_bal', 'nhb_attr_bal')
+trip_types_full <- c('Home-Based Work - Production', 'Home-Based Other - Production',
+                     'Non-Home Based - Production', 'Home-Based Work - Attraction',
+                     'Home-Based Other - Attraction', 'Non-Home Based - Attraction')
+
+for (tt in trip_types){
+  temp_map <- trips_map %>%
+    mutate(temp_col = st_drop_geometry(trips_map[tt])[[1]] / trips_map$total_trips_combined)
+  this_map <- ggplot(temp_map) +
+    geom_sf(aes(fill = temp_col),
+            color = NA) +
+    scale_fill_viridis_c(paste("Home-based Work Trips\n(Normalized by Tract Area)"), option = "B") +
+    geom_sf(data = urban_bounds_sf, aes(color = "Urban Area"), fill = NA) +
+    scale_color_manual(name = "", values = c('Urban Area' = 'steelblue4')) +
+    theme_void()
+
+  print(this_map)
+  ggsave(filename = here("images",
+                         "a7",
+                         "share maps",
+                         paste(tt, "Share Map.png")))
+}
+
+
+```
+
+
