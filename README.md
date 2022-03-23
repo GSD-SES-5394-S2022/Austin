@@ -21,3 +21,5 @@ The following R Markdown files are used to perform this analysis (list to be upd
 * *a5_access* - calculates job accessibility by mode for each TAZ in existing conditions and alternative scenario; saves them in *csvs* sub-folder (assignment rmd docs/a5)
 * *a5_graphics* - mapping and visualization for assignment 5
 * *a6_model* - creates model to estimate change in number of zero-car households in the alternative, as well as visualizations 
+* *a7_data.Rmd* - filters NHTS data for the Austin-Round Rock MSA and adds it to Github Repo
+* *a7_model.Rmd* - models of trip generation and attraction and graphics for report chapter
