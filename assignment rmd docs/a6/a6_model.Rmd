@@ -288,6 +288,12 @@ alt_zones <- here("alternative",
   mutate(hh_no_vehE = round(hh_totalE * pct_no_veh))
 
 alt_zones$GEOID <- as.character(alt_zones$GEOID)
+
+write.csv(alt_zones, 
+          here("alternative",
+               "data",
+               "zone_data.csv"),
+          append = FALSE)
 ```
 
 ## predicted accessibility visualization
