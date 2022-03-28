@@ -14,9 +14,9 @@ knitr::opts_chunk$set(echo = TRUE)
 This first chunk reinstalls the scenaRios package. You only need to run it once.
 
 ```{r}
-library(devtools)
-
-install_github("https://github.com/c-voulgaris/scenRios")
+# library(devtools)
+# 
+# install_github("https://github.com/c-voulgaris/scenRios")
 ```
 
 Load all the packages needed:
@@ -103,21 +103,21 @@ skims <- skims %>%
 A starting point for the friction factors:
 
 ```{r}
-# Using Gamma Function; Large MPO 2
+# Using Gamma Function; tweaks to match average times
 
-# skims <- skims %>%
-#   mutate(F_HBW = min_time^-1.65*exp(-0.0398*min_time),
-#          F_HBO = min_time^-1.51*exp(-0.18*min_time),
-#          F_NHB = min_time^-1.94*exp(-0.116*min_time))
+skims <- skims %>%
+  mutate(F_HBW = min_time^-0.106*exp(-0.035*min_time),
+         F_HBO = min_time^-3.693*exp(-0.015*min_time),
+         F_NHB = min_time^-3.215*exp(-0.002*min_time))
 ```
 
 ```{r}
 # Using power function
 
-skims <- skims %>%
-  mutate(F_HBW = min_time^-2,
-         F_HBO = min_time^-2,
-         F_NHB = min_time^-2)
+# skims <- skims %>%
+#   mutate(F_HBW = min_time^-2,
+#          F_HBO = min_time^-2,
+#          F_NHB = min_time^-2)
 ```
 
 ```{r}
@@ -184,38 +184,31 @@ NHB_dist <- grvty_balancing(od_zones = zones,
 tail(HBW_dist$convergence)
 ```
 
-```{r}
-head(HBO_dist$flows)
-```
 
 ```{r}
-table(HBO_dist$flows$flow > 0)
-```
-
-```{r}
-convergence_points <- HBW_dist$convergence %>%
-  mutate(max_diff = max_o_diff + max_d_diff) %>%
-  mutate(which_max = ifelse(max_o_diff > max_d_diff, 
-                            "Productions",
-                            "Attractions"))
-
-ggplot(convergence_points) +
-  geom_line(aes(x = iteration, y = max_diff, lty = which_max)) +
-  scale_y_continuous(name = "Maximum difference from target value",
-                     trans = "log", 
-                     breaks = breaks <- 10^seq(1,5, by=1),
-                     labels = formatC(breaks, 
-                                      big.mark = ",", 
-                                      format = "f", 
-                                      digits = 0)) +
-  scale_x_continuous(name = "Iteration",
-                     breaks = breaks <- seq(0, 14000, by=2000),
-                     labels = formatC(breaks, 
-                                      big.mark = ",", 
-                                      format = "f", 
-                                      digits = 0)) +
-  scale_linetype(name = "") +
-  theme_minimal()
+# convergence_points <- HBW_dist$convergence %>%
+#   mutate(max_diff = max_o_diff + max_d_diff) %>%
+#   mutate(which_max = ifelse(max_o_diff > max_d_diff, 
+#                             "Productions",
+#                             "Attractions"))
+# 
+# ggplot(convergence_points) +
+#   geom_line(aes(x = iteration, y = max_diff, lty = which_max)) +
+#   scale_y_continuous(name = "Maximum difference from target value",
+#                      trans = "log", 
+#                      breaks = breaks <- 10^seq(1,5, by=1),
+#                      labels = formatC(breaks, 
+#                                       big.mark = ",", 
+#                                       format = "f", 
+#                                       digits = 0)) +
+#   scale_x_continuous(name = "Iteration",
+#                      breaks = breaks <- seq(0, 14000, by=2000),
+#                      labels = formatC(breaks, 
+#                                       big.mark = ",", 
+#                                       format = "f", 
+#                                       digits = 0)) +
+#   scale_linetype(name = "") +
+#   theme_minimal()
 ```
 
 ```{r}
