@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Required Packages
 
-This first chunk reinstalls the scenaRios package. You only need to run it once.
+This first chunk re installs the scenaRios package. You only need to run it once.
 
 ```{r}
 # library(devtools)
@@ -31,6 +31,10 @@ library(od)
 library(ggspatial)
 library(scenRios)
 ```
+
+# Existing conditions
+
+This first section will fit a trip distribution model to our data for the existing conditions.
 
 ## Loading and Manipulating Data
 
@@ -100,7 +104,7 @@ skims <- skims %>%
 
 ## Friction Factors
 
-A starting point for the friction factors:
+A starting point for the friction factors. Gamma function performs well.
 
 ```{r}
 # Using Gamma Function; tweaks to match average times
@@ -180,10 +184,9 @@ NHB_dist <- grvty_balancing(od_zones = zones,
                             max_iter = 500)
 ```
 
-```{r}
-tail(HBW_dist$convergence)
-```
+For some reason, the balancing never seems to get to the tolerance, no matter how many iterations or which friction factors are used.
 
+This plot was used to observe the convergence (or lack thereof).
 
 ```{r}
 # convergence_points <- NHB_dist$convergence %>%
@@ -210,6 +213,8 @@ tail(HBW_dist$convergence)
 #   scale_linetype(name = "") +
 #   theme_minimal()
 ```
+
+Appending the various modeled trip flows to our skim table in the existing conditions.
 
 ```{r}
 HBW_flows <- HBW_dist$flows %>%
@@ -239,11 +244,15 @@ skims <- skims %>%
          total_nhb_time = NHB_flow * min_time)
 ```
 
+Save the skim with travel flows to our repo.
+
 ```{r}
-write_csv(skims, here("existing",
-                      "data",
-                      "all_skims_ex.csv"))
+# write_csv(skims, here("existing",
+#                       "data",
+#                       "all_skims_ex.csv"))
 ```
+
+This chunk used to confirm alignment with travel survey information.
 
 ```{r}
 # HBW_mean_time <- sum(skims$total_hbw_time) / sum(skims$HBW_flow)
@@ -254,6 +263,10 @@ write_csv(skims, here("existing",
 # HBO_mean_time
 # NHB_mean_time
 ```
+
+# Alternative
+
+## Importing our data
 
 ```{r}
 zones_alt <- here("alternative",
@@ -269,7 +282,7 @@ skims_alt <- here("alternative",
 
 ## Calculate Minimum Travel Times
 
-Finding the minimum travel time across all modes and adding it to the skims:
+Finding the minimum travel time across all modes and adding it to the skims for the alternative scenario:
 
 ```{r}
 skims_alt <- skims_alt %>%
@@ -282,7 +295,7 @@ skims_alt <- skims_alt %>%
 
 ## Friction Factors
 
-A starting point for the friction factors:
+Using the same factors that were calibrated in the model, just including them in the alternative skim table now.
 
 ```{r}
 # Using Gamma Function; tweaks to match average times
@@ -340,6 +353,8 @@ NHB_dist_alt <- grvty_balancing(od_zones = zones_alt,
                             max_iter = 500)
 ```
 
+Append the flows and travel time to the alternative skim data.
+
 ```{r}
 HBW_flows_alt <- HBW_dist_alt$flows %>%
   rename(fromId = o_id,
@@ -368,6 +383,8 @@ skims_alt <- skims_alt %>%
          total_nhb_time_alt = NHB_flow_alt * min_time)
 ```
 
+Adding flows from the existing conditions for the sake of comparison. Predicted absolute and percentage changes are calculated for each trip type.
+
 ```{r}
 skims_ex <- skims %>%
   select(fromId, 
@@ -391,12 +408,15 @@ skims_alt <- skims_alt %>%
          NHB_flow_pct = NHB_flow_ch/NHB_flow)
 ```
 
+Saving the alt skims to our repo.
 
 ```{r}
-write_csv(skims_alt, here("alternative",
-                          "data",
-                          "all_skims_alt.csv"))
+# write_csv(skims_alt, here("alternative",
+#                           "data",
+#                           "all_skims_alt.csv"))
 ```
+
+This is for comparison of average trip time by type; all are slightly (>1 minute) longer than in the existing conditions.
 
 ```{r}
 # HBW_mean_time_alt <- sum(skims_alt$total_hbw_time_alt) / sum(skims_alt$HBW_flow_alt)
