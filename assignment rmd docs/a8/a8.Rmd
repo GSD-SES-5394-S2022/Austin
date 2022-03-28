@@ -1,0 +1,206 @@
+---
+title: "Assignment 8"
+author: "Chris Dsida and Reuven Herzog"
+date: "3/28/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Required Packages
+
+This first chunk reinstalls the scenaRios package. You only need to run it once.
+
+```{r}
+library(devtools)
+
+install_github("https://github.com/c-voulgaris/scenRios")
+```
+
+Load all the packages needed:
+
+```{r}
+library(here)
+library(tidyverse)
+library(sf)
+library(survey)
+library(srvyr)
+library(od)
+library(ggspatial)
+library(scenRios)
+```
+
+## Loading and Manipulating Data
+
+```{r}
+zones <- here("existing",
+              "data",
+              "zone_data.csv") %>%
+  read_csv(show_col_types = FALSE)
+
+skims <- here("existing",
+              "data",
+              "all_skims_ex.csv") %>%
+  read_csv(show_col_types = FALSE)
+```
+
+NHTS trip survey data is already filtered for Austin MSA:
+
+```{r}
+austin_trips <- read_csv(here(
+                        "assignment rmd docs",
+                        "a7",
+                        "austin_trips.csv"))
+```
+
+Adding trip purposes and grouping by type:
+
+```{r}
+trips <- austin_trips %>%
+  mutate(home_based = case_when(WHYTO == "01" ~ TRUE,
+                                WHYTO == "02" ~ TRUE,
+                                WHYFROM == "01" ~ TRUE,
+                                WHYFROM == "02" ~ TRUE,
+                                TRUE ~ FALSE)) %>%
+  mutate(work = ifelse(WHYTO == "03" | WHYFROM == "03", TRUE, FALSE)) %>%
+  mutate(purpose = case_when(home_based & work ~ "HBW",
+                            home_based ~ "HBO",
+                            TRUE ~ "NHB"))
+```
+
+## Summarize Average Trip Time by Purpose
+
+Create a survey object:
+
+```{r}
+trips_svy <- trips %>%
+  as_survey(weights = WTTRDFIN)
+
+ttime_by_purpose <- trips_svy %>%
+  group_by(purpose) %>%
+  summarise(avg_time = survey_mean(TRVLCMIN))
+
+ttime_by_purpose
+```
+
+## Calculate Minimum Travel Times
+
+Finding the minimum travel time across all modes and adding it to the skims:
+
+```{r}
+skims <- skims %>%
+  mutate(min_time = pmin(transit_time, 
+                         car_time,
+                         bike_time,
+                         walk_time,
+                         na.rm = TRUE))
+```
+
+## Friction Factors
+
+A starting point for the friction factors:
+
+```{r}
+# Using Gamma Function; Large MPO 1 values
+
+# skims <- skims %>%
+#   mutate(F_HBW = min_time^-0.503*exp(-0.078*min_time),
+#          F_HBO = min_time^-3.993*exp(-0.019*min_time),
+#          F_NHB = min_time^-3.345*exp(-0.003*min_time)) 
+```
+
+```{r}
+# Using power function
+
+skims <- skims %>%
+  mutate(F_HBW = min_time^-2,
+         F_HBO = min_time^-2,
+         F_NHB = min_time^-2)
+```
+
+## Estimate Travel Flows
+
+Home-based other:
+
+```{r}
+HBO_dist <- grvty_balancing(od_zones = zones,
+                            friction = skims,
+                            zone_id = "GEOID",
+                            zone_o = "hbo_prod",
+                            zone_d = "hbo_attr_bal",
+                            friction_o_id = "fromId",
+                            friction_d_id = "toId",
+                            friction_factor = "F_HBO",
+                            tolerance = 5,
+                            max_iter = 50000)
+```
+
+Home-based work:
+
+```{r}
+HBW_dist <- grvty_balancing(od_zones = zones,
+                            friction = skims,
+                            zone_id = "GE OID",
+                            zone_o = "hbw_prod",
+                            zone_d = "hbw_attr_bal",
+                            friction_o_id = "fromId",
+                            friction_d_id = "toId",
+                            friction_factor = "F_HBW",
+                            tolerance = 5,
+                            max_iter = 50000)
+```
+
+Non-home based:
+
+```{r}
+NHB_dist <- grvty_balancing(od_zones = zones,
+                            friction = skims,
+                            zone_id = "GEOID",
+                            zone_o = "nhb_prod",
+                            zone_d = "nhb_attr_bal",
+                            friction_o_id = "fromId",
+                            friction_d_id = "toId",
+                            friction_factor = "F_NHB",
+                            tolerance = 5,
+                            max_iter = 50000)
+```
+
+```{r}
+tail(HBW_dist$convergence)
+```
+
+```{r}
+head(HBW_dist$flows)
+```
+
+```{r}
+table(HBW_dist$flows$flow > 0)
+```
+
+```{r}
+convergence_points <- HBO_dist$convergence %>%
+  mutate(max_diff = max_o_diff + max_d_diff) %>%
+  mutate(which_max = ifelse(max_o_diff > max_d_diff, 
+                            "Productions",
+                            "Attractions"))
+
+ggplot(convergence_points) +
+  geom_line(aes(x = iteration, y = max_diff, lty = which_max)) +
+  scale_y_continuous(name = "Maximum difference from target value",
+                     trans = "log", 
+                     breaks = breaks <- 10^seq(1,5, by=1),
+                     labels = formatC(breaks, 
+                                      big.mark = ",", 
+                                      format = "f", 
+                                      digits = 0)) +
+  scale_x_continuous(name = "Iteration",
+                     breaks = breaks <- seq(0, 14000, by=2000),
+                     labels = formatC(breaks, 
+                                      big.mark = ",", 
+                                      format = "f", 
+                                      digits = 0)) +
+  scale_linetype(name = "") +
+  theme_minimal()
+```
