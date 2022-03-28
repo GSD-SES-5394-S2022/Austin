@@ -103,12 +103,12 @@ skims <- skims %>%
 A starting point for the friction factors:
 
 ```{r}
-# Using Gamma Function; Large MPO 1 values
+# Using Gamma Function; Large MPO 2
 
 # skims <- skims %>%
-#   mutate(F_HBW = min_time^-0.503*exp(-0.078*min_time),
-#          F_HBO = min_time^-3.993*exp(-0.019*min_time),
-#          F_NHB = min_time^-3.345*exp(-0.003*min_time)) 
+#   mutate(F_HBW = min_time^-1.65*exp(-0.0398*min_time),
+#          F_HBO = min_time^-1.51*exp(-0.18*min_time),
+#          F_NHB = min_time^-1.94*exp(-0.116*min_time))
 ```
 
 ```{r}
@@ -118,6 +118,19 @@ skims <- skims %>%
   mutate(F_HBW = min_time^-2,
          F_HBO = min_time^-2,
          F_NHB = min_time^-2)
+```
+
+```{r}
+# Using exp. function
+
+# m_HBO <- ttime_by_purpose$avg_time[ttime_by_purpose$purpose == "HBO"]
+# m_HBW <- ttime_by_purpose$avg_time[ttime_by_purpose$purpose == "HBW"]
+# m_NHB <- ttime_by_purpose$avg_time[ttime_by_purpose$purpose == "NHB"]
+# 
+# skims <- skims %>%
+#   mutate(F_HBO = exp(-1 * m_HBO * min_time),
+#          F_HBW = exp(-1 * m_HBW * min_time),
+#          F_NHB = exp(-1 * m_NHB * min_time)) 
 ```
 
 ## Estimate Travel Flows
@@ -134,7 +147,7 @@ HBO_dist <- grvty_balancing(od_zones = zones,
                             friction_d_id = "toId",
                             friction_factor = "F_HBO",
                             tolerance = 5,
-                            max_iter = 50000)
+                            max_iter = 500)
 ```
 
 Home-based work:
@@ -142,14 +155,14 @@ Home-based work:
 ```{r}
 HBW_dist <- grvty_balancing(od_zones = zones,
                             friction = skims,
-                            zone_id = "GE OID",
+                            zone_id = "GEOID",
                             zone_o = "hbw_prod",
                             zone_d = "hbw_attr_bal",
                             friction_o_id = "fromId",
                             friction_d_id = "toId",
                             friction_factor = "F_HBW",
                             tolerance = 5,
-                            max_iter = 50000)
+                            max_iter = 500)
 ```
 
 Non-home based:
@@ -164,7 +177,7 @@ NHB_dist <- grvty_balancing(od_zones = zones,
                             friction_d_id = "toId",
                             friction_factor = "F_NHB",
                             tolerance = 5,
-                            max_iter = 50000)
+                            max_iter = 500)
 ```
 
 ```{r}
@@ -172,15 +185,15 @@ tail(HBW_dist$convergence)
 ```
 
 ```{r}
-head(HBW_dist$flows)
+head(HBO_dist$flows)
 ```
 
 ```{r}
-table(HBW_dist$flows$flow > 0)
+table(HBO_dist$flows$flow > 0)
 ```
 
 ```{r}
-convergence_points <- HBO_dist$convergence %>%
+convergence_points <- HBW_dist$convergence %>%
   mutate(max_diff = max_o_diff + max_d_diff) %>%
   mutate(which_max = ifelse(max_o_diff > max_d_diff, 
                             "Productions",
@@ -203,4 +216,42 @@ ggplot(convergence_points) +
                                       digits = 0)) +
   scale_linetype(name = "") +
   theme_minimal()
+```
+
+```{r}
+HBW_flows <- HBW_dist$flows %>%
+  rename(fromId = o_id,
+         toId = d_id,
+         HBW_flow = flow)
+
+HBO_flows <- HBO_dist$flows %>%
+  rename(fromId = o_id,
+         toId = d_id,
+         HBO_flow = flow)
+
+NHB_flows <- NHB_dist$flows %>%
+  rename(fromId = o_id,
+         toId = d_id,
+         NHB_flow = flow)
+
+skims <- skims %>%
+  left_join(HBW_flows) %>%
+  replace_na(list(HBW_flow = 0)) %>%
+  left_join(HBO_flows) %>%
+  replace_na(list(HBO_flow = 0)) %>%
+  left_join(NHB_flows) %>%
+  replace_na(list(NHB_flow = 0)) %>%
+  mutate(total_hbw_time = HBW_flow * min_time,
+         total_hbo_time = HBO_flow * min_time,
+         total_nhb_time = NHB_flow * min_time)
+```
+
+```{r}
+HBW_mean_time <- sum(skims$total_hbw_time) / sum(skims$HBW_flow)
+HBO_mean_time <- sum(skims$total_hbo_time) / sum(skims$HBO_flow)
+NHB_mean_time <- sum(skims$total_nhb_time) / sum(skims$NHB_flow)
+
+HBW_mean_time
+HBO_mean_time
+NHB_mean_time
 ```
