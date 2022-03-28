@@ -186,26 +186,26 @@ tail(HBW_dist$convergence)
 
 
 ```{r}
-# convergence_points <- HBW_dist$convergence %>%
+# convergence_points <- NHB_dist$convergence %>%
 #   mutate(max_diff = max_o_diff + max_d_diff) %>%
-#   mutate(which_max = ifelse(max_o_diff > max_d_diff, 
+#   mutate(which_max = ifelse(max_o_diff > max_d_diff,
 #                             "Productions",
 #                             "Attractions"))
 # 
 # ggplot(convergence_points) +
 #   geom_line(aes(x = iteration, y = max_diff, lty = which_max)) +
 #   scale_y_continuous(name = "Maximum difference from target value",
-#                      trans = "log", 
+#                      trans = "log",
 #                      breaks = breaks <- 10^seq(1,5, by=1),
-#                      labels = formatC(breaks, 
-#                                       big.mark = ",", 
-#                                       format = "f", 
+#                      labels = formatC(breaks,
+#                                       big.mark = ",",
+#                                       format = "f",
 #                                       digits = 0)) +
 #   scale_x_continuous(name = "Iteration",
 #                      breaks = breaks <- seq(0, 14000, by=2000),
-#                      labels = formatC(breaks, 
-#                                       big.mark = ",", 
-#                                       format = "f", 
+#                      labels = formatC(breaks,
+#                                       big.mark = ",",
+#                                       format = "f",
 #                                       digits = 0)) +
 #   scale_linetype(name = "") +
 #   theme_minimal()
@@ -240,11 +240,170 @@ skims <- skims %>%
 ```
 
 ```{r}
-HBW_mean_time <- sum(skims$total_hbw_time) / sum(skims$HBW_flow)
-HBO_mean_time <- sum(skims$total_hbo_time) / sum(skims$HBO_flow)
-NHB_mean_time <- sum(skims$total_nhb_time) / sum(skims$NHB_flow)
+# write_csv(skims, here("existing",
+#                       "data",
+#                       "all_skims_ex.csv"))
+```
 
-HBW_mean_time
-HBO_mean_time
-NHB_mean_time
+```{r}
+# HBW_mean_time <- sum(skims$total_hbw_time) / sum(skims$HBW_flow)
+# HBO_mean_time <- sum(skims$total_hbo_time) / sum(skims$HBO_flow)
+# NHB_mean_time <- sum(skims$total_nhb_time) / sum(skims$NHB_flow)
+# 
+# HBW_mean_time
+# HBO_mean_time
+# NHB_mean_time
+```
+
+```{r}
+zones_alt <- here("alternative",
+                  "data",
+                  "zone_data.csv") %>%
+  read_csv(show_col_types = FALSE)
+
+skims_alt <- here("alternative",
+                  "data",
+                  "all_skims_alt.csv") %>%
+  read_csv(show_col_types = FALSE)
+```
+
+## Calculate Minimum Travel Times
+
+Finding the minimum travel time across all modes and adding it to the skims:
+
+```{r}
+skims_alt <- skims_alt %>%
+  mutate(min_time = pmin(transit_time, 
+                         car_time,
+                         bike_time,
+                         walk_time,
+                         na.rm = TRUE))
+```
+
+## Friction Factors
+
+A starting point for the friction factors:
+
+```{r}
+# Using Gamma Function; tweaks to match average times
+
+skims_alt <- skims_alt %>%
+  mutate(F_HBW = min_time^-0.106*exp(-0.035*min_time),
+         F_HBO = min_time^-3.693*exp(-0.015*min_time),
+         F_NHB = min_time^-3.215*exp(-0.002*min_time))
+```
+
+## Estimate Travel Flows
+
+Home-based other:
+
+```{r}
+HBO_dist_alt <- grvty_balancing(od_zones = zones_alt,
+                            friction = skims_alt,
+                            zone_id = "GEOID",
+                            zone_o = "hbo_prod",
+                            zone_d = "hbo_attr_bal",
+                            friction_o_id = "fromId",
+                            friction_d_id = "toId",
+                            friction_factor = "F_HBO",
+                            tolerance = 5,
+                            max_iter = 500)
+```
+
+Home-based work:
+
+```{r}
+HBW_dist_alt <- grvty_balancing(od_zones = zones_alt,
+                            friction = skims_alt,
+                            zone_id = "GEOID",
+                            zone_o = "hbw_prod",
+                            zone_d = "hbw_attr_bal",
+                            friction_o_id = "fromId",
+                            friction_d_id = "toId",
+                            friction_factor = "F_HBW",
+                            tolerance = 5,
+                            max_iter = 500)
+```
+
+Non-home based:
+
+```{r}
+NHB_dist_alt <- grvty_balancing(od_zones = zones_alt,
+                            friction = skims_alt,
+                            zone_id = "GEOID",
+                            zone_o = "nhb_prod",
+                            zone_d = "nhb_attr_bal",
+                            friction_o_id = "fromId",
+                            friction_d_id = "toId",
+                            friction_factor = "F_NHB",
+                            tolerance = 5,
+                            max_iter = 500)
+```
+
+```{r}
+HBW_flows_alt <- HBW_dist_alt$flows %>%
+  rename(fromId = o_id,
+         toId = d_id,
+         HBW_flow_alt = flow)
+
+HBO_flows_alt <- HBO_dist_alt$flows %>%
+  rename(fromId = o_id,
+         toId = d_id,
+         HBO_flow_alt = flow)
+
+NHB_flows_alt <- NHB_dist_alt$flows %>%
+  rename(fromId = o_id,
+         toId = d_id,
+         NHB_flow_alt = flow)
+
+skims_alt <- skims_alt %>%
+  left_join(HBW_flows_alt) %>%
+  replace_na(list(HBW_flow_alt = 0)) %>%
+  left_join(HBO_flows_alt) %>%
+  replace_na(list(HBO_flow_alt = 0)) %>%
+  left_join(NHB_flows_alt) %>%
+  replace_na(list(NHB_flow_alt = 0)) %>%
+  mutate(total_hbw_time_alt = HBW_flow_alt * min_time,
+         total_hbo_time_alt = HBO_flow_alt * min_time,
+         total_nhb_time_alt = NHB_flow_alt * min_time)
+```
+
+```{r}
+skims_ex <- skims %>%
+  select(fromId, 
+         toId,
+         HBW_flow,
+         HBO_flow,
+         NHB_flow,
+         total_hbw_time,
+         total_hbo_time,
+         total_nhb_time)
+
+skims_alt <- skims_alt %>%
+  left_join(skims_ex) 
+
+skims_alt <- skims_alt %>%
+  mutate(HBW_flow_ch = HBW_flow_alt-HBW_flow,
+         HBO_flow_ch = HBO_flow_alt-HBO_flow,
+         NHB_flow_ch = NHB_flow_alt-NHB_flow,
+         HBW_flow_pct = HBW_flow_ch/HBW_flow,
+         HBO_flow_pct = HBO_flow_ch/HBO_flow,
+         NHB_flow_pct = NHB_flow_ch/NHB_flow)
+```
+
+
+```{r}
+# write_csv(skims_alt, here("alternative",
+#                           "data",
+#                           "all_skims_alt.csv"))
+```
+
+```{r}
+# HBW_mean_time_alt <- sum(skims_alt$total_hbw_time_alt) / sum(skims_alt$HBW_flow_alt)
+# HBO_mean_time_alt <- sum(skims_alt$total_hbo_time_alt) / sum(skims_alt$HBO_flow_alt)
+# NHB_mean_time_alt <- sum(skims_alt$total_nhb_time_alt) / sum(skims_alt$NHB_flow_alt)
+# 
+# HBW_mean_time_alt
+# HBO_mean_time_alt
+# NHB_mean_time_alt
 ```
