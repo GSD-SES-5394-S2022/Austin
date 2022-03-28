@@ -240,9 +240,9 @@ skims <- skims %>%
 ```
 
 ```{r}
-# write_csv(skims, here("existing",
-#                       "data",
-#                       "all_skims_ex.csv"))
+write_csv(skims, here("existing",
+                      "data",
+                      "all_skims_ex.csv"))
 ```
 
 ```{r}
@@ -393,9 +393,9 @@ skims_alt <- skims_alt %>%
 
 
 ```{r}
-# write_csv(skims_alt, here("alternative",
-#                           "data",
-#                           "all_skims_alt.csv"))
+write_csv(skims_alt, here("alternative",
+                          "data",
+                          "all_skims_alt.csv"))
 ```
 
 ```{r}
