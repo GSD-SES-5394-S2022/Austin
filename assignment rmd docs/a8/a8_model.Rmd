@@ -106,6 +106,11 @@ skims <- skims %>%
 
 A starting point for the friction factors. Gamma function performs well.
 
+Several options are available to us for calculating friction factors between origin and destination pairs. We assessed three different functional forms, attempting to match observed travel time values as closely as possible. Exponential functions were prohibitively time-consuming during computation and failed to improve prediction accuracy over power or gamma functions. While friction factors calculated with the power function did not have this problem, the tuneability of parameters in the gamma function led to its selection. This ease of calibration is noted in NCHRP 716 as the reason why many transportation modelers prefer to use it.
+
+Starting values for the gamma function parameters came from the Large MPO models in Table 4.5 of NCHRP 716, which are appropriate for MSAs of greater than 1 million residents. Home-based work trip times were best approximated by the parameters in Large MPO Model 3, while Large MPO model 1 performed best initially for home-based other and non-home based trips. From these starting values, they were then adjusted until predicted average travel times by type aligned with observed data in the National Household Travel Survey. After many iterations, we were able to get modeled average travel times to within a tenth of a minute of observed values.
+
+
 ```{r}
 # Using Gamma Function; tweaks to match average times
 
