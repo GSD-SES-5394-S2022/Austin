@@ -329,8 +329,8 @@ HBO_dist_alt <- grvty_balancing(od_zones = zones_alt,
                             friction_o_id = "fromId",
                             friction_d_id = "toId",
                             friction_factor = "F_HBO",
-                            tolerance = 5,
-                            max_iter = 500)
+                            tolerance = 0.003,
+                            max_iter = 100)
 ```
 
 Home-based work:
@@ -344,8 +344,8 @@ HBW_dist_alt <- grvty_balancing(od_zones = zones_alt,
                             friction_o_id = "fromId",
                             friction_d_id = "toId",
                             friction_factor = "F_HBW",
-                            tolerance = 5,
-                            max_iter = 500)
+                            tolerance = 0.003,
+                            max_iter = 100)
 ```
 
 Non-home based:
@@ -359,8 +359,8 @@ NHB_dist_alt <- grvty_balancing(od_zones = zones_alt,
                             friction_o_id = "fromId",
                             friction_d_id = "toId",
                             friction_factor = "F_NHB",
-                            tolerance = 5,
-                            max_iter = 500)
+                            tolerance = 0.003,
+                            max_iter = 100)
 ```
 
 Append the flows and travel time to the alternative skim data.
@@ -536,7 +536,10 @@ NHB_mean_time
 ```{r}
 ttime_by_purpose <- ttime_by_purpose %>%
   add_column(pred_avg_time = c(HBO_mean_time, HBW_mean_time, NHB_mean_time))
-select(ttime_by_purpose, purpose, avg_time, pred_avg_time)
+
+ttime_by_purpose <- ttime_by_purpose %>%
+  add_column(pred_avg_time_alt = c(HBO_mean_time_alt, HBW_mean_time_alt, NHB_mean_time_alt))
+select(ttime_by_purpose, purpose, avg_time, pred_avg_time, pred_avg_time_alt)
 ```
 
 
