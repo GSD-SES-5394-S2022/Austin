@@ -544,6 +544,10 @@ ok, it works
 Calculate the change in flow for each O-D pair for each of the 3 trip types.
 Then grab the 100 most extreme O-D changes for each trip type.
 
+Defining difference as "alternate_condition - existing_condition"
+(So a negative number means fewer trips under the alternate scenario.
+Therefore we expect areas in downtown to be much more negative.)
+
 ```{r HBO compare}
 HBO_compare <- HBO_flows %>%
   mutate(fromId = as.character(fromId),
@@ -968,7 +972,7 @@ ggsave(here("images", "a8", "aggregate zones", "NHB_to_increase.png"))
 
 ggplot(zone_boundaries_decrease) +
   geom_sf(aes(fill = HBO_from_diff), color = NA) +
-  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo-log") +
+  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo_log") +
   geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
   theme_void()
 
@@ -977,7 +981,7 @@ ggsave(here("images", "a8", "aggregate zones", "HBO_from_decrease.png"))
 
 ggplot(zone_boundaries_decrease) +
   geom_sf(aes(fill = HBW_from_diff), color = NA) +
-  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo-log") +
+  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo_log") +
   geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
   theme_void()
 
@@ -985,7 +989,7 @@ ggsave(here("images", "a8", "aggregate zones", "HBW_from_decrease.png"))
 
 ggplot(zone_boundaries_decrease) +
   geom_sf(aes(fill = NHB_from_diff), color = NA) +
-  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo-log") +
+  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo_log") +
   geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
   theme_void()
 
@@ -994,7 +998,7 @@ ggsave(here("images", "a8", "aggregate zones", "NHB_from_decrease.png"))
 
 ggplot(zone_boundaries_decrease) +
   geom_sf(aes(fill = HBO_to_diff), color = NA) +
-  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo-log") +
+  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo_log") +
   geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
   theme_void()
 
@@ -1003,7 +1007,7 @@ ggsave(here("images", "a8", "aggregate zones", "HBO_to_decrease.png"))
 
 ggplot(zone_boundaries_decrease) +
   geom_sf(aes(fill = HBW_to_diff), color = NA) +
-  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo-log") +
+  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo_log") +
   geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
   theme_void()
 
@@ -1011,7 +1015,7 @@ ggsave(here("images", "a8", "aggregate zones", "HBW_to_decrease.png"))
 
 ggplot(zone_boundaries_decrease) +
   geom_sf(aes(fill = NHB_to_diff), color = NA) +
-  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo-log") +
+  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo_log") +
   geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
   theme_void()
 
