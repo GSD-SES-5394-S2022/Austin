@@ -441,7 +441,16 @@ This is for comparison of average trip time by type; all are slightly (>1 minute
 zone_boundaries <- here("zones",
               "boundaries.geojson") %>%
   st_read(quiet = TRUE)
+```
 
+```{r urban area}
+urban_bounds_sf <- read_sf(here("zones",
+                           "urban areas.geojson")) %>%
+  filter(UATYP10 == "U") %>%
+  st_transform(crs = st_crs(zone_boundaries))
+```
+
+```{r}
 desire_lines_HBO <- od_to_sf(filter(HBO_dist$flows, flow >= 750), zone_boundaries, silent = TRUE) %>%
   filter(flow > 0)
 
@@ -452,6 +461,7 @@ ggplot(desire_lines_HBO) +
 
 ggsave(here("images", "a8", "desirelines750.png"))
 ```
+
 
 ```{r}
 zone_boundaries <- here("zones",
@@ -550,11 +560,11 @@ HBO_compare <- HBO_compare %>%
   left_join(temp, by = "pairId") %>%
   select(c(-"fromId.y", -"toId.y")) %>%
   mutate(flow_diff = HBO_flow_alt - HBO_flow) %>%
-  mutate(diff_absolute = abs(flow_diff))
+  mutate(diff_absolute = abs(flow_diff)) %>%
+  rename("fromId" = "fromId.x", "toId" = "toId.x")
 
 HBO_most_extreme <- top_n(HBO_compare, 100, diff_absolute) %>%
-  select(c(-"pairId", -"diff_absolute")) %>%
-  rename("fromId" = "fromId.x", "toId" = "toId.x")
+  select(c(-"pairId", -"diff_absolute"))
 ```
 
 ```{r HBW compare}
@@ -572,11 +582,11 @@ HBW_compare <- HBW_compare %>%
   left_join(temp, by = "pairId") %>%
   select(c(-"fromId.y", -"toId.y")) %>%
   mutate(flow_diff = HBW_flow_alt - HBW_flow) %>%
-  mutate(diff_absolute = abs(flow_diff))
+  mutate(diff_absolute = abs(flow_diff)) %>%
+  rename("fromId" = "fromId.x", "toId" = "toId.x")
 
 HBW_most_extreme <- top_n(HBW_compare, 100, diff_absolute) %>%
-  select(c(-"pairId", -"diff_absolute")) %>%
-  rename("fromId" = "fromId.x", "toId" = "toId.x")
+  select(c(-"pairId", -"diff_absolute"))
 ```
 
 ```{r NHB compare}
@@ -594,11 +604,11 @@ NHB_compare <- NHB_compare %>%
   left_join(temp, by = "pairId") %>%
   select(c(-"fromId.y", -"toId.y")) %>%
   mutate(flow_diff = NHB_flow_alt - NHB_flow) %>%
-  mutate(diff_absolute = abs(flow_diff))
+  mutate(diff_absolute = abs(flow_diff)) %>%
+  rename("fromId" = "fromId.x", "toId" = "toId.x")
 
 NHB_most_extreme <- top_n(NHB_compare, 100, diff_absolute) %>%
-  select(c(-"pairId", -"diff_absolute")) %>%
-  rename("fromId" = "fromId.x", "toId" = "toId.x")
+  select(c(-"pairId", -"diff_absolute"))
 ```
 
 
@@ -640,3 +650,166 @@ ggplot(desire_lines_diff_HBW) +
 
 ggsave(here("images","a8","HBW differences.png"))
 ```
+
+
+
+# What zones have the greatest change overall?
+
+Let's now aggregate the changes in flow for each tract.
+Variables:
+- From/to (2)
+- Trip type (3)
+- (Absolute / balancing (2))
+We'll either have 6 or 12 maps to look through.
+
+```{r HBO diff aggregate}
+
+zones_flow_diff_HBO_from <- aggregate(list(HBO_from_diff = HBO_compare$flow_diff), by = list(GEOID = HBO_compare$fromId), FUN = sum)
+zones_flow_diff_HBW_from <- aggregate(list(HBW_from_diff = HBW_compare$flow_diff), by = list(GEOID = HBW_compare$fromId), FUN = sum)
+zones_flow_diff_NHB_from <- aggregate(list(NHB_from_diff = NHB_compare$flow_diff), by = list(GEOID = NHB_compare$fromId), FUN = sum)
+zones_flow_diff_HBO_to <- aggregate(list(HBO_to_diff = HBO_compare$flow_diff), by = list(GEOID = HBO_compare$toId), FUN = sum)
+zones_flow_diff_HBW_to <- aggregate(list(HBW_to_diff = HBW_compare$flow_diff), by = list(GEOID = HBW_compare$toId), FUN = sum)
+zones_flow_diff_NHB_to <- aggregate(list(NHB_to_diff = NHB_compare$flow_diff), by = list(GEOID = NHB_compare$toId), FUN = sum)
+
+
+zones_diff_absolute_HBO_from <- aggregate(list(HBO_from_diff = HBO_compare$diff_absolute), by = list(GEOID = HBO_compare$fromId), FUN = sum)
+zones_diff_absolute_HBW_from <- aggregate(list(HBW_from_diff = HBW_compare$diff_absolute), by = list(GEOID = HBW_compare$fromId), FUN = sum)
+zones_diff_absolute_NHB_from <- aggregate(list(NHB_from_diff = NHB_compare$diff_absolute), by = list(GEOID = NHB_compare$fromId), FUN = sum)
+zones_diff_absolute_HBO_to <- aggregate(list(HBO_to_diff = HBO_compare$diff_absolute), by = list(GEOID = HBO_compare$toId), FUN = sum)
+zones_diff_absolute_HBW_to <- aggregate(list(HBW_to_diff = HBW_compare$diff_absolute), by = list(GEOID = HBW_compare$toId), FUN = sum)
+zones_diff_absolute_NHB_to <- aggregate(list(NHB_to_diff = NHB_compare$diff_absolute), by = list(GEOID = NHB_compare$toId), FUN = sum)
+
+```
+
+```{r}
+zone_boundaries <- zone_boundaries %>%
+  select(GEOID) %>%
+  left_join(zones_flow_diff_HBO_from) %>%
+  left_join(zones_flow_diff_HBW_from) %>%
+  left_join(zones_flow_diff_NHB_from) %>%
+  left_join(zones_flow_diff_HBO_to) %>%
+  left_join(zones_flow_diff_HBW_to) %>%
+  left_join(zones_flow_diff_NHB_to)
+
+zone_boundaries_absolute <- zone_boundaries %>%
+  select(GEOID) %>%
+  left_join(zones_diff_absolute_HBO_from) %>%
+  left_join(zones_diff_absolute_HBW_from) %>%
+  left_join(zones_diff_absolute_NHB_from) %>%
+  left_join(zones_diff_absolute_HBO_to) %>%
+  left_join(zones_diff_absolute_HBW_to) %>%
+  left_join(zones_diff_absolute_NHB_to)
+```
+
+Now to actually visualize the maps
+
+
+```{r balanced aggregate maps}
+
+ggplot(zone_boundaries) +
+  geom_sf(aes(fill = HBO_from_diff), color = NA) +
+  scale_fill_gradient2(low = "red", mid = "grey", high = "blue", midpoint = 0) +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "HBO_from.png"))
+
+
+ggplot(zone_boundaries) +
+  geom_sf(aes(fill = HBW_from_diff), color = NA) +
+  scale_fill_gradient2(low = "red", mid = "grey", high = "blue", midpoint = 0) +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "HBW_from.png"))
+
+ggplot(zone_boundaries) +
+  geom_sf(aes(fill = NHB_from_diff), color = NA) +
+  scale_fill_gradient2(low = "red", mid = "grey", high = "blue", midpoint = 0) +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "NHB_from.png"))
+
+
+ggplot(zone_boundaries) +
+  geom_sf(aes(fill = HBO_to_diff), color = NA) +
+  scale_fill_gradient2(low = "red", mid = "grey", high = "blue", midpoint = 0) +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "HBO_to.png"))
+
+
+ggplot(zone_boundaries) +
+  geom_sf(aes(fill = HBW_to_diff), color = NA) +
+  scale_fill_gradient2(low = "red", mid = "grey", high = "blue", midpoint = 0) +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "HBW_to.png"))
+
+ggplot(zone_boundaries) +
+  geom_sf(aes(fill = NHB_to_diff), color = NA) +
+  scale_fill_gradient2(low = "red", mid = "grey", high = "blue", midpoint = 0) +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "NHB_to.png"))
+```
+
+```{r absolute aggregate maps}
+
+ggplot(zone_boundaries_absolute) +
+  geom_sf(aes(fill = HBO_from_diff), color = NA) +
+  scale_fill_continuous(trans = "log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "abs_HBO_from.png"))
+
+
+ggplot(zone_boundaries_absolute) +
+  geom_sf(aes(fill = HBW_from_diff), color = NA) +
+  scale_fill_continuous(trans = "log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "abs_HBW_from.png"))
+
+ggplot(zone_boundaries_absolute) +
+  geom_sf(aes(fill = NHB_from_diff), color = NA) +
+  scale_fill_continuous(trans = "log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "abs_NHB_from.png"))
+
+
+ggplot(zone_boundaries_absolute) +
+  geom_sf(aes(fill = HBO_to_diff), color = NA) +
+  scale_fill_continuous(trans = "log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "abs_HBO_to.png"))
+
+
+ggplot(zone_boundaries_absolute) +
+  geom_sf(aes(fill = HBW_to_diff), color = NA) +
+  scale_fill_continuous(trans = "log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "abs_HBW_to.png"))
+
+ggplot(zone_boundaries_absolute) +
+  geom_sf(aes(fill = NHB_to_diff), color = NA) +
+  scale_fill_continuous(trans = "log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "abs_NHB_to.png"))
+```
+
+
