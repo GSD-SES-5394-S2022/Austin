@@ -434,3 +434,209 @@ This is for comparison of average trip time by type; all are slightly (>1 minute
 # HBO_mean_time_alt
 # NHB_mean_time_alt
 ```
+
+# More Viz
+
+```{r}
+zone_boundaries <- here("zones",
+              "boundaries.geojson") %>%
+  st_read(quiet = TRUE)
+
+desire_lines_HBO <- od_to_sf(filter(HBO_dist$flows, flow >= 750), zone_boundaries, silent = TRUE) %>%
+  filter(flow > 0)
+
+ggplot(desire_lines_HBO) +
+  annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+  geom_sf(aes(alpha = flow)) +
+  theme_void()
+
+ggsave(here("images", "a8", "desirelines750.png"))
+```
+
+```{r}
+zone_boundaries <- here("zones",
+              "boundaries.geojson") %>%
+  st_read(quiet = TRUE)
+
+desire_lines_HBW <- od_to_sf(filter(HBW_dist$flows, flow >= 70), zone_boundaries, silent = TRUE) %>%
+  filter(flow > 0)
+
+ggplot(desire_lines_HBW) +
+  annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+  geom_sf(aes(alpha = flow)) +
+  theme_void()
+
+ggsave(here("images", "a8", "desirelinesHBW70.png"))
+```
+
+Comparing travel times
+
+```{r}
+ttime_by_purpose
+```
+
+```{r}
+HBO_flows <- HBO_dist$flows %>%
+  rename(fromId = o_id,
+         toId = d_id,
+         HBO_flow = flow)
+
+skims <- skims %>%
+  left_join(HBO_flows) %>%
+  replace_na(list(HBO_flow = 0)) %>%
+  mutate(total_time = HBO_flow * min_time)
+
+
+HBO_mean_time <- sum(skims$total_time) / sum(skims$HBO_flow)
+
+HBW_flows <- HBW_dist$flows %>%
+  rename(fromId = o_id,
+         toId = d_id,
+         HBW_flow = flow)
+
+skims <- skims %>%
+  left_join(HBW_flows) %>%
+  replace_na(list(HBW_flow = 0)) %>%
+  mutate(total_time = HBW_flow * min_time)
+
+
+HBW_mean_time <- sum(skims$total_time) / sum(skims$HBW_flow)
+
+NHB_flows <- NHB_dist$flows %>%
+  rename(fromId = o_id,
+         toId = d_id,
+         NHB_flow = flow)
+
+skims <- skims %>%
+  left_join(NHB_flows) %>%
+  replace_na(list(NHB_flow = 0)) %>%
+  mutate(total_time = NHB_flow * min_time)
+
+
+NHB_mean_time <- sum(skims$total_time) / sum(skims$NHB_flow)
+
+HBO_mean_time
+HBW_mean_time
+NHB_mean_time
+```
+
+```{r}
+# ttime_by_purpose <- ttime_by_purpose %>%
+#   add_column(pred_avg_time = c(HBO_mean_time, HBW_mean_time, NHB_mean_time))
+```
+
+```{r}
+select(ttime_by_purpose, purpose, avg_time, pred_avg_time)
+```
+
+
+# identify sig changes between original and alternative
+
+Calculate the change in flow for each O-D pair for each of the 3 trip types.
+Then grab the 100 most extreme O-D changes for each trip type.
+
+```{r HBO compare}
+HBO_compare <- HBO_flows %>%
+  mutate(fromId = as.character(fromId),
+         toId = as.character(toId)) %>%
+  mutate(pairId = paste(fromId, toId))
+
+temp <- HBO_flows_alt %>%
+  mutate(fromId = as.character(fromId),
+         toId = as.character(toId)) %>%
+  mutate(pairId = paste(fromId, toId))
+
+HBO_compare <- HBO_compare %>%
+  left_join(temp, by = "pairId") %>%
+  select(c(-"fromId.y", -"toId.y")) %>%
+  mutate(flow_diff = HBO_flow_alt - HBO_flow) %>%
+  mutate(diff_absolute = abs(flow_diff))
+
+HBO_most_extreme <- top_n(HBO_compare, 100, diff_absolute) %>%
+  select(c(-"pairId", -"diff_absolute")) %>%
+  rename("fromId" = "fromId.x", "toId" = "toId.x")
+```
+
+```{r HBW compare}
+HBW_compare <- HBW_flows %>%
+  mutate(fromId = as.character(fromId),
+         toId = as.character(toId)) %>%
+  mutate(pairId = paste(fromId, toId))
+
+temp <- HBW_flows_alt %>%
+  mutate(fromId = as.character(fromId),
+         toId = as.character(toId)) %>%
+  mutate(pairId = paste(fromId, toId))
+
+HBW_compare <- HBW_compare %>%
+  left_join(temp, by = "pairId") %>%
+  select(c(-"fromId.y", -"toId.y")) %>%
+  mutate(flow_diff = HBW_flow_alt - HBW_flow) %>%
+  mutate(diff_absolute = abs(flow_diff))
+
+HBW_most_extreme <- top_n(HBW_compare, 100, diff_absolute) %>%
+  select(c(-"pairId", -"diff_absolute")) %>%
+  rename("fromId" = "fromId.x", "toId" = "toId.x")
+```
+
+```{r NHB compare}
+NHB_compare <- NHB_flows %>%
+  mutate(fromId = as.character(fromId),
+         toId = as.character(toId)) %>%
+  mutate(pairId = paste(fromId, toId))
+
+temp <- NHB_flows_alt %>%
+  mutate(fromId = as.character(fromId),
+         toId = as.character(toId)) %>%
+  mutate(pairId = paste(fromId, toId))
+
+NHB_compare <- NHB_compare %>%
+  left_join(temp, by = "pairId") %>%
+  select(c(-"fromId.y", -"toId.y")) %>%
+  mutate(flow_diff = NHB_flow_alt - NHB_flow) %>%
+  mutate(diff_absolute = abs(flow_diff))
+
+NHB_most_extreme <- top_n(NHB_compare, 100, diff_absolute) %>%
+  select(c(-"pairId", -"diff_absolute")) %>%
+  rename("fromId" = "fromId.x", "toId" = "toId.x")
+```
+
+
+
+Now to visualize these differences
+
+```{r}
+desire_lines_diff_HBO <- od_to_sf(HBO_most_extreme, zone_boundaries, silent = TRUE)
+
+ggplot(desire_lines_diff_HBO) +
+  annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+  geom_sf(aes(color = flow_diff)) +
+  scale_color_gradient2(low = "red", high = "blue", mid = "grey", midpoint = 0, trans = "pseudo_log") +
+  theme_void()
+
+ggsave(here("images","a8","HBO differences.png"))
+```
+
+```{r}
+desire_lines_diff_NHB <- od_to_sf(NHB_most_extreme, zone_boundaries, silent = TRUE)
+
+ggplot(desire_lines_diff_NHB) +
+  annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+  geom_sf(aes(color = flow_diff)) +
+  scale_color_gradient2(low = "red", high = "blue", mid = "grey", midpoint = 0, trans = "pseudo_log") +
+  theme_void()
+
+ggsave(here("images","a8","NHB differences.png"))
+```
+
+```{r}
+desire_lines_diff_HBW <- od_to_sf(HBW_most_extreme, zone_boundaries, silent = TRUE)
+
+ggplot(desire_lines_diff_HBW) +
+  annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+  geom_sf(aes(color = flow_diff)) +
+  scale_color_gradient2(low = "red", high = "blue", mid = "grey", midpoint = 0, trans = "pseudo_log") +
+  theme_void()
+
+ggsave(here("images","a8","HBW differences.png"))
+```
