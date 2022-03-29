@@ -155,7 +155,7 @@ HBO_dist <- grvty_balancing(od_zones = zones,
                             friction_o_id = "fromId",
                             friction_d_id = "toId",
                             friction_factor = "F_HBO",
-                            tolerance = 5,
+                            tolerance = .01,
                             max_iter = 500)
 ```
 
@@ -170,7 +170,7 @@ HBW_dist <- grvty_balancing(od_zones = zones,
                             friction_o_id = "fromId",
                             friction_d_id = "toId",
                             friction_factor = "F_HBW",
-                            tolerance = 5,
+                            tolerance = .01,
                             max_iter = 500)
 ```
 
@@ -185,7 +185,7 @@ NHB_dist <- grvty_balancing(od_zones = zones,
                             friction_o_id = "fromId",
                             friction_d_id = "toId",
                             friction_factor = "F_NHB",
-                            tolerance = 5,
+                            tolerance = .01,
                             max_iter = 500)
 ```
 
