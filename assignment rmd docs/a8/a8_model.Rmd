@@ -144,7 +144,12 @@ skims <- skims %>%
 
 ## Estimate Travel Flows
 
+Note on tolerance: testing lower tolerances showed us that the model converges
+around .004 after ~30 iterations. For the sake of expedience, we're setting
+the tolerance just below it, but also stopping after 50 iterations.
+
 Home-based other:
+
 
 ```{r}
 HBO_dist <- grvty_balancing(od_zones = zones,
@@ -155,8 +160,8 @@ HBO_dist <- grvty_balancing(od_zones = zones,
                             friction_o_id = "fromId",
                             friction_d_id = "toId",
                             friction_factor = "F_HBO",
-                            tolerance = .01,
-                            max_iter = 500)
+                            tolerance = .003,
+                            max_iter = 50)
 ```
 
 Home-based work:
@@ -170,8 +175,8 @@ HBW_dist <- grvty_balancing(od_zones = zones,
                             friction_o_id = "fromId",
                             friction_d_id = "toId",
                             friction_factor = "F_HBW",
-                            tolerance = .01,
-                            max_iter = 500)
+                            tolerance = .003,
+                            max_iter = 50)
 ```
 
 Non-home based:
@@ -185,8 +190,8 @@ NHB_dist <- grvty_balancing(od_zones = zones,
                             friction_o_id = "fromId",
                             friction_d_id = "toId",
                             friction_factor = "F_NHB",
-                            tolerance = .01,
-                            max_iter = 500)
+                            tolerance = .003,
+                            max_iter = 50)
 ```
 
 For some reason, the balancing never seems to get to the tolerance, no matter how many iterations or which friction factors are used.
@@ -203,8 +208,7 @@ convergence_points <- NHB_dist$convergence %>%
 ggplot(filter(convergence_points, between(iteration, 0, 50))) +
   geom_line(aes(x = iteration, y = max_diff, lty = which_max)) +
   scale_y_continuous(name = "Maximum difference from target value",
-                     trans = "log",
-                     breaks = breaks <- 10^seq(1,5, by= 1),
+                     breaks = breaks <- seq(0,1, by= 0.1),
                      labels = formatC(breaks,
                                       big.mark = ",",
                                       format = "f",
@@ -215,8 +219,6 @@ ggplot(filter(convergence_points, between(iteration, 0, 50))) +
                                       big.mark = ",",
                                       format = "f",
                                       digits = 0)) +
-  annotate(geom = "text", x = 53, y = 407, label = "(407)", size = 3.5) +
-  annotate(geom = "text", x = 53, y = 91, label = "(91)", size = 3.5) +
   scale_linetype(name = "") +
   theme_minimal()
 ```
@@ -254,21 +256,22 @@ skims <- skims %>%
 Save the skim with travel flows to our repo.
 
 ```{r}
-# write_csv(skims, here("existing",
-#                       "data",
-#                       "all_skims_ex.csv"))
+write_csv(skims, here("existing",
+                      "data",
+                      "all_skims_ex.csv"))
 ```
 
 This chunk used to confirm alignment with travel survey information.
 
 ```{r}
-# HBW_mean_time <- sum(skims$total_hbw_time) / sum(skims$HBW_flow)
-# HBO_mean_time <- sum(skims$total_hbo_time) / sum(skims$HBO_flow)
-# NHB_mean_time <- sum(skims$total_nhb_time) / sum(skims$NHB_flow)
-# 
-# HBW_mean_time
-# HBO_mean_time
-# NHB_mean_time
+HBW_mean_time <- sum(skims$total_hbw_time) / sum(skims$HBW_flow)
+HBO_mean_time <- sum(skims$total_hbo_time) / sum(skims$HBO_flow)
+NHB_mean_time <- sum(skims$total_nhb_time) / sum(skims$NHB_flow)
+
+
+HBO_mean_time
+HBW_mean_time
+NHB_mean_time
 ```
 
 # Alternative
@@ -418,21 +421,21 @@ skims_alt <- skims_alt %>%
 Saving the alt skims to our repo.
 
 ```{r}
-# write_csv(skims_alt, here("alternative",
-#                           "data",
-#                           "all_skims_alt.csv"))
+write_csv(skims_alt, here("alternative",
+                          "data",
+                          "all_skims_alt.csv"))
 ```
 
 This is for comparison of average trip time by type; all are slightly (>1 minute) longer than in the existing conditions.
 
 ```{r}
-# HBW_mean_time_alt <- sum(skims_alt$total_hbw_time_alt) / sum(skims_alt$HBW_flow_alt)
-# HBO_mean_time_alt <- sum(skims_alt$total_hbo_time_alt) / sum(skims_alt$HBO_flow_alt)
-# NHB_mean_time_alt <- sum(skims_alt$total_nhb_time_alt) / sum(skims_alt$NHB_flow_alt)
-# 
-# HBW_mean_time_alt
-# HBO_mean_time_alt
-# NHB_mean_time_alt
+HBW_mean_time_alt <- sum(skims_alt$total_hbw_time_alt) / sum(skims_alt$HBW_flow_alt)
+HBO_mean_time_alt <- sum(skims_alt$total_hbo_time_alt) / sum(skims_alt$HBO_flow_alt)
+NHB_mean_time_alt <- sum(skims_alt$total_nhb_time_alt) / sum(skims_alt$NHB_flow_alt)
+
+HBW_mean_time_alt
+HBO_mean_time_alt
+NHB_mean_time_alt
 ```
 
 # More Viz
