@@ -531,14 +531,13 @@ NHB_mean_time
 ```
 
 ```{r}
-# ttime_by_purpose <- ttime_by_purpose %>%
-#   add_column(pred_avg_time = c(HBO_mean_time, HBW_mean_time, NHB_mean_time))
-```
-
-```{r}
+ttime_by_purpose <- ttime_by_purpose %>%
+  add_column(pred_avg_time = c(HBO_mean_time, HBW_mean_time, NHB_mean_time))
 select(ttime_by_purpose, purpose, avg_time, pred_avg_time)
 ```
 
+
+ok, it works
 
 # identify sig changes between original and alternative
 
@@ -664,20 +663,96 @@ We'll either have 6 or 12 maps to look through.
 
 ```{r HBO diff aggregate}
 
-zones_flow_diff_HBO_from <- aggregate(list(HBO_from_diff = HBO_compare$flow_diff), by = list(GEOID = HBO_compare$fromId), FUN = sum)
-zones_flow_diff_HBW_from <- aggregate(list(HBW_from_diff = HBW_compare$flow_diff), by = list(GEOID = HBW_compare$fromId), FUN = sum)
-zones_flow_diff_NHB_from <- aggregate(list(NHB_from_diff = NHB_compare$flow_diff), by = list(GEOID = NHB_compare$fromId), FUN = sum)
-zones_flow_diff_HBO_to <- aggregate(list(HBO_to_diff = HBO_compare$flow_diff), by = list(GEOID = HBO_compare$toId), FUN = sum)
-zones_flow_diff_HBW_to <- aggregate(list(HBW_to_diff = HBW_compare$flow_diff), by = list(GEOID = HBW_compare$toId), FUN = sum)
-zones_flow_diff_NHB_to <- aggregate(list(NHB_to_diff = NHB_compare$flow_diff), by = list(GEOID = NHB_compare$toId), FUN = sum)
+#Balanced
+
+zones_flow_diff_HBO_from <- aggregate(
+  list(HBO_from_diff = HBO_compare$flow_diff),
+  by = list(GEOID = HBO_compare$fromId), FUN = sum)
+zones_flow_diff_HBW_from <- aggregate(
+  list(HBW_from_diff = HBW_compare$flow_diff),
+  by = list(GEOID = HBW_compare$fromId), FUN = sum)
+zones_flow_diff_NHB_from <- aggregate(
+  list(NHB_from_diff = NHB_compare$flow_diff),
+  by = list(GEOID = NHB_compare$fromId), FUN = sum)
+zones_flow_diff_HBO_to <- aggregate(
+  list(HBO_to_diff = HBO_compare$flow_diff),
+  by = list(GEOID = HBO_compare$toId), FUN = sum)
+zones_flow_diff_HBW_to <- aggregate(
+  list(HBW_to_diff = HBW_compare$flow_diff),
+  by = list(GEOID = HBW_compare$toId), FUN = sum)
+zones_flow_diff_NHB_to <- aggregate(
+  list(NHB_to_diff = NHB_compare$flow_diff),
+  by = list(GEOID = NHB_compare$toId), FUN = sum)
+
+#Absolute Value
+
+zones_diff_absolute_HBO_from <- aggregate(
+  list(HBO_from_diff = HBO_compare$diff_absolute),
+  by = list(GEOID = HBO_compare$fromId), FUN = sum)
+zones_diff_absolute_HBW_from <- aggregate(
+  list(HBW_from_diff = HBW_compare$diff_absolute),
+  by = list(GEOID = HBW_compare$fromId), FUN = sum)
+zones_diff_absolute_NHB_from <- aggregate(
+  list(NHB_from_diff = NHB_compare$diff_absolute),
+  by = list(GEOID = NHB_compare$fromId), FUN = sum)
+zones_diff_absolute_HBO_to <- aggregate(
+  list(HBO_to_diff = HBO_compare$diff_absolute),
+  by = list(GEOID = HBO_compare$toId), FUN = sum)
+zones_diff_absolute_HBW_to <- aggregate(
+  list(HBW_to_diff = HBW_compare$diff_absolute),
+  by = list(GEOID = HBW_compare$toId), FUN = sum)
+zones_diff_absolute_NHB_to <- aggregate(
+  list(NHB_to_diff = NHB_compare$diff_absolute),
+  by = list(GEOID = NHB_compare$toId), FUN = sum)
+
+#Increases
+temp <- filter(HBO_compare, flow_diff > 0)
+zones_flow_increase_HBO_from <- aggregate(list(HBO_from_diff = temp$flow_diff),
+                                      by = list(GEOID = temp$fromId), FUN = sum)
+
+temp <- filter(HBW_compare, flow_diff > 0)
+zones_flow_increase_HBW_from <- aggregate(list(HBW_from_diff = temp$flow_diff),
+                                      by = list(GEOID = temp$fromId), FUN = sum)
+temp <- filter(NHB_compare, flow_diff > 0)
+zones_flow_increase_NHB_from <- aggregate(list(NHB_from_diff = temp$flow_diff),
+                                      by = list(GEOID = temp$fromId), FUN = sum)
+zones_flow_increase_HBO_to <- aggregate(list(HBO_to_diff = temp$flow_diff),
+                                      by = list(GEOID = temp$toId), FUN = sum)
+
+temp <- filter(HBW_compare, flow_diff > 0)
+zones_flow_increase_HBW_to <- aggregate(list(HBW_to_diff = temp$flow_diff),
+                                      by = list(GEOID = temp$toId), FUN = sum)
+temp <- filter(NHB_compare, flow_diff > 0)
+zones_flow_increase_NHB_to <- aggregate(list(NHB_to_diff = temp$flow_diff),
+                                      by = list(GEOID = temp$toId), FUN = sum)
 
 
-zones_diff_absolute_HBO_from <- aggregate(list(HBO_from_diff = HBO_compare$diff_absolute), by = list(GEOID = HBO_compare$fromId), FUN = sum)
-zones_diff_absolute_HBW_from <- aggregate(list(HBW_from_diff = HBW_compare$diff_absolute), by = list(GEOID = HBW_compare$fromId), FUN = sum)
-zones_diff_absolute_NHB_from <- aggregate(list(NHB_from_diff = NHB_compare$diff_absolute), by = list(GEOID = NHB_compare$fromId), FUN = sum)
-zones_diff_absolute_HBO_to <- aggregate(list(HBO_to_diff = HBO_compare$diff_absolute), by = list(GEOID = HBO_compare$toId), FUN = sum)
-zones_diff_absolute_HBW_to <- aggregate(list(HBW_to_diff = HBW_compare$diff_absolute), by = list(GEOID = HBW_compare$toId), FUN = sum)
-zones_diff_absolute_NHB_to <- aggregate(list(NHB_to_diff = NHB_compare$diff_absolute), by = list(GEOID = NHB_compare$toId), FUN = sum)
+#Decreases
+
+temp <- filter(HBO_compare, flow_diff < 0)
+zones_flow_decrease_HBO_from <- aggregate(list(HBO_from_diff = temp$flow_diff),
+                                        by = list(GEOID = temp$fromId), FUN = sum)
+
+temp <- filter(HBW_compare, flow_diff < 0)
+zones_flow_decrease_HBW_from <- aggregate(list(HBW_from_diff = temp$flow_diff),
+                                        by = list(GEOID = temp$fromId), FUN = sum)
+
+temp <- filter(NHB_compare, flow_diff < 0)
+zones_flow_decrease_NHB_from <- aggregate(list(NHB_from_diff = temp$flow_diff),
+                                        by = list(GEOID = temp$fromId), FUN = sum)
+temp <- filter(HBO_compare, flow_diff < 0)
+zones_flow_decrease_HBO_to <- aggregate(list(HBO_to_diff = temp$flow_diff),
+                                        by = list(GEOID = temp$toId), FUN = sum)
+
+temp <- filter(HBW_compare, flow_diff < 0)
+zones_flow_decrease_HBW_to <- aggregate(list(HBW_to_diff = temp$flow_diff),
+                                        by = list(GEOID = temp$toId), FUN = sum)
+
+temp <- filter(NHB_compare, flow_diff < 0)
+zones_flow_decrease_NHB_to <- aggregate(list(NHB_to_diff = temp$flow_diff),
+                                        by = list(GEOID = temp$toId), FUN = sum)
+
+
 
 ```
 
@@ -699,6 +774,26 @@ zone_boundaries_absolute <- zone_boundaries %>%
   left_join(zones_diff_absolute_HBO_to) %>%
   left_join(zones_diff_absolute_HBW_to) %>%
   left_join(zones_diff_absolute_NHB_to)
+
+zone_boundaries_increase <- zone_boundaries %>%
+  select(GEOID) %>%
+  left_join(zones_flow_increase_HBO_from) %>%
+  left_join(zones_flow_increase_HBW_from) %>%
+  left_join(zones_flow_increase_NHB_from) %>%
+  left_join(zones_flow_increase_HBO_to) %>%
+  left_join(zones_flow_increase_HBW_to) %>%
+  left_join(zones_flow_increase_NHB_to)
+
+zone_boundaries_decrease <- zone_boundaries %>%
+  select(GEOID) %>%
+  left_join(zones_flow_decrease_HBO_from) %>%
+  left_join(zones_flow_decrease_HBW_from) %>%
+  left_join(zones_flow_decrease_NHB_from) %>%
+  left_join(zones_flow_decrease_HBO_to) %>%
+  left_join(zones_flow_decrease_HBW_to) %>%
+  left_join(zones_flow_decrease_NHB_to)
+
+
 ```
 
 Now to actually visualize the maps
@@ -812,4 +907,113 @@ ggplot(zone_boundaries_absolute) +
 ggsave(here("images", "a8", "aggregate zones", "abs_NHB_to.png"))
 ```
 
+What about viewing increases and decreases separately?
 
+```{r increase aggregate maps}
+
+ggplot(zone_boundaries_increase) +
+  geom_sf(aes(fill = HBO_from_diff), color = NA) +
+  scale_fill_gradient(low = "grey", high = "blue", trans = "log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "HBO_from_increase.png"))
+
+
+ggplot(zone_boundaries_increase) +
+  geom_sf(aes(fill = HBW_from_diff), color = NA) +
+  scale_fill_gradient(low = "grey", high = "blue", trans = "log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "HBW_from_increase.png"))
+
+ggplot(zone_boundaries_increase) +
+  geom_sf(aes(fill = NHB_from_diff), color = NA) +
+  scale_fill_gradient(low = "grey", high = "blue", trans = "log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "NHB_from_increase.png"))
+
+
+ggplot(zone_boundaries_increase) +
+  geom_sf(aes(fill = HBO_to_diff), color = NA) +
+  scale_fill_gradient(low = "grey", high = "blue", trans = "log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "HBO_to_increase.png"))
+
+
+ggplot(zone_boundaries_increase) +
+  geom_sf(aes(fill = HBW_to_diff), color = NA) +
+  scale_fill_gradient(low = "grey", high = "blue", trans = "log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "HBW_to_increase.png"))
+
+ggplot(zone_boundaries_increase) +
+  geom_sf(aes(fill = NHB_to_diff), color = NA) +
+  scale_fill_gradient(low = "grey", high = "blue", trans = "log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "NHB_to_increase.png"))
+```
+
+
+```{r decrease aggregate maps}
+
+ggplot(zone_boundaries_decrease) +
+  geom_sf(aes(fill = HBO_from_diff), color = NA) +
+  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo-log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "HBO_from_decrease.png"))
+
+
+ggplot(zone_boundaries_decrease) +
+  geom_sf(aes(fill = HBW_from_diff), color = NA) +
+  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo-log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "HBW_from_decrease.png"))
+
+ggplot(zone_boundaries_decrease) +
+  geom_sf(aes(fill = NHB_from_diff), color = NA) +
+  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo-log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "NHB_from_decrease.png"))
+
+
+ggplot(zone_boundaries_decrease) +
+  geom_sf(aes(fill = HBO_to_diff), color = NA) +
+  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo-log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "HBO_to_decrease.png"))
+
+
+ggplot(zone_boundaries_decrease) +
+  geom_sf(aes(fill = HBW_to_diff), color = NA) +
+  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo-log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "HBW_to_decrease.png"))
+
+ggplot(zone_boundaries_decrease) +
+  geom_sf(aes(fill = NHB_to_diff), color = NA) +
+  scale_fill_gradient(low = "red", high = "grey", trans = "pseudo-log") +
+  geom_sf(data = urban_bounds_sf, color = "black", fill = NA) +
+  theme_void()
+
+ggsave(here("images", "a8", "aggregate zones", "NHB_to_decrease.png"))
+```
