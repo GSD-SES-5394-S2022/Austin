@@ -189,29 +189,31 @@ For some reason, the balancing never seems to get to the tolerance, no matter ho
 This plot was used to observe the convergence (or lack thereof).
 
 ```{r}
-# convergence_points <- NHB_dist$convergence %>%
-#   mutate(max_diff = max_o_diff + max_d_diff) %>%
-#   mutate(which_max = ifelse(max_o_diff > max_d_diff,
-#                             "Productions",
-#                             "Attractions"))
-# 
-# ggplot(convergence_points) +
-#   geom_line(aes(x = iteration, y = max_diff, lty = which_max)) +
-#   scale_y_continuous(name = "Maximum difference from target value",
-#                      trans = "log",
-#                      breaks = breaks <- 10^seq(1,5, by=1),
-#                      labels = formatC(breaks,
-#                                       big.mark = ",",
-#                                       format = "f",
-#                                       digits = 0)) +
-#   scale_x_continuous(name = "Iteration",
-#                      breaks = breaks <- seq(0, 14000, by=2000),
-#                      labels = formatC(breaks,
-#                                       big.mark = ",",
-#                                       format = "f",
-#                                       digits = 0)) +
-#   scale_linetype(name = "") +
-#   theme_minimal()
+convergence_points <- NHB_dist$convergence %>%
+  mutate(max_diff = max_o_diff + max_d_diff) %>%
+  mutate(which_max = ifelse(max_o_diff > max_d_diff,
+                            "Productions",
+                            "Attractions"))
+
+ggplot(filter(convergence_points, between(iteration, 0, 50))) +
+  geom_line(aes(x = iteration, y = max_diff, lty = which_max)) +
+  scale_y_continuous(name = "Maximum difference from target value",
+                     trans = "log",
+                     breaks = breaks <- 10^seq(1,5, by= 1),
+                     labels = formatC(breaks,
+                                      big.mark = ",",
+                                      format = "f",
+                                      digits = 0)) +
+  scale_x_continuous(name = "Iteration",
+                     breaks = breaks <- seq(0, 50, by=10),
+                     labels = formatC(breaks,
+                                      big.mark = ",",
+                                      format = "f",
+                                      digits = 0)) +
+  annotate(geom = "text", x = 53, y = 407, label = "(407)", size = 3.5) +
+  annotate(geom = "text", x = 53, y = 91, label = "(91)", size = 3.5) +
+  scale_linetype(name = "") +
+  theme_minimal()
 ```
 
 Appending the various modeled trip flows to our skim table in the existing conditions.
