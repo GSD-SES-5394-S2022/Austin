@@ -194,9 +194,7 @@ NHB_dist <- grvty_balancing(od_zones = zones,
                             max_iter = 50)
 ```
 
-For some reason, the balancing never seems to get to the tolerance, no matter how many iterations or which friction factors are used.
-
-This plot was used to observe the convergence (or lack thereof).
+Observing the convergence:
 
 ```{r}
 convergence_points <- NHB_dist$convergence %>%
@@ -205,22 +203,21 @@ convergence_points <- NHB_dist$convergence %>%
                             "Productions",
                             "Attractions"))
 
-ggplot(filter(convergence_points, between(iteration, 0, 50))) +
+ggplot(convergence_points) +
   geom_line(aes(x = iteration, y = max_diff, lty = which_max)) +
-  scale_y_continuous(name = "Maximum difference from target value",
-                     breaks = breaks <- seq(0,1, by= 0.1),
-                     labels = formatC(breaks,
-                                      big.mark = ",",
-                                      format = "f",
-                                      digits = 0)) +
+  scale_y_continuous(name = "Maximum %difference from target value",
+                     trans = "log10") +
   scale_x_continuous(name = "Iteration",
                      breaks = breaks <- seq(0, 50, by=10),
                      labels = formatC(breaks,
                                       big.mark = ",",
                                       format = "f",
                                       digits = 0)) +
+  annotate(geom = "text", x = 55, y = 0.0037, label = "(0.0037)", size = 3.5) +
   scale_linetype(name = "") +
   theme_minimal()
+
+ggsave(here("images","a8","convergence graph.png"))
 ```
 
 Appending the various modeled trip flows to our skim table in the existing conditions.
@@ -454,7 +451,7 @@ urban_bounds_sf <- read_sf(here("zones",
 ```
 
 ```{r}
-desire_lines_HBO <- od_to_sf(filter(HBO_dist$flows, flow >= 750), zone_boundaries, silent = TRUE) %>%
+desire_lines_HBO <- od_to_sf(top_n(HBO_dist$flows, 500), zone_boundaries, silent = TRUE) %>%
   filter(flow > 0)
 
 ggplot(desire_lines_HBO) +
@@ -462,7 +459,7 @@ ggplot(desire_lines_HBO) +
   geom_sf(aes(alpha = flow)) +
   theme_void()
 
-ggsave(here("images", "a8", "desirelines750.png"))
+ggsave(here("images", "a8", "desirelinesHBO.png"))
 ```
 
 
@@ -471,7 +468,7 @@ zone_boundaries <- here("zones",
               "boundaries.geojson") %>%
   st_read(quiet = TRUE)
 
-desire_lines_HBW <- od_to_sf(filter(HBW_dist$flows, flow >= 70), zone_boundaries, silent = TRUE) %>%
+desire_lines_HBW <- od_to_sf(top_n(HBW_dist$flows, 500), zone_boundaries, silent = TRUE) %>%
   filter(flow > 0)
 
 ggplot(desire_lines_HBW) +
@@ -479,7 +476,43 @@ ggplot(desire_lines_HBW) +
   geom_sf(aes(alpha = flow)) +
   theme_void()
 
-ggsave(here("images", "a8", "desirelinesHBW70.png"))
+ggsave(here("images", "a8", "desirelinesHBW.png"))
+```
+
+```{r}
+desire_lines_NHB <- od_to_sf(top_n(NHB_dist$flows, 500), zone_boundaries, silent = TRUE) %>%
+  filter(flow > 0)
+
+ggplot(desire_lines_NHB) +
+  annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+  geom_sf(aes(alpha = flow)) +
+  theme_void()
+
+ggsave(here("images", "a8", "desirelinesNHB.png"))
+```
+
+
+What about HBW _without_ downtown?
+
+```{r}
+zone_boundaries <- here("zones",
+              "boundaries.geojson") %>%
+  st_read(quiet = TRUE)
+
+HBW_flow_no_downtown <- filter(HBW_dist$flows, !(o_id %in% c(48453001100, 48453000700))) %>%
+  filter(!(d_id %in% c(48453001100, 48453000700)))
+
+desire_lines_HBW_nd <- od_to_sf(top_n(HBW_flow_no_downtown, 500),
+                                zone_boundaries, silent = TRUE) %>%
+  filter(flow > 0)
+
+ggplot(desire_lines_HBW_nd) +
+  annotation_map_tile(type = "cartolight", zoom = 10, progress = "none") +
+  geom_sf(aes(alpha = flow)) +
+  theme_void()
+
+ggsave(here("images","a8","desirelinesHBW_no_downtown.png"))
+
 ```
 
 Comparing travel times
@@ -540,6 +573,9 @@ ttime_by_purpose <- ttime_by_purpose %>%
 ttime_by_purpose <- ttime_by_purpose %>%
   add_column(pred_avg_time_alt = c(HBO_mean_time_alt, HBW_mean_time_alt, NHB_mean_time_alt))
 select(ttime_by_purpose, purpose, avg_time, pred_avg_time, pred_avg_time_alt)
+
+write_csv(select(ttime_by_purpose, purpose, avg_time, pred_avg_time, pred_avg_time_alt),
+          here("assignment rmd docs","a8","travel time comparisons.csv"))
 ```
 
 
