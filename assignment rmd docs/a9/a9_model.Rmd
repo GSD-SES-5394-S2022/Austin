@@ -1004,7 +1004,7 @@ ex_alt_compare %>%
 ## Writing our data out
 ```{r write complete table}
 
-#this is a large file, it's on Reuven's repo and not synced to GitHub
+#this is a large file, it won't sync to github
 
 skims %>%
   write_csv(here("large datasets",
