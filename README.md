@@ -23,5 +23,5 @@ The following R Markdown files are used to perform this analysis (list to be upd
 * *a6_model* - creates model to estimate change in number of zero-car households in the alternative, as well as visualizations 
 * *a7_data.Rmd* - filters NHTS data for the Austin-Round Rock MSA and adds it to Github Repo
 * *a7_model.Rmd* - models of trip generation and attraction and graphics for report chapter
-* *a8_model.Rmd* - models trip distribution by type in existing conditions and apply predictions to alternative, saves travel flows appended to corresponding skim files, and creates visualizations
-* *a9_model.Rmd* - models mode choice by trip type in existing conditions and apply predictions to alternative, saves mode trip counts appended to corresponding skim files, and creates visualizations
+* *a8_model.Rmd* - models trip distribution by type in existing conditions and apply predictions to alternative, saves travel flows appended to corresponding skim files (*all_skims_ex.csv* and *sall_skims_alt.csv*), and creates visualizations
+* *a9_model.Rmd* - models mode choice by trip type in existing conditions and apply predictions to alternative, saves mode trip counts appended to corresponding skim files (*skims_merged.csv* and *skims_merged_alt.csv*), and creates visualizations
