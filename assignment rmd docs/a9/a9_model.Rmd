@@ -90,16 +90,24 @@ remarkably cheap: 58 cents per trip!
 
 A single bus fare is advertised as $1.25. 7-day passes average this cost with
 19 trips in a week. 31-day passes average this cost with 71 rides a month, which
-is a lot, but not a crazy amount (3.5 trips per workday, assuming 20 workdays a month.
-So our per-ride cost is probably resulted from a combination of
+is a lot, but not a crazy amount (3.5 trips per workday, assuming 20 workdays a month;
+Capital Metro prices them at the cost of 36 rides in that timeframe).
+So our per-ride cost is probably resulted from a combination of:
 - Lots of monthly passes
 - Transfers
 
 Interestingly, even though the commuter buses and rail line share the same fare
 structure, their derived per-ride costs are different. ($2.70 for the commuter bus
 vs $2.10 for the rail line.) This implies that ridership trends are different; maybe
-rail riders are more likely to use monthly passes?
+rail riders are more likely to use monthly passes? Based on literally nothing other 
+than a hunch, (no data, anecdotes, or anecdata) I would guess that a "Typical Commuter 
+Rail Rider" might(?) be more likely to have a monthly pass.
 
+UPDATE: some data
+https://www.ctps.org/dv/mbtasurvey2018/2015_2017_Passenger_Survey_Final_Report.pdf
+At least in Boston, commuter rail riders are slightly more likely to use monthly
+passes when paying fares, which if the same applies to Austin, then that could explain
+a lower cost per transit trip.
 
 --
 ## Driving cost
@@ -1047,6 +1055,7 @@ new_stuff_alt <- skims_alt %>%
 
 skims_merged <- full_join(skims_prev, new_stuff_ex) %>%
   select(-c(fromTo))
+
 skims_alt_merged <- full_join(skims_prev, new_stuff_alt) %>%
   select(-c(fromTo))
 
@@ -1055,7 +1064,7 @@ skims_merged %>%
                  "data",
                  "all_skims_mode_numbers_ex.csv"))
 
-skims_merged %>%
+skims_alt_merged %>%
   write_csv(here("alternative",
                  "data",
                  "all_skims_mode_numbers_alt.csv"))
