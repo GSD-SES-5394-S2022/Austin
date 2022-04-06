@@ -575,5 +575,56 @@ skims <- skims %>%
 ```
 
 
+## Model Calibration
+
+```{r}
+modeled_mode_by_purpose_1 <- tibble(
+  purpose = "HBW_model 1", 
+  pct_bike = sum(skims$n_bike_HBW) / 
+                 sum(skims$HBW_flow),
+  pct_SOV = sum(skims$n_SOV_HBW) / 
+                sum(skims$HBW_flow),
+  pct_HOV = sum(skims$n_HOV_HBW) / 
+                sum(skims$HBW_flow),
+  pct_transit = sum(skims$n_transit_HBW) / 
+                sum(skims$HBW_flow),
+  pct_walk = sum(skims$n_walk_HBW) / 
+                sum(skims$HBW_flow))
+
+
+modeled_mode_by_purpose_2 <- tibble(
+  purpose = "HBO_model 1", 
+  pct_bike = sum(skims$n_bike_HBO) / 
+                 sum(skims$HBO_flow),
+  pct_SOV = sum(skims$n_SOV_HBO) / 
+                sum(skims$HBO_flow),
+  pct_HOV = sum(skims$n_HOV_HBO) / 
+                sum(skims$HBO_flow),
+  pct_transit = sum(skims$n_transit_HBO) / 
+                sum(skims$HBO_flow),
+  pct_walk = sum(skims$n_walk_HBO) / 
+                sum(skims$HBO_flow))
+
+modeled_mode_by_purpose_3 <- tibble(
+  purpose = "NHB_model 1", 
+  pct_bike = sum(skims$n_bike_NHB) / 
+                 sum(skims$NHB_flow),
+  pct_SOV = sum(skims$n_SOV_NHB) / 
+                sum(skims$NHB_flow),
+  pct_HOV = sum(skims$n_HOV_NHB) / 
+                sum(skims$NHB_flow),
+  pct_transit = sum(skims$n_transit_NHB) / 
+                sum(skims$NHB_flow),
+  pct_walk = sum(skims$n_walk_NHB) / 
+                sum(skims$NHB_flow))
+
+
+
+model_compare <- rbind(mode_by_purpose, modeled_mode_by_purpose_2,
+                       modeled_mode_by_purpose_1, modeled_mode_by_purpose_3) 
+
+model_compare
+
+```
 
 
