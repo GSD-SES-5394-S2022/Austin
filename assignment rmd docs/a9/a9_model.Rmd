@@ -448,8 +448,8 @@ skims <- skims %>%
                                ride_time * -0.013  +
                                (access_time + 
                                  egress_time) * -0.032 +
-                               min(wait_time, 7) * -0.032 + #stratified wait time coefs
-                               max(wait_time - 7, 0) * -0.025 + #stratified wait time coefs
+                               pmin(wait_time, 7) * -0.032 + #stratified wait time coefs
+                               pmax(wait_time - 7, 0) * -0.025 + #stratified wait time coefs
                                transfer_time * -0.050 +
                                (n_rides - 1) * -0.306 + #transfer penalty
                                transit_cost * -0.002,
@@ -478,6 +478,102 @@ skims <- skims %>%
                                  na.rm = TRUE)) %>%
   ungroup()
 ```
+
+
+Now we need to add in the probability of taking a particular mode
+
+```{r probability HBW}
+skims <- skims %>%
+  mutate(p_transit_HBW = exp(utility_transit_HBW) / total_utility_HBW,
+         p_car_HBW = exp(utility_car_HBW) / total_utility_HBW,
+         p_active_HBW = exp(utility_active_HBW) / total_utility_HBW) 
+
+skims <- skims %>%
+  mutate(p_SOV_if_car_HBW = exp(utility_SOV_HBW) / exp(utility_car_HBW),
+         p_HOV_if_car_HBW = exp(utility_HOV_HBW) / exp(utility_car_HBW),
+         p_walk_if_active_HBW = exp(utility_walk_HBW) / exp(utility_active_HBW),
+         p_bike_if_active_HBW = exp(utility_bike_HBW) / exp(utility_active_HBW))
+
+skims <- skims %>%
+  mutate(p_SOV_HBW = p_SOV_if_car_HBW * p_car_HBW,
+         p_HOV_HBW = p_HOV_if_car_HBW * p_car_HBW,
+         p_walk_HBW = p_walk_if_active_HBW * p_active_HBW,
+         p_bike_HBW = p_bike_if_active_HBW * p_active_HBW) 
+```
+
+```{r probability HBO}
+skims <- skims %>%
+  mutate(p_transit_HBO = exp(utility_transit_HBO) / total_utility_HBO,
+         p_car_HBO = exp(utility_car_HBO) / total_utility_HBO,
+         p_active_HBO = exp(utility_active_HBO) / total_utility_HBO) 
+
+skims <- skims %>%
+  mutate(p_SOV_if_car_HBO = exp(utility_SOV_HBO) / exp(utility_car_HBO),
+         p_HOV_if_car_HBO = exp(utility_HOV_HBO) / exp(utility_car_HBO),
+         p_walk_if_active_HBO = exp(utility_walk_HBO) / exp(utility_active_HBO),
+         p_bike_if_active_HBO = exp(utility_bike_HBO) / exp(utility_active_HBO))
+
+skims <- skims %>%
+  mutate(p_SOV_HBO = p_SOV_if_car_HBO * p_car_HBO,
+         p_HOV_HBO = p_HOV_if_car_HBO * p_car_HBO,
+         p_walk_HBO = p_walk_if_active_HBO * p_active_HBO,
+         p_bike_HBO = p_bike_if_active_HBO * p_active_HBO) 
+```
+
+```{r probability NHB}
+skims <- skims %>%
+  mutate(p_transit_NHB = exp(utility_transit_NHB) / total_utility_NHB,
+         p_SOV_NHB = exp(utility_SOV_NHB) / total_utility_NHB,
+         p_HOV_NHB = exp(utility_HOV_NHB) / total_utility_NHB,
+         p_walk_NHB = exp(utility_walk_NHB) / total_utility_NHB,
+         p_bike_NHB = exp(utility_bike_NHB) / total_utility_NHB)
+```
+
+
+Now to total up number of trips by mode
+
+```{r number HBW}
+skims <- skims %>%
+  mutate(n_transit_HBW = round(HBW_flow * p_transit_HBW),
+         n_SOV_HBW = round(HBW_flow * p_SOV_HBW),
+         n_HOV_HBW = round(HBW_flow * p_HOV_HBW),
+         n_walk_HBW = round(HBW_flow * p_walk_HBW),
+         n_bike_HBW = round(HBW_flow * p_bike_HBW)) %>%
+  replace_na(list(n_transit_HBW = 0,
+                  n_SOV_HBW = 0,
+                  n_HOV_HBW = 0,
+                  n_walk_HBW = 0,
+                  n_bike_HBW =0)) 
+```
+
+```{r number HBO}
+skims <- skims %>%
+  mutate(n_transit_HBO = round(HBO_flow * p_transit_HBO),
+         n_SOV_HBO = round(HBO_flow * p_SOV_HBO),
+         n_HOV_HBO = round(HBO_flow * p_HOV_HBO),
+         n_walk_HBO = round(HBO_flow * p_walk_HBO),
+         n_bike_HBO = round(HBO_flow * p_bike_HBO)) %>%
+  replace_na(list(n_transit_HBO = 0,
+                  n_SOV_HBO = 0,
+                  n_HOV_HBO = 0,
+                  n_walk_HBO = 0,
+                  n_bike_HBO =0)) 
+```
+
+```{r number NHB}
+skims <- skims %>%
+  mutate(n_transit_NHB = round(NHB_flow * p_transit_NHB),
+         n_SOV_NHB = round(NHB_flow * p_SOV_NHB),
+         n_HOV_NHB = round(NHB_flow * p_HOV_NHB),
+         n_walk_NHB = round(NHB_flow * p_walk_NHB),
+         n_bike_NHB = round(NHB_flow * p_bike_NHB)) %>%
+  replace_na(list(n_transit_NHB = 0,
+                  n_SOV_NHB = 0,
+                  n_HOV_NHB = 0,
+                  n_walk_NHB = 0,
+                  n_bike_NHB =0)) 
+```
+
 
 
 
