@@ -363,6 +363,7 @@ NHB - Table 4.13/14 Model M
 
 ```{r}
 #SOV, HOV, transit, walk, bike
+
 #HBW - Let's try: 1, -1.5, -2.5, -2, -3
 #HBW - What if all zeroes?
 #HBW - Try 1, -1, 1, 2, -1
@@ -370,12 +371,30 @@ NHB - Table 4.13/14 Model M
 #HBW - Tweak - 0.7, -0.5, 2, 5, 0
 #HBW - Tweak - 0.85, -0.75, 2, 5, 0.25
 #HBW - Close! - 0.9, -0.75, 2, 4.5, 0.25
+#HBW - One more nudge - 0.9, -0.7, 2, 4.75, 0.15
+#HBW - Bring up SOV - 0.95, -0.7, 2, 4.75, 0.15
+#HBW - other attemps made it worse, sticking with this
 
-SOV_const_HBW = 0.9
-HOV_const_HBW = -0.75
+SOV_const_HBW = 0.95
+HOV_const_HBW = -0.7
 transit_const_HBW = 2
-walk_const_HBW = 4.5
-bike_const_HBW = 0.25
+walk_const_HBW = 4.75
+bike_const_HBW = 0.15
+
+
+#HBO - First correction - -.5, 0, -3, 0, -2
+#HBO - Fix transit - -.5, 0, 0, 0.5, -2
+#HBO - Transit overcorrected - -.5, 0, -1.5, 0.5, -2
+#HBO - Nudge down SOV and Transit - -.75, -0.1, -1.75, 0.5, -1.5
+#HBO - Up SOV -.6, -0.1, -1.6, 0.5, -1.75
+#HBO - Up HOV slightly - -.6, -0.2, -1.6, 0.5, -1.75
+#HBO - Nudge - -.5, 0, -1.5, 0.6, -1.75
+
+SOV_const_HBO = -0.5
+HOV_const_HBO = 0
+transit_const_HBO = -1.5
+walk_const_HBO = 0.6
+bike_const_HBO = -1.75
 
 ```
 
@@ -657,22 +676,23 @@ modeled_mode_by_purpose_3 <- tibble(
 model_compare <- rbind(mode_by_purpose, modeled_mode_by_purpose_2,
                        modeled_mode_by_purpose_1, modeled_mode_by_purpose_3)
 
-model_compare %>% filter(str_starts(purpose, "HBW")) %>%
+model_compare %>% filter(str_starts(purpose, "HBO")) %>%
   select(purpose, pct_SOV, pct_HOV, pct_transit, pct_walk, pct_bike)
 ```
 
 We're going to calibrate constants for each trip type separately.
 Initial iteration:
 For HBW - undercounting bike, walk, and transit, and even HOV, and overcounting SOV.
+For HBO - nudge up SOV, bring transit, walk, and bike way up
 
 ```{r}
-mode_constants %>% filter(trip_type == "HBW")
+mode_constants %>% filter(trip_type == "HBO")
 ```
-Let's try: 1, -1.5, -2.5, -2, -3
-Not nearly enough. What if they were all 0s?
-LOL - but we're STILL undercounting walking!
-Try 1, -1, 1, 2, -1
-Closer - try 0.5, -0.5, 2, 5, -0.5
-Tweak - 0.75, -0.5, 2, 5, 0
-Tweak - 0.85, -0.75, 2, 5, 0.25
-Close! - 0.9, -0.75, 2, 4.5, 0.25
+Initial run: -.75, .2, -4.5, -2.15, -4
+First correction - -.5, 0, -3, 0, -2
+Fix transit - -.5, 0, 0, 0.5, -2
+Transit overcorrected - -.5, 0, -1.5, 0.5, -2
+Nudge down SOV and Transit - -.75, -0.1, -1.75, 0.5, -1.5
+Up SOV -.6, -0.1, -1.6, 0.5, -1.75
+Up HOV slightly - -.6, 0, -1.6, 0.5, -1.75
+Nudge - -.5, 0, -1.5, 0.6, -1.75
