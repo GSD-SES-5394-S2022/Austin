@@ -21,6 +21,7 @@ library(knitr)
 library(kableExtra)
 library(survey)
 library(srvyr)
+library(stringr)
 ```
 
 # Travel Cost
@@ -317,45 +318,78 @@ NHB - Table 4.13/14 Model M
 
 
 ```{r mode-specific constants}
-SOV_share_HBW <- mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBW"]
-HOV_share_HBW <- mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBW"]
-transit_share_HBW <- mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBW"]
-walk_share_HBW <- mode_by_purpose$pct_walk[mode_by_purpose$purpose == "HBW"]
-bike_share_HBW <- mode_by_purpose$pct_bike[mode_by_purpose$purpose == "HBW"]
-
-SOV_const_HBW <- log(SOV_share_HBW / (1 - SOV_share_HBW))
-HOV_const_HBW <- log(HOV_share_HBW / (1 - HOV_share_HBW))
-transit_const_HBW <- log(transit_share_HBW / (1 - transit_share_HBW))
-walk_const_HBW <- log(walk_share_HBW / (1 - walk_share_HBW))
-bike_const_HBW <- log(bike_share_HBW / (1 - bike_share_HBW))
-
-
-
-SOV_share_HBO <- mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBO"]
-HOV_share_HBO <- mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBO"]
-transit_share_HBO <- mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBO"]
-walk_share_HBO <- mode_by_purpose$pct_walk[mode_by_purpose$purpose == "HBO"]
-bike_share_HBO <- mode_by_purpose$pct_bike[mode_by_purpose$purpose == "HBO"]
-
-SOV_const_HBO <- log(SOV_share_HBO / (1 - SOV_share_HBO))
-HOV_const_HBO <- log(HOV_share_HBO / (1 - HOV_share_HBO))
-transit_const_HBO <- log(transit_share_HBO / (1 - transit_share_HBO))
-walk_const_HBO <- log(walk_share_HBO / (1 - walk_share_HBO))
-bike_const_HBO <- log(bike_share_HBO / (1 - bike_share_HBO))
-
-
-SOV_share_NHB <- mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "NHB"]
-HOV_share_NHB <- mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "NHB"]
-transit_share_NHB <- mode_by_purpose$pct_transit[mode_by_purpose$purpose == "NHB"]
-walk_share_NHB <- mode_by_purpose$pct_walk[mode_by_purpose$purpose == "NHB"]
-bike_share_NHB <- mode_by_purpose$pct_bike[mode_by_purpose$purpose == "NHB"]
-
-SOV_const_NHB <- log(SOV_share_NHB / (1 - SOV_share_NHB))
-HOV_const_NHB <- log(HOV_share_NHB / (1 - HOV_share_NHB))
-transit_const_NHB <- log(transit_share_NHB / (1 - transit_share_NHB))
-walk_const_NHB <- log(walk_share_NHB / (1 - walk_share_NHB))
-bike_const_NHB <- log(bike_share_NHB / (1 - bike_share_NHB))
+# #Initial attempt:
+# 
+# SOV_share_HBW <- mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBW"]
+# HOV_share_HBW <- mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBW"]
+# transit_share_HBW <- mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBW"]
+# walk_share_HBW <- mode_by_purpose$pct_walk[mode_by_purpose$purpose == "HBW"]
+# bike_share_HBW <- mode_by_purpose$pct_bike[mode_by_purpose$purpose == "HBW"]
+# 
+# SOV_const_HBW <- log(SOV_share_HBW / (1 - SOV_share_HBW))
+# HOV_const_HBW <- log(HOV_share_HBW / (1 - HOV_share_HBW))
+# transit_const_HBW <- log(transit_share_HBW / (1 - transit_share_HBW))
+# walk_const_HBW <- log(walk_share_HBW / (1 - walk_share_HBW))
+# bike_const_HBW <- log(bike_share_HBW / (1 - bike_share_HBW))
+# 
+# 
+# 
+# SOV_share_HBO <- mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "HBO"]
+# HOV_share_HBO <- mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "HBO"]
+# transit_share_HBO <- mode_by_purpose$pct_transit[mode_by_purpose$purpose == "HBO"]
+# walk_share_HBO <- mode_by_purpose$pct_walk[mode_by_purpose$purpose == "HBO"]
+# bike_share_HBO <- mode_by_purpose$pct_bike[mode_by_purpose$purpose == "HBO"]
+# 
+# SOV_const_HBO <- log(SOV_share_HBO / (1 - SOV_share_HBO))
+# HOV_const_HBO <- log(HOV_share_HBO / (1 - HOV_share_HBO))
+# transit_const_HBO <- log(transit_share_HBO / (1 - transit_share_HBO))
+# walk_const_HBO <- log(walk_share_HBO / (1 - walk_share_HBO))
+# bike_const_HBO <- log(bike_share_HBO / (1 - bike_share_HBO))
+# 
+# 
+# SOV_share_NHB <- mode_by_purpose$pct_SOV[mode_by_purpose$purpose == "NHB"]
+# HOV_share_NHB <- mode_by_purpose$pct_HOV[mode_by_purpose$purpose == "NHB"]
+# transit_share_NHB <- mode_by_purpose$pct_transit[mode_by_purpose$purpose == "NHB"]
+# walk_share_NHB <- mode_by_purpose$pct_walk[mode_by_purpose$purpose == "NHB"]
+# bike_share_NHB <- mode_by_purpose$pct_bike[mode_by_purpose$purpose == "NHB"]
+# 
+# SOV_const_NHB <- log(SOV_share_NHB / (1 - SOV_share_NHB))
+# HOV_const_NHB <- log(HOV_share_NHB / (1 - HOV_share_NHB))
+# transit_const_NHB <- log(transit_share_NHB / (1 - transit_share_NHB))
+# walk_const_NHB <- log(walk_share_NHB / (1 - walk_share_NHB))
+# bike_const_NHB <- log(bike_share_NHB / (1 - bike_share_NHB))
 ```
+
+
+```{r}
+#SOV, HOV, transit, walk, bike
+#HBW - Let's try: 1, -1.5, -2.5, -2, -3
+#HBW - What if all zeroes?
+#HBW - Try 1, -1, 1, 2, -1
+#HBW - Closer - try 0.5, -0.5, 2, 5, -0.5
+#HBW - Tweak - 0.7, -0.5, 2, 5, 0
+#HBW - Tweak - 0.85, -0.75, 2, 5, 0.25
+#HBW - Close! - 0.9, -0.75, 2, 4.5, 0.25
+
+SOV_const_HBW = 0.9
+HOV_const_HBW = -0.75
+transit_const_HBW = 2
+walk_const_HBW = 4.5
+bike_const_HBW = 0.25
+
+```
+
+
+
+```{r model constants}
+mode_constants <- data.frame(trip_type = c("HBW","HBO","NHB"),
+                             SOV = c(SOV_const_HBW,SOV_const_HBO, SOV_const_NHB),
+                             HOV = c(HOV_const_HBW, HOV_const_HBO, HOV_const_NHB),
+                             transit = c(transit_const_HBW, transit_const_HBO, transit_const_NHB),
+                             walk = c(walk_const_HBW, walk_const_HBO, walk_const_NHB),
+                             bike = c(bike_const_HBW, bike_const_HBO, bike_const_NHB))
+```
+
 
 
 Now to estimate utilities
@@ -621,10 +655,24 @@ modeled_mode_by_purpose_3 <- tibble(
 
 
 model_compare <- rbind(mode_by_purpose, modeled_mode_by_purpose_2,
-                       modeled_mode_by_purpose_1, modeled_mode_by_purpose_3) 
+                       modeled_mode_by_purpose_1, modeled_mode_by_purpose_3)
 
-model_compare
-
+model_compare %>% filter(str_starts(purpose, "HBW")) %>%
+  select(purpose, pct_SOV, pct_HOV, pct_transit, pct_walk, pct_bike)
 ```
 
+We're going to calibrate constants for each trip type separately.
+Initial iteration:
+For HBW - undercounting bike, walk, and transit, and even HOV, and overcounting SOV.
 
+```{r}
+mode_constants %>% filter(trip_type == "HBW")
+```
+Let's try: 1, -1.5, -2.5, -2, -3
+Not nearly enough. What if they were all 0s?
+LOL - but we're STILL undercounting walking!
+Try 1, -1, 1, 2, -1
+Closer - try 0.5, -0.5, 2, 5, -0.5
+Tweak - 0.75, -0.5, 2, 5, 0
+Tweak - 0.85, -0.75, 2, 5, 0.25
+Close! - 0.9, -0.75, 2, 4.5, 0.25
