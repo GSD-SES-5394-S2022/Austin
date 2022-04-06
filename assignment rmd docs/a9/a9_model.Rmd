@@ -1,0 +1,193 @@
+---
+title: "a9"
+author: "Reuven Herzog"
+date: "4/5/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+We are building a mode choice model for Austin, TX.
+Our travel skims are the same as from earlier in our model construction,
+taken for April 6, 2022.
+
+```{r load libraries}
+library(here)
+library(tidyverse)
+library(sf)
+library(knitr)
+library(kableExtra)
+library(survey)
+library(srvyr)
+```
+
+# Travel Cost
+
+## Transit Cost
+
+We need to bring in monetary cost data. We obtain it from the National Transit
+Database. Even though our model is for 2022, the most recent data we can obtain
+is for 2020. However, to avoid confusion by the effects of the Covid-19 Pandemic,
+we'll go with 2019 data instead.
+
+Source: https://www.transit.dot.gov/sites/fta.dot.gov/files/transit_agency_profile_doc/2019/60048.pdf
+
+Austin's transit agency, Capital Metro, has 2 primary modes of fixed-route
+travel - bus and rail (a single commuter line, the Red Line),
+and the bus network is divided into 2 categories: "bus" and "commuter bus."
+Of these 3, the regular bus mode is by far the largest.
+(CTMA also has a "Demand Response" and "Vanpool" travel. However, these are not
+described in our GTFS data, so functionally they are not included in our model's
+transit options.)
+We don't know yet if our model can handle such subdivision, but let's hold onto
+as much cost data for now as we can.
+
+
+```{r transit cost}
+#Fare Revenues
+revenue_bus_reg = 16515594
+revenue_bus_commuter = 2113839
+revenue_rail = 1526429
+
+#Annual Unlinked Trips
+trips_bus_reg = 28313270
+trips_bus_commuter = 779887
+trips_rail = 729507
+
+#Derived values
+revenue_bus_all = revenue_bus_reg + revenue_bus_commuter
+revenue_total = revenue_bus_reg + revenue_bus_commuter + revenue_rail
+
+trips_bus_all = trips_bus_reg + trips_bus_commuter
+trips_total = trips_bus_reg + trips_bus_commuter + trips_rail
+
+#Organize this data into tables
+cost_disagg <- data.frame(mode = c("bus","commuter bus","rail"),
+                  revenue = c(revenue_bus_reg,revenue_bus_commuter,revenue_rail),
+                  trips = c(trips_bus_reg,trips_bus_commuter,trips_rail)) %>%
+  mutate(cost_per_ride = revenue/trips)
+
+cost_sums <- data.frame(mode = c("bus combined","all modes"),
+                        revenue = c(revenue_bus_all, revenue_total),
+                        trips = c(trips_bus_all, trips_total)) %>%
+  mutate(cost_per_ride = revenue/trips)
+
+#highlight the *all modes combined* cost per ride
+cost_per_ride_combined <- revenue_total / trips_total
+```
+
+
+(For GTFS data, commuter fares cover Routes 900-999 and Route 550 = the Red Line.
+Everything else is local fares.)
+
+Naturally, the regular bus dominates the data, and the combined per-ride cost
+is very close to the regular bus per-ride cost. This per-ride bus cost is
+remarkably cheap: 58 cents per trip!
+
+
+A single bus fare is advertised as $1.25. 7-day passes average this cost with
+19 trips in a week. 31-day passes average this cost with 71 rides a month, which
+is a lot, but not a crazy amount (3.5 trips per workday, assuming 20 workdays a month.
+So our per-ride cost is probably resulted from a combination of
+- Lots of monthly passes
+- Transfers
+
+Interestingly, even though the commuter buses and rail line share the same fare
+structure, their derived per-ride costs are different. ($2.70 for the commuter bus
+vs $2.10 for the rail line.) This implies that ridership trends are different; maybe
+rail riders are more likely to use monthly passes?
+
+
+--
+## Driving cost
+
+Now let's move to driving cost per minute:
+
+```{r driving cost}
+#Austin MSA's FIPS code is 12420
+
+temp <- tempfile()
+download.file("https://nhts.ornl.gov/assets/2016/download/csv.zip", temp)
+
+vehs <- read_csv(unz(temp, "vehpub.csv"), 
+                 show_col_types = FALSE) %>%
+  filter(HH_CBSA == "12420")
+
+trips <- read_csv(unz(temp, "trippub.csv"), 
+                      show_col_types = FALSE) %>%
+  filter(HH_CBSA == "12420")
+
+car_trips <- trips %>%
+  filter(PSGR_FLG == "02") 
+  
+unlink(temp)
+
+
+
+```
+
+```{r driving cost cont}
+car_trips_svy <- car_trips %>%
+  as_survey(weights = WTTRDFIN)
+
+veh_svy <- vehs %>%
+  as_survey(weights = WTHHFIN)
+
+total_time <- car_trips_svy %>%
+  summarise(total_time = survey_total(TRVLCMIN))
+
+kable(total_time, format.args = list(big.mark = ",",
+                                     scientific = FALSE))
+```
+
+Austin drivers drive around 35.7 Billion minutes annually. With a 2016 population
+at 1.7 million, that's around 21,000 minutes per person per year, or around 57 minutes
+per person per day.
+
+```{r gas cost summary}
+total_gas_cost <- veh_svy %>%
+  summarise(total_cost = survey_total(GSTOTCST))
+
+kable(total_gas_cost, format.args = list(big.mark = ","))
+```
+Households in Austin spend around $1.8 Billion on gas each year. Per person this
+comes out to approximately \$1000 annually, or \$2.70 per day
+
+```{r cost per minute}
+cost_per_minute <- total_gas_cost$total_cost[1] / total_time$total_time[1] 
+
+cost_per_minute
+```
+
+Around 5.2 cents per minute to operate a car in Austin.
+
+
+## Costs per Trip
+
+```{r load up skims}
+skims <- here("existing",
+              "data",
+              "all_skims_ex.csv") %>%
+  read_csv(show_col_types = FALSE) %>%
+  mutate(fromId = as.character(fromId),
+         toId = as.character(toId))
+
+head(skims, 5) %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "500px", height = "320px")
+
+skims <- skims %>%
+  mutate(drive_cost = car_time * cost_per_minute) %>%
+  mutate(transit_cost = n_rides * cost_per_ride_combined)
+
+
+#use the NCHRP 716 Table 4.16 to assume average size of carpools at 2.42 ppl
+skims <- skims %>%
+  mutate(carpool_cost = drive_cost / 2.42)
+```
+
+
+
