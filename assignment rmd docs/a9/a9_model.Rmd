@@ -388,13 +388,26 @@ bike_const_HBW = 0.15
 #HBO - Nudge down SOV and Transit - -.75, -0.1, -1.75, 0.5, -1.5
 #HBO - Up SOV -.6, -0.1, -1.6, 0.5, -1.75
 #HBO - Up HOV slightly - -.6, -0.2, -1.6, 0.5, -1.75
-#HBO - Nudge - -.5, 0, -1.5, 0.6, -1.75
+#HBO - Final Nudge - -.5, 0, -1.5, 0.6, -1.75
 
 SOV_const_HBO = -0.5
 HOV_const_HBO = 0
 transit_const_HBO = -1.5
 walk_const_HBO = 0.6
 bike_const_HBO = -1.75
+
+
+#NHB - Initial run: -0.5, 0, -4.5, -2.2, -5.5
+#NHB - Use the HBO constants - -0.5, 0, -1.5, 0.6, -1.75
+#NHB - Tweak - -0.5, -0.5, -1.5, 0.6, -2.5
+#NHB - Tweak - -0.8, -0.5, -1.5, 0.6, -4
+
+SOV_const_NHB = -0.8
+HOV_const_NHB = -0.5
+transit_const_NHB = -1.5
+walk_const_NHB = 0.6
+bike_const_NHB = -4
+
 
 ```
 
@@ -676,7 +689,7 @@ modeled_mode_by_purpose_3 <- tibble(
 model_compare <- rbind(mode_by_purpose, modeled_mode_by_purpose_2,
                        modeled_mode_by_purpose_1, modeled_mode_by_purpose_3)
 
-model_compare %>% filter(str_starts(purpose, "HBO")) %>%
+model_compare %>% filter(str_starts(purpose, "NHB")) %>%
   select(purpose, pct_SOV, pct_HOV, pct_transit, pct_walk, pct_bike)
 ```
 
@@ -686,13 +699,7 @@ For HBW - undercounting bike, walk, and transit, and even HOV, and overcounting 
 For HBO - nudge up SOV, bring transit, walk, and bike way up
 
 ```{r}
-mode_constants %>% filter(trip_type == "HBO")
+mode_constants %>% filter(trip_type == "NHB")
 ```
-Initial run: -.75, .2, -4.5, -2.15, -4
-First correction - -.5, 0, -3, 0, -2
-Fix transit - -.5, 0, 0, 0.5, -2
-Transit overcorrected - -.5, 0, -1.5, 0.5, -2
-Nudge down SOV and Transit - -.75, -0.1, -1.75, 0.5, -1.5
-Up SOV -.6, -0.1, -1.6, 0.5, -1.75
-Up HOV slightly - -.6, 0, -1.6, 0.5, -1.75
-Nudge - -.5, 0, -1.5, 0.6, -1.75
+Looks pretty solid!
+
