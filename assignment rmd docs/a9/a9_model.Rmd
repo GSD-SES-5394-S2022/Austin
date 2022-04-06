@@ -189,5 +189,129 @@ skims <- skims %>%
   mutate(carpool_cost = drive_cost / 2.42)
 ```
 
+## Estimate existing mode shares
+
+Note about mode shares and costs: Ideally we would want to separate into
+a nest for transit, with bus splitting into local and commuter, and rail separate.
+However, fare-wise rail and commuter bus are comparable. But the NHTS data does
+*not* distinguish between commuter bus and local bus service. Therefore we could
+only disaggregate data to all bus vs. rail. And that seems a bit silly, since our
+bus data is somewhat skewed. So we might as well just lump it all into a single
+transit factor.
+(Plus disaggregating would require us to go back to the travel time skims and try
+to disaggregate it there, which is annoying...)
+
+
+First, let's just get an overview of our mode breakdown at the least aggregated level:
+```{r}
+mode_count <- count(trips, TRPTRANS) %>%
+  mutate(mode = c("walk","bike","car","suv","van","pickup truck",'golf cart/segway',
+           'motorcycle','rv','school bus','public or commuter bus','paratransit',
+           'private/charter bus','amtrak/commuter rail',
+           'subway/light rail','taxi/uber','rental/zipcar','airplane','ferry',
+           'something else'))
+mode_count
+```
+
+
+Note on data aggregation: We are choosing to count "transit trips" as only
+those which are by public bus, or heavy or light rail. This is so that our mode
+choice data matches our travel time data, which is based off GTFS that only
+includes bus and rail. School bus trips, paratransit trips, charter bus trips
+will all be discounted from our model.
+
+Really, the aforementioned 3 modes should be their own category. They all feature
+indirect travel, and often are directionally sensitive - children board
+individually in mornings, but as a unit in the afternoon.
+(Paratransit is also such a small segment of the NHTS data that excluding it won't
+skew much.)
+
+Ultimately the reason to exclude these modes from our model is that we don't have
+travel time estimates for them. They don't move like standard driving trips, nor
+do they line up with the GTFS data for fixed-route trips.
+
+
+(I'm still not certain what trips are classified as commuter rail vs light rail.
+Especially since Amtrak travel is not possible _within_ the metro area, only
+external trips. I think we can assume that both commuter rail trips and subway/
+light rail trips are referring to the same mode.)
+
+
+
+```{r aggregate trip data by mode}
+
+#codebook source: https://nhts.ornl.gov/assets/codebook_v1.2.pdf
+
+trips <- trips %>%
+  mutate(home_based = case_when(WHYTO == "01" ~ TRUE,
+                                WHYTO == "02" ~ TRUE,
+                                WHYFROM == "01" ~ TRUE,
+                                WHYFROM == "02" ~ TRUE,
+                                TRUE ~ FALSE)) %>%
+  mutate(work = ifelse(WHYTO == "03" | WHYFROM == "03", TRUE, FALSE)) %>%
+  mutate(purpose = case_when(home_based & work ~ "HBW",
+                            home_based ~ "HBO",
+                            TRUE ~ "NHB")) %>%
+  mutate(mode = case_when(TRPTRANS == "01" ~ "walk",
+                          TRPTRANS == "02" ~ "bike",
+                          TRPTRANS == "03" & NUMONTRP > 1 ~ "HOV", #car
+                          TRPTRANS == "04" & NUMONTRP > 1 ~ "HOV", #SUV
+                          TRPTRANS == "05" & NUMONTRP > 1 ~ "HOV", #van
+                          TRPTRANS == "06" & NUMONTRP > 1 ~ "HOV", #pickup truck
+                          TRPTRANS == "08" & NUMONTRP > 1 ~ "HOV", #motorcycle/moped
+                          TRPTRANS == "17" & NUMONTRP > 1 ~ "HOV", #taxi/Uber
+                          TRPTRANS == "18" & NUMONTRP > 1 ~ "HOV", #rental/Zipcar
+                          TRPTRANS == "03" ~ "SOV",
+                          TRPTRANS == "04" ~ "SOV",
+                          TRPTRANS == "05" ~ "SOV",
+                          TRPTRANS == "06" ~ "SOV",
+                          TRPTRANS == "08" ~ "SOV",
+                          TRPTRANS == "17" ~ "SOV",
+                          TRPTRANS == "18" ~ "SOV",
+                          TRPTRANS == "11" ~ "transit", #public or commuter bus
+                          #TRPTRANS == "14" ~ "transit", #city-to-city bus
+                          TRPTRANS == "15" ~ "transit", #amtrak/commuter rail
+                          TRPTRANS == "16" ~ "transit", #subway/light rail
+                          TRPTRANS == "10" ~ "Group Travel", #school bus
+                          TRPTRANS == "12" ~ "Group Travel", #paratransit
+                          TRPTRANS == "13" ~ "Group Travel", #charter bus
+                          TRUE ~ "other")) %>%
+  filter(mode != "other")
+```
+
+
+```{r survey trips by mode}
+trips_svy <- trips %>%
+  as_survey(weights = WTTRDFIN)
+
+mode_by_purpose <- trips_svy %>%
+  group_by(purpose, mode) %>%
+  survey_tally() %>%
+  select(-n_se) %>%
+  pivot_wider(names_from = mode,
+              values_from = n,
+              names_prefix = "n_",) %>%
+  mutate(n_trips = n_bike + n_SOV + n_HOV + n_transit + n_walk) %>%
+  mutate(pct_bike = n_bike / n_trips) %>%
+  mutate(pct_SOV = n_SOV / n_trips) %>%
+  mutate(pct_HOV = n_HOV / n_trips) %>%
+  mutate(pct_walk = n_walk / n_trips) %>%
+  mutate(pct_transit = n_transit / n_trips) %>%
+  select(purpose, pct_bike, pct_SOV, pct_HOV, pct_transit, pct_walk)
+
+mode_by_purpose
+
+```
+
+
+For our model choice, we're using NCHRP tables. We are looking for models
+that fit our population size and include non-motorized travel. (Breaking down transit
+into submodes would be nice, but isn't necessary, especially since rail travel is such
+a small segment of transit trips in Austin.)
+
+HBW - Table 4.7/8 Model I
+HBO - Table 4.10/11 Model I
+NHB - Table 4.13/14 Model M
+
 
 
