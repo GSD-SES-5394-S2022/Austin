@@ -22,6 +22,8 @@ library(kableExtra)
 library(survey)
 library(srvyr)
 library(stringr)
+library(PNWColors)
+library(RColorBrewer)
 ```
 
 # Travel Cost
@@ -653,7 +655,7 @@ skims <- skims %>%
 
 ```{r}
 modeled_mode_by_purpose_1 <- tibble(
-  purpose = "HBW_model 1", 
+  purpose = "HBW_model_1", 
   pct_bike = sum(skims$n_bike_HBW) / 
                  sum(skims$HBW_flow),
   pct_SOV = sum(skims$n_SOV_HBW) / 
@@ -667,7 +669,7 @@ modeled_mode_by_purpose_1 <- tibble(
 
 
 modeled_mode_by_purpose_2 <- tibble(
-  purpose = "HBO_model 1", 
+  purpose = "HBO_model_1", 
   pct_bike = sum(skims$n_bike_HBO) / 
                  sum(skims$HBO_flow),
   pct_SOV = sum(skims$n_SOV_HBO) / 
@@ -680,7 +682,7 @@ modeled_mode_by_purpose_2 <- tibble(
                 sum(skims$HBO_flow))
 
 modeled_mode_by_purpose_3 <- tibble(
-  purpose = "NHB_model 1", 
+  purpose = "NHB_model_1", 
   pct_bike = sum(skims$n_bike_NHB) / 
                  sum(skims$NHB_flow),
   pct_SOV = sum(skims$n_SOV_NHB) / 
@@ -959,7 +961,7 @@ And to display our comparison
 
 ```{r}
 alt_modeled_mode_by_purpose_1 <- tibble(
-  purpose = "HBW_model alt", 
+  purpose = "HBW_model_alt", 
   pct_bike = sum(skims_alt$n_bike_HBW) / 
                  sum(skims_alt$HBW_flow),
   pct_SOV = sum(skims_alt$n_SOV_HBW) / 
@@ -973,7 +975,7 @@ alt_modeled_mode_by_purpose_1 <- tibble(
 
 
 alt_modeled_mode_by_purpose_2 <- tibble(
-  purpose = "HBO_model alt", 
+  purpose = "HBO_model_alt", 
   pct_bike = sum(skims_alt$n_bike_HBO) / 
                  sum(skims_alt$HBO_flow),
   pct_SOV = sum(skims_alt$n_SOV_HBO) / 
@@ -986,7 +988,7 @@ alt_modeled_mode_by_purpose_2 <- tibble(
                 sum(skims_alt$HBO_flow))
 
 alt_modeled_mode_by_purpose_3 <- tibble(
-  purpose = "NHB_model alt", 
+  purpose = "NHB_model_alt", 
   pct_bike = sum(skims_alt$n_bike_NHB) / 
                  sum(skims_alt$NHB_flow),
   pct_SOV = sum(skims_alt$n_SOV_NHB) / 
@@ -1031,12 +1033,16 @@ skims_alt %>%
 skims_prev <- read_csv(here("existing",
                             "data",
                             "all_skims_ex.csv")) %>%
-  mutate(fromTo = paste0(fromId,toId))
+  mutate(fromTo = paste0(fromId,toId),
+         fromId = as.character(fromId),
+         toId = as.character(toId))
 
 skims_prev_alt <- read_csv(here("alternative",
                                 "data",
                                 "all_skims_alt.csv")) %>%
-  mutate(fromTo = paste0(fromId,toId))
+  mutate(fromTo = paste0(fromId,toId),
+         fromId = as.character(fromId),
+         toId = as.character(toId))
 
 new_stuff_ex <- skims %>%
   mutate(fromTo = paste0(fromId,toId)) %>%
@@ -1056,7 +1062,7 @@ new_stuff_alt <- skims_alt %>%
 skims_merged <- full_join(skims_prev, new_stuff_ex) %>%
   select(-c(fromTo))
 
-skims_alt_merged <- full_join(skims_prev, new_stuff_alt) %>%
+skims_alt_merged <- full_join(skims_prev_alt, new_stuff_alt) %>%
   select(-c(fromTo))
 
 skims_merged %>%
@@ -1072,3 +1078,346 @@ skims_alt_merged %>%
 
 ```
 
+```{r}
+pie_data <- read.csv(here("assignment rmd docs", "a9", "pie_data.csv")) %>%
+  mutate(mode = c("Bike", "SOV", "HOV", "Transit", "Walk"),
+         HBO_ch = (HBO_alt-HBO_ex)*100/HBO_ex,
+         HBW_ch = (HBW_alt-HBW_ex)*100/HBW_ex,
+         NHB_ch = (NHB_alt-NHB_ex)*100/NHB_ex)
+  
+# Compute percentages
+pie_data$fraction_ex <- pie_data$Existing / sum(pie_data$Existing)
+
+# Compute the cumulative percentages (top of each rectangle)
+pie_data$ymax_ex <- cumsum(pie_data$fraction_ex)
+
+# Compute the bottom of each rectangle
+pie_data$ymin_ex <- c(0, head(pie_data$ymax, n=-1))
+
+# Compute label position
+pie_data$labelPosition <- (pie_data$ymax + pie_data$ymin) / 2
+
+# Label radius
+pie_data <- pie_data %>%
+  mutate(radius_ex = ifelse(Existing > 5, 3.5, 4),
+         radius_alt = ifelse(Alternative > 5, 3.5, 4))
+
+# Make the plot
+ggplot(pie_data, aes(ymax=ymax_ex, ymin=ymin_ex, xmax=4, xmin=3, fill=mode)) +
+  geom_rect() +
+  geom_label(x=pie_data$radius_ex, aes(y=labelPosition, 
+                                       label=scales::percent(fraction_ex, accuracy=0.01)), size=3, show.legend = FALSE) +
+  scale_fill_brewer(palette="Oranges") +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  labs(fill = "Mode") +
+  theme(legend.position = "bottom")
+
+ggsave(here("images", "a9", "ex_modeshare_all.png"))
+```
+
+```{r}
+# Compute percentages
+pie_data$fraction_alt <- pie_data$Alternative / sum(pie_data$Alternative)
+
+# Compute the cumulative percentages (top of each rectangle)
+pie_data$ymax_alt <- cumsum(pie_data$fraction_ex)
+
+# Compute the bottom of each rectangle
+pie_data$ymin_alt <- c(0, head(pie_data$ymax_alt, n=-1))
+
+# Compute label position
+pie_data$labelPosition <- (pie_data$ymax_alt + pie_data$ymin_alt) / 2
+
+# Label radius
+pie_data <- pie_data %>%
+  mutate(radius_alt = ifelse(Existing > 5, 3.5, 4),
+         radius_alt = ifelse(Alternative > 5, 3.5, 4))
+
+# Make the plot
+ggplot(pie_data, aes(ymax=ymax_alt, ymin=ymin_alt, xmax=4, xmin=3, fill=mode)) +
+  geom_rect() +
+  geom_label(x=pie_data$radius_alt, aes(y=labelPosition, 
+                                        label=scales::percent(fraction_alt, accuracy=0.01)), size=3, show.legend = FALSE) +
+  scale_fill_brewer(palette="Oranges") +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  labs(fill = "Mode") +
+  theme(legend.position = "none")
+
+ggsave(here("images", "a9", "alt_modeshare_all.png"))
+```
+
+```{r}
+# Compute percentages
+pie_data$fraction_ex <- pie_data$HBO_ex / sum(pie_data$HBO_ex)
+
+# Compute the cumulative percentages (top of each rectangle)
+pie_data$ymax_ex <- cumsum(pie_data$fraction_ex)
+
+# Compute the bottom of each rectangle
+pie_data$ymin_ex <- c(0, head(pie_data$ymax_ex, n=-1))
+
+# Compute label position
+pie_data$labelPosition <- (pie_data$ymax_ex + pie_data$ymin_ex) / 2
+
+# Label radius
+pie_data <- pie_data %>%
+  mutate(radius_ex = ifelse(HBO_ex*100 > 5, 3.5, 4),
+         radius_alt = ifelse(Alternative > 5, 3.5, 4))
+
+# Make the plot
+ggplot(pie_data, aes(ymax=ymax_ex, ymin=ymin_ex, xmax=4, xmin=3, fill=mode)) +
+  geom_rect() +
+  geom_label(x=pie_data$radius_ex, aes(y=labelPosition, 
+                                       label=scales::percent(fraction_ex, accuracy=0.01)), size=3, show.legend = FALSE) +
+  scale_fill_brewer(palette=4,) +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  labs(fill = "Mode") +
+  theme(legend.position = "none")
+
+ggsave(here("images", "a9", "ex_modeshare_HBO.png"))
+```
+
+```{r}
+# Compute percentages
+pie_data$fraction_ex <- pie_data$HBW_ex / sum(pie_data$HBW_ex)
+
+# Compute the cumulative percentages (top of each rectangle)
+pie_data$ymax_ex <- cumsum(pie_data$fraction_ex)
+
+# Compute the bottom of each rectangle
+pie_data$ymin_ex <- c(0, head(pie_data$ymax_ex, n=-1))
+
+# Compute label position
+pie_data$labelPosition <- (pie_data$ymax_ex + pie_data$ymin_ex) / 2
+
+# Label radius
+pie_data <- pie_data %>%
+  mutate(radius_ex = ifelse(HBW_ex*100 > 5|mode=="Walk", 3.5, 4),
+         radius_alt = ifelse(Alternative > 5, 3.5, 4))
+
+# Make the plot
+ggplot(pie_data, aes(ymax=ymax_ex, ymin=ymin_ex, xmax=4, xmin=3, fill=mode)) +
+  geom_rect() +
+  geom_label(x=pie_data$radius_ex, aes(y=labelPosition, 
+                                       label=scales::percent(fraction_ex, accuracy=0.01)), size=3, show.legend = FALSE) +
+  scale_fill_brewer(palette=4,) +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  labs(fill = "Mode") +
+  theme(legend.position = "none")
+
+ggsave(here("images", "a9", "ex_modeshare_HBW.png"))
+```
+
+```{r}
+# Compute percentages
+pie_data$fraction_ex <- pie_data$NHB_ex / sum(pie_data$NHB_ex)
+
+# Compute the cumulative percentages (top of each rectangle)
+pie_data$ymax_ex <- cumsum(pie_data$fraction_ex)
+
+# Compute the bottom of each rectangle
+pie_data$ymin_ex <- c(0, head(pie_data$ymax_ex, n=-1))
+
+# Compute label position
+pie_data$labelPosition <- (pie_data$ymax_ex + pie_data$ymin_ex) / 2
+
+# Label radius
+pie_data <- pie_data %>%
+  mutate(radius_ex = ifelse(NHB_ex*100 > 5|mode=="Walk", 3.5, 4),
+         radius_alt = ifelse(Alternative > 5, 3.5, 4))
+
+# Make the plot
+ggplot(pie_data, aes(ymax=ymax_ex, ymin=ymin_ex, xmax=4, xmin=3, fill=mode)) +
+  geom_rect() +
+  geom_label(x=pie_data$radius_ex, aes(y=labelPosition, 
+                                       label=scales::percent(fraction_ex, accuracy=0.01)), size=3, show.legend = FALSE) +
+  scale_fill_brewer(palette=4,) +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  labs(fill = "Mode") +
+  theme(legend.position = "bottom")
+
+ggsave(here("images", "a9", "ex_modeshare_NHB.png"))
+```
+```{r}
+# Compute percentages
+pie_data$fraction_ex <- pie_data$HBW_ex / sum(pie_data$HBW_ex)
+
+# Compute the cumulative percentages (top of each rectangle)
+pie_data$ymax_ex <- cumsum(pie_data$fraction_ex)
+
+# Compute the bottom of each rectangle
+pie_data$ymin_ex <- c(0, head(pie_data$ymax_ex, n=-1))
+
+# Compute label position
+pie_data$labelPosition <- (pie_data$ymax_ex + pie_data$ymin_ex) / 2
+
+# Label radius
+pie_data <- pie_data %>%
+  mutate(radius_ex = ifelse(HBW_ex*100 > 5|mode=="Walk", 3.5, 4),
+         radius_alt = ifelse(Alternative > 5, 3.5, 4))
+
+# Make the plot
+ggplot(pie_data, aes(ymax=ymax_ex, ymin=ymin_ex, xmax=4, xmin=3, fill=mode)) +
+  geom_rect() +
+  geom_label(x=pie_data$radius_ex, aes(y=labelPosition, 
+                                       label=scales::percent(fraction_ex, accuracy=0.01)), size=3, show.legend = FALSE) +
+  scale_fill_brewer(palette="PuRd") +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  labs(fill = "Mode") +
+  theme(legend.position = "bottom")
+
+ggsave(here("images", "a9", "excomp_modeshare_HBW.png"))
+```
+
+```{r}
+# Compute percentages
+pie_data$fraction_alt <- pie_data$HBW_alt / sum(pie_data$HBW_alt)
+
+# Compute the cumulative percentages (top of each rectangle)
+pie_data$ymax_alt <- cumsum(pie_data$fraction_alt)
+
+# Compute the bottom of each rectangle
+pie_data$ymin_alt <- c(0, head(pie_data$ymax_alt, n=-1))
+
+# Compute label position
+pie_data$labelPosition <- (pie_data$ymax_alt + pie_data$ymin_alt) / 2
+
+# Label radius
+pie_data <- pie_data %>%
+  mutate(radius_ex = ifelse(HBW_ex*100 > 5|mode=="Walk", 3.5, 4),
+         radius_alt = ifelse(Alternative > 5, 3.5, 4))
+
+# Make the plot
+ggplot(pie_data, aes(ymax=ymax_alt, ymin=ymin_alt, xmax=4, xmin=3, fill=mode)) +
+  geom_rect() +
+  geom_label(x=pie_data$radius_alt, aes(y=labelPosition, 
+                                       label=scales::percent(fraction_alt, accuracy=0.01)), size=3, show.legend = FALSE) +
+  scale_fill_brewer(palette="PuRd") +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  labs(fill = "Mode") +
+  theme(legend.position = "none")
+
+ggsave(here("images", "a9", "altcomp_modeshare_HBW.png"))
+```
+
+```{r}
+zones <- st_read(here("zones", "boundaries.geojson"))
+
+dt_skim_ex <- skims_merged %>%
+  filter(toId == "48453000700"|toId == "48453001100") %>%
+  nest_by(fromId) %>%
+  mutate(transit_HBW_ex = sum(data$n_transit_HBW)/sum(data$HBW_flow),
+         bike_HBW_ex = sum(data$n_bike_HBW)/sum(data$HBW_flow),
+         walk_HBW_ex = sum(data$n_walk_HBW)/sum(data$HBW_flow),
+         sov_HBW_ex = sum(data$n_SOV_HBW)/sum(data$HBW_flow))
+
+zones_ex <- zones %>%
+  left_join(dt_skim_ex,
+            by = c("GEOID" = "fromId"))
+
+dt_skim_alt <- skims_alt_merged %>%
+  filter(toId == "48453000700"|toId == "48453001100") %>%
+  nest_by(fromId) %>%
+  mutate(transit_HBW_alt = sum(data$n_transit_HBW)/sum(data$HBW_flow),
+         bike_HBW_alt = sum(data$n_bike_HBW)/sum(data$HBW_flow),
+         walk_HBW_alt = sum(data$n_walk_HBW)/sum(data$HBW_flow),
+         sov_HBW_alt = sum(data$n_SOV_HBW)/sum(data$HBW_flow))
+
+dt_skim_ex <- dt_skim_ex %>%
+  select(fromId, transit_HBW_ex, bike_HBW_ex, walk_HBW_ex, sov_HBW_ex)
+
+zones_alt <- zones %>%
+  left_join(dt_skim_alt,
+            by = c("GEOID" = "fromId")) %>%
+  left_join(dt_skim_ex,
+            by = c("GEOID" = "fromId")) %>%
+  mutate(transit_HBW_ch = (transit_HBW_alt - transit_HBW_ex)/transit_HBW_ex,
+         bike_HBW_ch = ifelse((bike_HBW_alt - bike_HBW_ex)/bike_HBW_ex>.50, .51,(bike_HBW_alt - bike_HBW_ex)/bike_HBW_ex),
+         walk_HBW_ch = (walk_HBW_alt - walk_HBW_ex)/walk_HBW_ex,
+         sov_HBW_ch = (sov_HBW_alt - sov_HBW_ex)/sov_HBW_ex)
+```
+
+```{r}
+# ggplot(zones_ex) +
+#   geom_sf(aes(fill = transit_HBW_ex),
+#           color = NA) +
+#   theme_void()
+```
+
+```{r}
+pal1 <- pnw_palette(name = "Bay", 
+                           n = 5, 
+                           type = "continuous")
+
+ggplot(zones_alt) +
+  geom_sf(aes(fill = transit_HBW_ch),
+          color = NA) +
+  scale_fill_gradientn(colours = pal1,
+                       labels = scales::percent) +
+  labs(fill = "% Increase in \nTransit Share \n(Home-based \nwork trips)") +
+  theme_void()
+
+ggsave(here("images", "a9", "transit_share_HBW.png"))
+```
+
+```{r}
+pal2 <- pnw_palette(name = "Sunset2", 
+                           n = 5, 
+                           type = "continuous")
+
+ggplot(zones_alt) +
+  geom_sf(aes(fill = bike_HBW_ch),
+          color = NA) +
+  scale_fill_gradientn(colours = pal2,
+                       labels = scales::percent) +
+  labs(fill = "% Increase in \nBike Share \n(Home-based \nwork trips)") +
+  theme_void()
+
+ggsave(here("images", "a9", "bike_share_HBW.png"))
+```
+
+```{r}
+pal3 <- pnw_palette(name = "Starfish", 
+                           n = 5, 
+                           type = "continuous")
+
+ggplot(zones_alt) +
+  geom_sf(aes(fill = walk_HBW_ch),
+          color = NA) +
+  scale_fill_gradientn(colours = pal3,
+                       labels = scales::percent) +
+  labs(fill = "% Increase in \nWalk Share \n(Home-based \nwork trips)") +
+  theme_void()
+
+ggsave(here("images", "a9", "walk_share_HBW.png"))
+```
+
+```{r}
+pal4 <- pnw_palette(name = "Moth", 
+                           n = 5, 
+                           type = "continuous")
+
+ggplot(zones_alt) +
+  geom_sf(aes(fill = sov_HBW_ch),
+          color = NA) +
+  scale_fill_gradientn(colours = pal4,
+                       labels = scales::percent) +
+  labs(fill = "% Decrease in \nSOV Share \n(Home-based \nwork trips)") +
+  theme_void()
+
+ggsave(here("images", "a9", "sov_share_HBW.png"))
+```
