@@ -1,0 +1,84 @@
+---
+title: "a10"
+author: "Reuven Herzog"
+date: "4/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This rmd document is meant to give us some aggregate counts about travel
+across all modes. We will calculate:
+1) Ridership on each transit route
+2) Regional VMT for SOVs and HOVs
+3) Regional PMT for walking and biking
+
+```{r load libraries}
+#allocating more RAM because my processor is weak, default should be 2G
+#options(java.parameters = "-Xmx4G")
+
+library(here)
+library(tidyverse)
+library(stplanr)
+#library(r5r)
+library(sf)
+```
+
+```{r load skims}
+skims <- here("existing",
+                     "data",
+                     "all_skims_mode_numbers_ex.csv") %>%
+  read_csv(show_col_types = FALSE) %>%
+  select(fromId, 
+         toId, 
+         n_SOV_HBW,
+         n_HOV_HBW,
+         n_transit_HBW,
+         n_walk_HBW,
+         n_bike_HBW,
+         n_SOV_HBO,
+         n_HOV_HBO,
+         n_transit_HBO,
+         n_walk_HBO,
+         n_bike_HBO,
+         n_SOV_NHB,
+         n_HOV_NHB,
+         n_transit_NHB,
+         n_walk_NHB,
+         n_bike_NHB,
+         routes) %>%
+  mutate(fromId = as.character(fromId),
+         toId = as.character(toId))
+
+skims_alt <- here("alternative",
+                     "data",
+                     "all_skims_mode_numbers_alt.csv") %>%
+  read_csv(show_col_types = FALSE) %>%
+  select(fromId, 
+         toId, 
+         n_SOV_HBW,
+         n_HOV_HBW,
+         n_transit_HBW,
+         n_walk_HBW,
+         n_bike_HBW,
+         n_SOV_HBO,
+         n_HOV_HBO,
+         n_transit_HBO,
+         n_walk_HBO,
+         n_bike_HBO,
+         n_SOV_NHB,
+         n_HOV_NHB,
+         n_transit_NHB,
+         n_walk_NHB,
+         n_bike_NHB,
+         routes) %>%
+  mutate(fromId = as.character(fromId),
+         toId = as.character(toId))
+```
+
+Now we need to turn our PA matrix into an OD matrix. We do this by averaging the
+PA matrix with its transpose.
+
+
