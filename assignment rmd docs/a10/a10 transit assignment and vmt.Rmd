@@ -16,11 +16,12 @@ across all modes. We will calculate:
 3) Regional PMT for walking and biking
 
 ```{r load libraries}
-options(java.parameters = "-Xmx4G")
+#allocating more RAM because my processor is weak, default should be 2G
+options(java.parameters = "-Xmx8G")
 
 library(here)
 library(tidyverse)
-#allocating more RAM because my processor is weak, default should be 2G
+
 library(r5r)
 library(stplanr)
 library(sf)
@@ -348,7 +349,7 @@ drive_dist_alt <- detailed_itineraries(r5r_core_alternative,
   select(fromId, toId, miles) %>%
   st_drop_geometry()
 
-stop_r5
+stop_r5()
 ```
 
 
