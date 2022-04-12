@@ -16,13 +16,13 @@ across all modes. We will calculate:
 3) Regional PMT for walking and biking
 
 ```{r load libraries}
-#allocating more RAM because my processor is weak, default should be 2G
-#options(java.parameters = "-Xmx4G")
+options(java.parameters = "-Xmx4G")
 
 library(here)
 library(tidyverse)
+#allocating more RAM because my processor is weak, default should be 2G
+library(r5r)
 library(stplanr)
-#library(r5r)
 library(sf)
 ```
 
@@ -81,4 +81,198 @@ skims_alt <- here("alternative",
 Now we need to turn our PA matrix into an OD matrix. We do this by averaging the
 PA matrix with its transpose.
 
+```{r PA to OD}
+HBW_PA_mat <- skims %>%
+  od_to_odmatrix(attrib = "n_transit_HBW", 
+                 name_orig = "fromId",
+                 name_dest = "toId") 
 
+HBW_PA_mat <- HBW_PA_mat[,row.names(HBW_PA_mat)]
+
+HBW_PA_mat_trans <- t(HBW_PA_mat)
+
+HBW_OD_mat <- (HBW_PA_mat + HBW_PA_mat_trans) / 2
+
+HBW_OD_table <- HBW_OD_mat %>%
+  odmatrix_to_od() %>%
+  rename(fromId = orig,
+         toId = dest,
+         flow_HBW = flow)
+
+HBO_PA_mat <- skims %>%
+  od_to_odmatrix(attrib = "n_transit_HBO", 
+                 name_orig = "fromId",
+                 name_dest = "toId") 
+
+HBO_PA_mat <- HBO_PA_mat[,row.names(HBO_PA_mat)]
+
+HBO_PA_mat_trans <- t(HBO_PA_mat)
+
+HBO_OD_mat <- (HBO_PA_mat + HBO_PA_mat_trans) / 2
+
+HBO_OD_table <- HBO_OD_mat %>%
+  odmatrix_to_od() %>%
+  rename(fromId = orig,
+         toId = dest,
+         flow_HBO = flow)
+
+NHB_PA_mat <- skims %>%
+  od_to_odmatrix(attrib = "n_transit_NHB", 
+                 name_orig = "fromId",
+                 name_dest = "toId") 
+
+NHB_PA_mat <- NHB_PA_mat[,row.names(NHB_PA_mat)]
+
+NHB_PA_mat_trans <- t(NHB_PA_mat)
+
+NHB_OD_mat <- (NHB_PA_mat + NHB_PA_mat_trans) / 2
+
+NHB_OD_table <- NHB_OD_mat %>%
+  odmatrix_to_od() %>%
+  rename(fromId = orig,
+         toId = dest,
+         flow_NHB = flow)
+
+OD_table_all <- left_join(skims, HBW_OD_table) %>%
+  left_join(HBO_OD_table) %>%
+  left_join(NHB_OD_table) %>%
+  select(-c(n_transit_HBW, n_transit_HBO, n_transit_NHB))
+```
+And now to aggregate trips by route
+
+```{r count route}
+route_trips <- OD_table_all %>%
+  filter(((flow_HBW > 0 | flow_HBO > 0) | flow_NHB > 0) & !is.na(routes)) %>%
+  mutate(route_1 = str_split_fixed(routes, "\\|", 3)[,1],
+         route_2 = str_split_fixed(routes, "\\|", 3)[,2],
+         route_3 = str_split_fixed(routes, "\\|", 3)[,3]) %>%
+  pivot_longer(cols = c(route_1, route_2, route_3),
+               values_to = "route") %>%
+  filter(route != "") %>%
+  select(route, flow_HBW, flow_HBO, flow_NHB)%>%
+  group_by(route) %>%
+  summarize(ridership_HBW = round(sum(flow_HBW)),
+            ridership_HBO = round(sum(flow_HBO)),
+            ridership_NHB = round(sum(flow_NHB))) %>%
+  mutate(total_ridership = ridership_HBW + ridership_HBO + ridership_NHB)
+```
+
+
+Allllrighty, let's do that whole thing for the alternative condition.
+
+```{r PA to OD alt}
+HBW_PA_mat_alt <- skims_alt %>%
+  od_to_odmatrix(attrib = "n_transit_HBW", 
+                 name_orig = "fromId",
+                 name_dest = "toId") 
+
+HBW_PA_mat_alt <- HBW_PA_mat_alt[,row.names(HBW_PA_mat_alt)]
+
+HBW_PA_mat_trans_alt <- t(HBW_PA_mat_alt)
+
+HBW_OD_mat_alt <- (HBW_PA_mat_alt + HBW_PA_mat_trans_alt) / 2
+
+HBW_OD_table_alt <- HBW_OD_mat_alt %>%
+  odmatrix_to_od() %>%
+  rename(fromId = orig,
+         toId = dest,
+         flow_HBW = flow)
+
+
+HBO_PA_mat_alt <- skims_alt %>%
+  od_to_odmatrix(attrib = "n_transit_HBO", 
+                 name_orig = "fromId",
+                 name_dest = "toId") 
+
+HBO_PA_mat_alt <- HBO_PA_mat_alt[,row.names(HBO_PA_mat_alt)]
+
+HBO_PA_mat_trans_alt <- t(HBO_PA_mat_alt)
+
+HBO_OD_mat_alt <- (HBO_PA_mat_alt + HBO_PA_mat_trans_alt) / 2
+
+HBO_OD_table_alt <- HBO_OD_mat_alt %>%
+  odmatrix_to_od() %>%
+  rename(fromId = orig,
+         toId = dest,
+         flow_HBO = flow)
+
+
+NHB_PA_mat_alt <- skims_alt %>%
+  od_to_odmatrix(attrib = "n_transit_NHB", 
+                 name_orig = "fromId",
+                 name_dest = "toId") 
+
+NHB_PA_mat_alt <- NHB_PA_mat_alt[,row.names(NHB_PA_mat_alt)]
+
+NHB_PA_mat_trans_alt <- t(NHB_PA_mat_alt)
+
+NHB_OD_mat_alt <- (NHB_PA_mat_alt + NHB_PA_mat_trans_alt) / 2
+
+NHB_OD_table_alt <- NHB_OD_mat_alt %>%
+  odmatrix_to_od() %>%
+  rename(fromId = orig,
+         toId = dest,
+         flow_NHB = flow)
+
+
+OD_table_all_alt <- left_join(skims_alt, HBW_OD_table_alt) %>%
+  left_join(HBO_OD_table_alt) %>%
+  left_join(NHB_OD_table_alt) %>%
+  select(-c(n_transit_HBW, n_transit_HBO, n_transit_NHB))
+```
+
+
+```{r count route alt}
+route_trips_alt <- OD_table_all %>%
+  filter(((flow_HBW > 0 | flow_HBO > 0) | flow_NHB > 0) & !is.na(routes)) %>%
+  mutate(route_1 = str_split_fixed(routes, "\\|", 3)[,1],
+         route_2 = str_split_fixed(routes, "\\|", 3)[,2],
+         route_3 = str_split_fixed(routes, "\\|", 3)[,3]) %>%
+  pivot_longer(cols = c(route_1, route_2, route_3),
+               values_to = "route") %>%
+  filter(route != "") %>%
+  select(route, flow_HBW, flow_HBO, flow_NHB)%>%
+  group_by(route) %>%
+  summarize(ridership_HBW = round(sum(flow_HBW)),
+            ridership_HBO = round(sum(flow_HBO)),
+            ridership_NHB = round(sum(flow_NHB))) %>%
+  mutate(total_ridership = ridership_HBW + ridership_HBO + ridership_NHB)
+```
+
+Let's do a comparison
+
+
+```{r comparison}
+rtt_alt_comp <- route_trips_alt %>%
+  rename(ridership_HBW_alt = ridership_HBW,
+         ridership_HBO_alt = ridership_HBO,
+         ridership_NHB_alt = ridership_NHB,)
+
+comp_rider <- left_join(route_trips, rtt_alt_comp) %>%
+  mutate(comp_HBW = ridership_HBW_alt - ridership_HBW,
+         comp_HBO = ridership_HBO_alt - ridership_HBO,
+         comp_NHB = ridership_NHB_alt - ridership_NHB)
+  
+```
+
+Uhhhhh, so we see absolutely no change in aggregate ridership between the existing and
+alternative condition?
+
+
+Let's check the PA ridership stats and see if there are changes
+```{r}
+PA_ex_rides <- select(skims, c(fromId, toId,
+                               n_transit_HBW, n_transit_HBO, n_transit_NHB))
+PA_alt_rides <- select(skims_alt, c(fromId, toId,
+                               n_transit_HBW, n_transit_HBO, n_transit_NHB)) %>%
+  rename(n_transit_HBW_alt = n_transit_HBW,
+         n_transit_HBO_alt = n_transit_HBO,
+         n_transit_NHB_alt = n_transit_NHB)
+
+comp_rider_PA <- left_join(PA_ex_rides, PA_alt_rides) %>%
+  mutate(comp_HBW = n_transit_HBW_alt - n_transit_HBW,
+         comp_HBO = n_transit_HBO_alt - n_transit_HBO,
+         comp_NHB = n_transit_NHB_alt - n_transit_NHB)
+```
+
+Welp, our transit ridership pattern didn't change one bit. At least we know.
