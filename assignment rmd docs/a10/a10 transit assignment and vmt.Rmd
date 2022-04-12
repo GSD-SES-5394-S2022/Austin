@@ -276,3 +276,183 @@ comp_rider_PA <- left_join(PA_ex_rides, PA_alt_rides) %>%
 ```
 
 Welp, our transit ridership pattern didn't change one bit. At least we know.
+
+
+# VMT and PMT by mode
+
+Calculating trip distance
+
+```{r trip distances}
+centroids <- here("zones",
+                   "centroids.geojson") %>%
+  st_read() %>%
+  filter(!st_is_empty(.)) 
+
+origins <- centroids %>% 
+  slice(rep(1:n(), each = n())) %>% 
+  mutate(dest_order = 
+           rep(seq(1:length(centroids$id)),
+               length(centroids$id)))
+
+destinations <- origins %>%
+  arrange(dest_order)
+
+r5r_core_existing <- here("existing",
+                          "networks") %>%
+  setup_r5(verbose = FALSE)
+
+ped_dist <- detailed_itineraries(r5r_core_existing,
+                                 origins = origins,
+                                 destinations = destinations,
+                                 mode = "WALK",
+                                 verbose = FALSE)  %>%
+  mutate(miles = distance / 1609.34) %>%
+  select(fromId, toId, miles) %>%
+  st_drop_geometry()
+
+drive_dist <- detailed_itineraries(r5r_core_existing,
+                                 origins = origins,
+                                 destinations = destinations,
+                                 mode = "CAR",
+                                 verbose = FALSE) %>%
+  mutate(miles = distance / 1609.34) %>%
+  select(fromId, toId, miles) %>%
+  st_drop_geometry()
+
+bike_dist <- detailed_itineraries(r5r_core_existing,
+                                 origins = origins,
+                                 destinations = destinations,
+                                 mode = "BICYCLE",
+                                 verbose = FALSE) %>%
+  mutate(miles = distance / 1609.34) %>%
+  select(fromId, toId, miles) %>%
+  st_drop_geometry()
+
+stop_r5() 
+```
+
+We'll also calculate trip distances for the alternative network.
+This change only affects cars, so that's the only mode we need to recalculate.
+
+```{r distance alt}
+r5r_core_alternative <- here("alternative",
+                             "networks") %>%
+  setup_r5(verbose = FALSE)
+
+drive_dist_alt <- detailed_itineraries(r5r_core_alternative,
+                                 origins = origins,
+                                 destinations = destinations,
+                                 mode = "CAR",
+                                 verbose = FALSE) %>%
+  mutate(miles = distance / 1609.34) %>%
+  select(fromId, toId, miles) %>%
+  st_drop_geometry()
+
+stop_r5
+```
+
+
+Calculating PMT by Mode
+
+```{r}
+PMT_car <- skims %>%
+  left_join(drive_dist, by = c("fromId", "toId")) %>%
+  select(n_SOV_HBW, n_HOW_HBW,
+         n_SOV_HBO, n_HOV_HBO,
+         n_SOV_NHB, N_HOV_NHB,
+         miles) %>%
+  mutate(PMT_SOV_HBW = n_SOV_HBW * miles,
+         PMT_HOV_HBW = n_HOV_HBW * miles,
+         PMT_SOV_HBO = n_SOV_HBO * miles,
+         PMT_HOV_HBO = n_HOV_HBO * miles,
+         PMT_SOV_NHB = n_SOV_NHB * miles,
+         PMT_HOV_NHB = n_HOV_NHB * miles) %>%
+  summarize(total_SOV_miles_HBW = sum(PMT_SOV_HBW),
+            total_HOV_miles_HBW = sum(PMT_HOV_HBW),
+            total_SOV_miles_HBO = sum(PMT_SOV_HBO),
+            total_HOV_miles_HBO = sum(PMT_HOV_HBO),
+            total_SOV_miles_NHB = sum(PMT_SOV_NHB),
+            total_HOV_miles_NHB = sum(PMT_HOV_NHB)) %>%
+  mutate(total_SOV_miles_all = total_SOV_miles_HBW + total_SOV_miles_HBO +
+           total_SOV_miles_NHB,
+         total_HOV_miles_all = total_HOV_miles_HBW + total_HOV_miles_HBO +
+           total_HOV_miles_NHB)
+
+PMT_car_alt <- skims_alt %>%
+  left_join(drive_dist_alt, by = c("fromId", "toId")) %>%
+  select(n_SOV_HBW, n_HOW_HBW,
+         n_SOV_HBO, n_HOV_HBO,
+         n_SOV_NHB, N_HOV_NHB,
+         miles) %>%
+  mutate(PMT_SOV_HBW = n_SOV_HBW * miles,
+         PMT_HOV_HBW = n_HOV_HBW * miles,
+         PMT_SOV_HBO = n_SOV_HBO * miles,
+         PMT_HOV_HBO = n_HOV_HBO * miles,
+         PMT_SOV_NHB = n_SOV_NHB * miles,
+         PMT_HOV_NHB = n_HOV_NHB * miles) %>%
+  summarize(total_SOV_miles_HBW = sum(PMT_SOV_HBW),
+            total_HOV_miles_HBW = sum(PMT_HOV_HBW),
+            total_SOV_miles_HBO = sum(PMT_SOV_HBO),
+            total_HOV_miles_HBO = sum(PMT_HOV_HBO),
+            total_SOV_miles_NHB = sum(PMT_SOV_NHB),
+            total_HOV_miles_NHB = sum(PMT_HOV_NHB)) %>%
+  mutate(total_SOV_miles_all = total_SOV_miles_HBW + total_SOV_miles_HBO +
+           total_SOV_miles_NHB,
+         total_HOV_miles_all = total_HOV_miles_HBW + total_HOV_miles_HBO +
+           total_HOV_miles_NHB)
+
+
+PMT_walk <- skims %>%
+  left_join(ped_dist, by = c("fromId", "toId")) %>%
+  select(n_walk_HBW, n_walk_HBO, n_walk_NHB, miles) %>%
+  mutate(PMT_walk_HBW = n_walk_HBW * miles,
+         PMT_walk_HBO = n_walk_HBO * miles,
+         PMT_walk_NHB = n_walk_NHB * miles) %>%
+  summarize(total_walk_miles_HBW = sum(PMT_walk_HBW),
+            total_walk_miles_HBO = sum(PMT_walk_HBO),
+            total_walk_miles_NHB = sum(PMT_walk_NHB)) %>%
+  mutate(total_walk_miles_all = total_walk_miles_HBW + total_walk_miles_HBO +
+           total_walk_miles_NHB)
+
+PMT_bike <- skims %>%
+  left_join(bike_dist, by = c("fromId", "toId")) %>%
+  select(n_bike_HBW, n_bike_HBO, n_bike_NHB, miles) %>%
+  mutate(PMT_bike_HBW = n_bike_HBW * miles,
+         PMT_bike_HBO = n_bike_HBO * miles,
+         PMT_bike_NHB = n_bike_NHB * miles) %>%
+  summarize(total_bike_miles_HBW = sum(PMT_bike_HBW),
+            total_bike_miles_HBO = sum(PMT_bike_HBO),
+            total_bike_miles_NHB = sum(PMT_bike_NHB)) %>%
+  mutate(total_bike_miles_all = total_bike_miles_HBW + total_bike_miles_HBO +
+           total_bike_miles_NHB)
+```
+
+
+And to calculate VMT
+Using estimates for carpool sizes based on the NCHRP 716, Table 4-16
+
+```{r}
+VMT_HBW <- PMT_car$total_SOV_miles_HBW[1] +
+  PMT_car$total_HOV_miles_HBW[1] / 2.42
+VMT_HBO <- PMT_car$total_SOV_miles_HBO[1] +
+  PMT_car$total_HOV_miles_HBO[1] / 2.71
+VMT_NHB <- PMT_car$total_SOV_miles_NHB[1] +
+  PMT_car$total_HOV_miles_NHB[1] / 2.75
+
+VMT_table <- data.frame("VMT_HBW" = VMT_HBW, "VMT_HBO" = VMT_HBO,
+                        "VMT_NHB" = VMT_NHB) %>%
+  mutate(VMT_total = VMT_HBW + VMT_HBO + VMT_NHB)
+
+VMT_HBW_alt <- PMT_car_alt$total_SOV_miles_HBW[1] +
+  PMT_car_alt$total_HOV_miles_HBW[1] / 2.42
+VMT_HBO_alt <- PMT_car_alt$total_SOV_miles_HBO[1] +
+  PMT_car_alt$total_HOV_miles_HBO[1] / 2.71
+VMT_NHB_alt <- PMT_car_alt$total_SOV_miles_NHB[1] +
+  PMT_car_alt$total_HOV_miles_NHB[1] / 2.75
+
+VMT_table_alt <- data.frame("VMT_HBW_alt" = VMT_HBW_alt, "VMT_HBO_alt" = VMT_HBO_alt,
+                        "VMT_NHB_alt" = VMT_NHB_alt) %>%
+  mutate(VMT_total_alt = VMT_HBW_alt + VMT_HBO_alt + VMT_NHB_alt)
+```
+
+
