@@ -17,7 +17,7 @@ across all modes. We will calculate:
 
 ```{r load libraries}
 #allocating more RAM because my processor is weak, default should be 2G
-options(java.parameters = "-Xmx8G")
+options(java.parameters = "-Xmx4G")
 
 library(here)
 library(tidyverse)
@@ -352,15 +352,25 @@ drive_dist_alt <- detailed_itineraries(r5r_core_alternative,
 stop_r5()
 ```
 
+```{r}
+# saving these to Github to avoid running the whole routing algorithm again
+
+write.csv(drive_dist, here("assignment rmd docs", "a10", "drive_dist.csv"))
+write.csv(drive_dist_alt, here("assignment rmd docs", "a10", "drive_dist_alt.csv"))
+write.csv(route_trips, here("assignment rmd docs", "a10", "route_trips.csv"))
+write.csv(route_trips_alt, here("assignment rmd docs", "a10", "route_trips_alt.csv"))
+write.csv(ped_dist, here("assignment rmd docs", "a10", "ped_dist.csv"))
+write.csv(bike_dist, here("assignment rmd docs", "a10", "bike_dist.csv"))
+```
 
 Calculating PMT by Mode
 
 ```{r}
 PMT_car <- skims %>%
   left_join(drive_dist, by = c("fromId", "toId")) %>%
-  select(n_SOV_HBW, n_HOW_HBW,
+  select(n_SOV_HBW, n_HOV_HBW,
          n_SOV_HBO, n_HOV_HBO,
-         n_SOV_NHB, N_HOV_NHB,
+         n_SOV_NHB, n_HOV_NHB,
          miles) %>%
   mutate(PMT_SOV_HBW = n_SOV_HBW * miles,
          PMT_HOV_HBW = n_HOV_HBW * miles,
@@ -368,12 +378,12 @@ PMT_car <- skims %>%
          PMT_HOV_HBO = n_HOV_HBO * miles,
          PMT_SOV_NHB = n_SOV_NHB * miles,
          PMT_HOV_NHB = n_HOV_NHB * miles) %>%
-  summarize(total_SOV_miles_HBW = sum(PMT_SOV_HBW),
-            total_HOV_miles_HBW = sum(PMT_HOV_HBW),
-            total_SOV_miles_HBO = sum(PMT_SOV_HBO),
-            total_HOV_miles_HBO = sum(PMT_HOV_HBO),
-            total_SOV_miles_NHB = sum(PMT_SOV_NHB),
-            total_HOV_miles_NHB = sum(PMT_HOV_NHB)) %>%
+  summarize(total_SOV_miles_HBW = sum(PMT_SOV_HBW, na.rm = TRUE),
+            total_HOV_miles_HBW = sum(PMT_HOV_HBW, na.rm = TRUE),
+            total_SOV_miles_HBO = sum(PMT_SOV_HBO, na.rm = TRUE),
+            total_HOV_miles_HBO = sum(PMT_HOV_HBO, na.rm = TRUE),
+            total_SOV_miles_NHB = sum(PMT_SOV_NHB, na.rm = TRUE),
+            total_HOV_miles_NHB = sum(PMT_HOV_NHB, na.rm = TRUE)) %>%
   mutate(total_SOV_miles_all = total_SOV_miles_HBW + total_SOV_miles_HBO +
            total_SOV_miles_NHB,
          total_HOV_miles_all = total_HOV_miles_HBW + total_HOV_miles_HBO +
@@ -381,9 +391,9 @@ PMT_car <- skims %>%
 
 PMT_car_alt <- skims_alt %>%
   left_join(drive_dist_alt, by = c("fromId", "toId")) %>%
-  select(n_SOV_HBW, n_HOW_HBW,
+  select(n_SOV_HBW, n_HOV_HBW,
          n_SOV_HBO, n_HOV_HBO,
-         n_SOV_NHB, N_HOV_NHB,
+         n_SOV_NHB, n_HOV_NHB,
          miles) %>%
   mutate(PMT_SOV_HBW = n_SOV_HBW * miles,
          PMT_HOV_HBW = n_HOV_HBW * miles,
@@ -391,12 +401,12 @@ PMT_car_alt <- skims_alt %>%
          PMT_HOV_HBO = n_HOV_HBO * miles,
          PMT_SOV_NHB = n_SOV_NHB * miles,
          PMT_HOV_NHB = n_HOV_NHB * miles) %>%
-  summarize(total_SOV_miles_HBW = sum(PMT_SOV_HBW),
-            total_HOV_miles_HBW = sum(PMT_HOV_HBW),
-            total_SOV_miles_HBO = sum(PMT_SOV_HBO),
-            total_HOV_miles_HBO = sum(PMT_HOV_HBO),
-            total_SOV_miles_NHB = sum(PMT_SOV_NHB),
-            total_HOV_miles_NHB = sum(PMT_HOV_NHB)) %>%
+  summarize(total_SOV_miles_HBW = sum(PMT_SOV_HBW, na.rm = TRUE),
+            total_HOV_miles_HBW = sum(PMT_HOV_HBW, na.rm = TRUE),
+            total_SOV_miles_HBO = sum(PMT_SOV_HBO, na.rm = TRUE),
+            total_HOV_miles_HBO = sum(PMT_HOV_HBO, na.rm = TRUE),
+            total_SOV_miles_NHB = sum(PMT_SOV_NHB, na.rm = TRUE),
+            total_HOV_miles_NHB = sum(PMT_HOV_NHB, na.rm = TRUE)) %>%
   mutate(total_SOV_miles_all = total_SOV_miles_HBW + total_SOV_miles_HBO +
            total_SOV_miles_NHB,
          total_HOV_miles_all = total_HOV_miles_HBW + total_HOV_miles_HBO +
@@ -409,9 +419,9 @@ PMT_walk <- skims %>%
   mutate(PMT_walk_HBW = n_walk_HBW * miles,
          PMT_walk_HBO = n_walk_HBO * miles,
          PMT_walk_NHB = n_walk_NHB * miles) %>%
-  summarize(total_walk_miles_HBW = sum(PMT_walk_HBW),
-            total_walk_miles_HBO = sum(PMT_walk_HBO),
-            total_walk_miles_NHB = sum(PMT_walk_NHB)) %>%
+  summarize(total_walk_miles_HBW = sum(PMT_walk_HBW, na.rm = TRUE),
+            total_walk_miles_HBO = sum(PMT_walk_HBO, na.rm = TRUE),
+            total_walk_miles_NHB = sum(PMT_walk_NHB, na.rm = TRUE)) %>%
   mutate(total_walk_miles_all = total_walk_miles_HBW + total_walk_miles_HBO +
            total_walk_miles_NHB)
 
@@ -421,9 +431,35 @@ PMT_bike <- skims %>%
   mutate(PMT_bike_HBW = n_bike_HBW * miles,
          PMT_bike_HBO = n_bike_HBO * miles,
          PMT_bike_NHB = n_bike_NHB * miles) %>%
-  summarize(total_bike_miles_HBW = sum(PMT_bike_HBW),
-            total_bike_miles_HBO = sum(PMT_bike_HBO),
-            total_bike_miles_NHB = sum(PMT_bike_NHB)) %>%
+  summarize(total_bike_miles_HBW = sum(PMT_bike_HBW, na.rm = TRUE),
+            total_bike_miles_HBO = sum(PMT_bike_HBO, na.rm = TRUE),
+            total_bike_miles_NHB = sum(PMT_bike_NHB, na.rm = TRUE)) %>%
+  mutate(total_bike_miles_all = total_bike_miles_HBW + total_bike_miles_HBO +
+           total_bike_miles_NHB)
+```
+
+```{r}
+PMT_walk <- skims %>%
+  left_join(ped_dist, by = c("fromId", "toId")) %>%
+  select(n_walk_HBW, n_walk_HBO, n_walk_NHB, miles) %>%
+  mutate(PMT_walk_HBW = n_walk_HBW * miles,
+         PMT_walk_HBO = n_walk_HBO * miles,
+         PMT_walk_NHB = n_walk_NHB * miles) %>%
+  summarize(total_walk_miles_HBW = sum(PMT_walk_HBW, na.rm = TRUE),
+            total_walk_miles_HBO = sum(PMT_walk_HBO, na.rm = TRUE),
+            total_walk_miles_NHB = sum(PMT_walk_NHB, na.rm = TRUE)) %>%
+  mutate(total_walk_miles_all = total_walk_miles_HBW + total_walk_miles_HBO +
+           total_walk_miles_NHB)
+
+PMT_bike <- skims %>%
+  left_join(bike_dist, by = c("fromId", "toId")) %>%
+  select(n_bike_HBW, n_bike_HBO, n_bike_NHB, miles) %>%
+  mutate(PMT_bike_HBW = n_bike_HBW * miles,
+         PMT_bike_HBO = n_bike_HBO * miles,
+         PMT_bike_NHB = n_bike_NHB * miles) %>%
+  summarize(total_bike_miles_HBW = sum(PMT_bike_HBW, na.rm = TRUE),
+            total_bike_miles_HBO = sum(PMT_bike_HBO, na.rm = TRUE),
+            total_bike_miles_NHB = sum(PMT_bike_NHB, na.rm = TRUE)) %>%
   mutate(total_bike_miles_all = total_bike_miles_HBW + total_bike_miles_HBO +
            total_bike_miles_NHB)
 ```
