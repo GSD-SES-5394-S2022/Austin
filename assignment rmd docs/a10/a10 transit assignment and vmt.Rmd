@@ -25,6 +25,7 @@ library(tidyverse)
 library(r5r)
 library(stplanr)
 library(sf)
+library(PNWColors)
 ```
 
 ```{r load skims}
@@ -154,7 +155,7 @@ route_trips <- OD_table_all %>%
   group_by(route) %>%
   summarize(ridership_HBW = round(sum(flow_HBW)),
             ridership_HBO = round(sum(flow_HBO)),
-            ridership_NHB = round(sum(flow_NHB))) %>%
+            ridership_NHB = round(sum(flow_NHB))) %>% 
   mutate(total_ridership = ridership_HBW + ridership_HBO + ridership_NHB)
 ```
 
@@ -224,7 +225,7 @@ OD_table_all_alt <- left_join(skims_alt, HBW_OD_table_alt) %>%
 
 
 ```{r count route alt}
-route_trips_alt <- OD_table_all %>%
+route_trips_alt <- OD_table_all_alt %>%
   filter(((flow_HBW > 0 | flow_HBO > 0) | flow_NHB > 0) & !is.na(routes)) %>%
   mutate(route_1 = str_split_fixed(routes, "\\|", 3)[,1],
          route_2 = str_split_fixed(routes, "\\|", 3)[,2],
@@ -233,7 +234,7 @@ route_trips_alt <- OD_table_all %>%
                values_to = "route") %>%
   filter(route != "") %>%
   select(route, flow_HBW, flow_HBO, flow_NHB)%>%
-  group_by(route) %>%
+  group_by(route) %>% 
   summarize(ridership_HBW = round(sum(flow_HBW)),
             ridership_HBO = round(sum(flow_HBO)),
             ridership_NHB = round(sum(flow_NHB))) %>%
@@ -244,20 +245,24 @@ Let's do a comparison
 
 
 ```{r comparison}
+rtt_ex_comp <- route_trips %>%
+  rename(ridership_HBW_ex = ridership_HBW,
+         ridership_HBO_ex = ridership_HBO,
+         ridership_NHB_ex = ridership_NHB,
+         total_ridership_ex = total_ridership)
+
 rtt_alt_comp <- route_trips_alt %>%
   rename(ridership_HBW_alt = ridership_HBW,
          ridership_HBO_alt = ridership_HBO,
-         ridership_NHB_alt = ridership_NHB,)
+         ridership_NHB_alt = ridership_NHB,
+         total_ridership_alt = total_ridership)
 
-comp_rider <- left_join(route_trips, rtt_alt_comp) %>%
-  mutate(comp_HBW = ridership_HBW_alt - ridership_HBW,
-         comp_HBO = ridership_HBO_alt - ridership_HBO,
-         comp_NHB = ridership_NHB_alt - ridership_NHB)
-  
+ridership_comp <- left_join(rtt_ex_comp, rtt_alt_comp, by = "route") %>% 
+  mutate(comp_HBW = ridership_HBW_alt - ridership_HBW_ex,
+         comp_HBO = ridership_HBO_alt - ridership_HBO_ex,
+         comp_NHB = ridership_NHB_alt - ridership_NHB_ex,
+         comp_total = total_ridership_alt - total_ridership_ex)
 ```
-
-Uhhhhh, so we see absolutely no change in aggregate ridership between the existing and
-alternative condition?
 
 
 Let's check the PA ridership stats and see if there are changes
@@ -273,7 +278,8 @@ PA_alt_rides <- select(skims_alt, c(fromId, toId,
 comp_rider_PA <- left_join(PA_ex_rides, PA_alt_rides) %>%
   mutate(comp_HBW = n_transit_HBW_alt - n_transit_HBW,
          comp_HBO = n_transit_HBO_alt - n_transit_HBO,
-         comp_NHB = n_transit_NHB_alt - n_transit_NHB)
+         comp_NHB = n_transit_NHB_alt - n_transit_NHB,
+         comp_all = comp_HBW+comp_HBO+comp_NHB)
 ```
 
 Welp, our transit ridership pattern didn't change one bit. At least we know.
@@ -355,13 +361,30 @@ stop_r5()
 ```{r}
 # saving these to Github to avoid running the whole routing algorithm again
 
-write.csv(drive_dist, here("assignment rmd docs", "a10", "drive_dist.csv"))
-write.csv(drive_dist_alt, here("assignment rmd docs", "a10", "drive_dist_alt.csv"))
-write.csv(route_trips, here("assignment rmd docs", "a10", "route_trips.csv"))
-write.csv(route_trips_alt, here("assignment rmd docs", "a10", "route_trips_alt.csv"))
-write.csv(ped_dist, here("assignment rmd docs", "a10", "ped_dist.csv"))
-write.csv(bike_dist, here("assignment rmd docs", "a10", "bike_dist.csv"))
+write.csv(drive_dist, here("assignment rmd docs", "a10", "drive_dist.csv"), row.names = FALSE)
+write.csv(drive_dist_alt, here("assignment rmd docs", "a10", "drive_dist_alt.csv"), row.names = FALSE)
+write.csv(route_trips, here("assignment rmd docs", "a10", "route_trips.csv"), row.names = FALSE)
+write.csv(route_trips_alt, here("assignment rmd docs", "a10", "route_trips_alt.csv"), row.names = FALSE)
+write.csv(ped_dist, here("assignment rmd docs", "a10", "ped_dist.csv"), row.names = FALSE)
+write.csv(bike_dist, here("assignment rmd docs", "a10", "bike_dist.csv"), row.names = FALSE)
 ```
+
+```{r}
+drive_dist <- read.csv(here("assignment rmd docs", "a10", "drive_dist.csv"), colClasses = c("character", "character", "numeric"))
+
+drive_dist_alt <- read.csv(here("assignment rmd docs", "a10", "drive_dist_alt.csv"), colClasses = c("character", "character", "numeric"))
+
+route_trips <- read.csv(here("assignment rmd docs", "a10", "route_trips.csv"),
+                        colClasses = c("character", "numeric", "numeric", "numeric", "numeric"))
+
+route_trips_alt <- read.csv(here("assignment rmd docs", "a10", "route_trips_alt.csv"),
+                            colClasses = c("character", "numeric", "numeric", "numeric", "numeric"))
+
+ped_dist <- read.csv(here("assignment rmd docs", "a10", "ped_dist.csv"), colClasses = c("character", "character", "numeric"))
+
+bike_dist <- read.csv(here("assignment rmd docs", "a10", "bike_dist.csv"), colClasses = c("character", "character", "numeric"))
+```
+
 
 Calculating PMT by Mode
 
@@ -439,7 +462,7 @@ PMT_bike <- skims %>%
 ```
 
 ```{r}
-PMT_walk <- skims %>%
+PMT_walk_alt <- skims_alt %>%
   left_join(ped_dist, by = c("fromId", "toId")) %>%
   select(n_walk_HBW, n_walk_HBO, n_walk_NHB, miles) %>%
   mutate(PMT_walk_HBW = n_walk_HBW * miles,
@@ -451,7 +474,7 @@ PMT_walk <- skims %>%
   mutate(total_walk_miles_all = total_walk_miles_HBW + total_walk_miles_HBO +
            total_walk_miles_NHB)
 
-PMT_bike <- skims %>%
+PMT_bike_alt <- skims_alt %>%
   left_join(bike_dist, by = c("fromId", "toId")) %>%
   select(n_bike_HBW, n_bike_HBO, n_bike_NHB, miles) %>%
   mutate(PMT_bike_HBW = n_bike_HBW * miles,
@@ -493,3 +516,28 @@ VMT_table_alt <- data.frame("VMT_HBW_alt" = VMT_HBW_alt, "VMT_HBO_alt" = VMT_HBO
 ```
 
 
+```{r}
+zones <- st_read(here("zones", "boundaries.geojson"))
+
+dt_transit_ch <- comp_rider_PA %>%
+  filter(toId == "48453000700"|toId == "48453001100") %>%
+  nest_by(fromId) %>%
+  mutate(transit_HBW_ch = sum(data$comp_HBW),
+         transit_HBO_ch = sum(data$comp_HBO),
+         transit_NHB_ch = sum(data$comp_NHB),
+         transit_all_ch = sum(data$comp_all))
+
+zones_ch <- zones %>%
+  left_join(dt_transit_ch,
+            by = c("GEOID" = "fromId"))
+
+pal1 <- pnw_palette(name = "Bay", 
+                           n = 5, 
+                           type = "continuous")
+
+ggplot(zones_ch) +
+  geom_sf(aes(fill = transit_all_ch),
+          color = NA) +
+  scale_fill_gradientn(colours = pal1) + 
+  theme_void()
+```
