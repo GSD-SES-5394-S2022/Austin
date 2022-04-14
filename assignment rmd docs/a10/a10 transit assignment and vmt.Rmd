@@ -21,11 +21,12 @@ options(java.parameters = "-Xmx4G")
 
 library(here)
 library(tidyverse)
-
+library(tidytransit)
 library(r5r)
 library(stplanr)
 library(sf)
 library(PNWColors)
+library(reshape2)
 ```
 
 ```{r load skims}
@@ -290,83 +291,83 @@ Welp, our transit ridership pattern didn't change one bit. At least we know.
 Calculating trip distance
 
 ```{r trip distances}
-centroids <- here("zones",
-                   "centroids.geojson") %>%
-  st_read() %>%
-  filter(!st_is_empty(.)) 
-
-origins <- centroids %>% 
-  slice(rep(1:n(), each = n())) %>% 
-  mutate(dest_order = 
-           rep(seq(1:length(centroids$id)),
-               length(centroids$id)))
-
-destinations <- origins %>%
-  arrange(dest_order)
-
-r5r_core_existing <- here("existing",
-                          "networks") %>%
-  setup_r5(verbose = FALSE)
-
-ped_dist <- detailed_itineraries(r5r_core_existing,
-                                 origins = origins,
-                                 destinations = destinations,
-                                 mode = "WALK",
-                                 verbose = FALSE)  %>%
-  mutate(miles = distance / 1609.34) %>%
-  select(fromId, toId, miles) %>%
-  st_drop_geometry()
-
-drive_dist <- detailed_itineraries(r5r_core_existing,
-                                 origins = origins,
-                                 destinations = destinations,
-                                 mode = "CAR",
-                                 verbose = FALSE) %>%
-  mutate(miles = distance / 1609.34) %>%
-  select(fromId, toId, miles) %>%
-  st_drop_geometry()
-
-bike_dist <- detailed_itineraries(r5r_core_existing,
-                                 origins = origins,
-                                 destinations = destinations,
-                                 mode = "BICYCLE",
-                                 verbose = FALSE) %>%
-  mutate(miles = distance / 1609.34) %>%
-  select(fromId, toId, miles) %>%
-  st_drop_geometry()
-
-stop_r5() 
+# centroids <- here("zones",
+#                    "centroids.geojson") %>%
+#   st_read() %>%
+#   filter(!st_is_empty(.)) 
+# 
+# origins <- centroids %>% 
+#   slice(rep(1:n(), each = n())) %>% 
+#   mutate(dest_order = 
+#            rep(seq(1:length(centroids$id)),
+#                length(centroids$id)))
+# 
+# destinations <- origins %>%
+#   arrange(dest_order)
+# 
+# r5r_core_existing <- here("existing",
+#                           "networks") %>%
+#   setup_r5(verbose = FALSE)
+# 
+# ped_dist <- detailed_itineraries(r5r_core_existing,
+#                                  origins = origins,
+#                                  destinations = destinations,
+#                                  mode = "WALK",
+#                                  verbose = FALSE)  %>%
+#   mutate(miles = distance / 1609.34) %>%
+#   select(fromId, toId, miles) %>%
+#   st_drop_geometry()
+# 
+# drive_dist <- detailed_itineraries(r5r_core_existing,
+#                                  origins = origins,
+#                                  destinations = destinations,
+#                                  mode = "CAR",
+#                                  verbose = FALSE) %>%
+#   mutate(miles = distance / 1609.34) %>%
+#   select(fromId, toId, miles) %>%
+#   st_drop_geometry()
+# 
+# bike_dist <- detailed_itineraries(r5r_core_existing,
+#                                  origins = origins,
+#                                  destinations = destinations,
+#                                  mode = "BICYCLE",
+#                                  verbose = FALSE) %>%
+#   mutate(miles = distance / 1609.34) %>%
+#   select(fromId, toId, miles) %>%
+#   st_drop_geometry()
+# 
+# stop_r5() 
 ```
 
 We'll also calculate trip distances for the alternative network.
 This change only affects cars, so that's the only mode we need to recalculate.
 
 ```{r distance alt}
-r5r_core_alternative <- here("alternative",
-                             "networks") %>%
-  setup_r5(verbose = FALSE)
-
-drive_dist_alt <- detailed_itineraries(r5r_core_alternative,
-                                 origins = origins,
-                                 destinations = destinations,
-                                 mode = "CAR",
-                                 verbose = FALSE) %>%
-  mutate(miles = distance / 1609.34) %>%
-  select(fromId, toId, miles) %>%
-  st_drop_geometry()
-
-stop_r5()
+# r5r_core_alternative <- here("alternative",
+#                              "networks") %>%
+#   setup_r5(verbose = FALSE)
+# 
+# drive_dist_alt <- detailed_itineraries(r5r_core_alternative,
+#                                  origins = origins,
+#                                  destinations = destinations,
+#                                  mode = "CAR",
+#                                  verbose = FALSE) %>%
+#   mutate(miles = distance / 1609.34) %>%
+#   select(fromId, toId, miles) %>%
+#   st_drop_geometry()
+# 
+# stop_r5()
 ```
 
 ```{r}
-# saving these to Github to avoid running the whole routing algorithm again
-
-write.csv(drive_dist, here("assignment rmd docs", "a10", "drive_dist.csv"), row.names = FALSE)
-write.csv(drive_dist_alt, here("assignment rmd docs", "a10", "drive_dist_alt.csv"), row.names = FALSE)
-write.csv(route_trips, here("assignment rmd docs", "a10", "route_trips.csv"), row.names = FALSE)
-write.csv(route_trips_alt, here("assignment rmd docs", "a10", "route_trips_alt.csv"), row.names = FALSE)
-write.csv(ped_dist, here("assignment rmd docs", "a10", "ped_dist.csv"), row.names = FALSE)
-write.csv(bike_dist, here("assignment rmd docs", "a10", "bike_dist.csv"), row.names = FALSE)
+# # saving these to Github to avoid running the whole routing algorithm again
+# 
+# write.csv(drive_dist, here("assignment rmd docs", "a10", "drive_dist.csv"), row.names = FALSE)
+# write.csv(drive_dist_alt, here("assignment rmd docs", "a10", "drive_dist_alt.csv"), row.names = FALSE)
+# write.csv(route_trips, here("assignment rmd docs", "a10", "route_trips.csv"), row.names = FALSE)
+# write.csv(route_trips_alt, here("assignment rmd docs", "a10", "route_trips_alt.csv"), row.names = FALSE)
+# write.csv(ped_dist, here("assignment rmd docs", "a10", "ped_dist.csv"), row.names = FALSE)
+# write.csv(bike_dist, here("assignment rmd docs", "a10", "bike_dist.csv"), row.names = FALSE)
 ```
 
 ```{r}
@@ -539,5 +540,130 @@ ggplot(zones_ch) +
   geom_sf(aes(fill = transit_all_ch),
           color = NA) +
   scale_fill_gradientn(colours = pal1) + 
+  labs(fill = "Change in Transit \nTrips to Downtown") +
   theme_void()
+
+ggsave(here("images", "a10", "downtown_rider_map.png"))
+```
+
+```{r}
+capmetro_gtfs <- read_gtfs(here("existing", "networks", "gtfs.zip"))
+
+capmetro_shapes <- shapes_as_sf(capmetro_gtfs$shapes, crs = "NAD83")
+
+service_types <- capmetro_gtfs$calendar_dates %>%
+  filter(date == "2022-04-06")
+
+capmetro_trips <- capmetro_gtfs$trips %>%
+  filter(service_id %in% service_types$service_id) %>%
+  right_join(ridership_comp,
+             by = c("route_id" = "route")) %>%
+  distinct(route_id, .keep_all = TRUE) %>% 
+  left_join(capmetro_shapes)
+
+capmetro_trips <- st_as_sf(capmetro_trips, sf_column_name = "geometry")
+```
+
+```{r}
+bbox_new <- st_bbox(capmetro_trips) # current bounding box
+
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+
+scale <- .05 # percentage for padding around bbox limits
+
+bbox_new[1] <- bbox_new[1] - (scale * xrange) # xmin - left
+bbox_new[3] <- bbox_new[3] + (scale * xrange) # xmax - right
+bbox_new[2] <- bbox_new[2] - (scale * yrange) # ymin - bottom
+bbox_new[4] <- bbox_new[4] + (scale * yrange) # ymax - top
+
+bbox_new <- bbox_new %>%  # take the bounding box ...
+  st_as_sfc() # ... and make it a sf polygon
+  
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = capmetro_trips,
+          aes(alpha = comp_total,
+              geometry = geometry)) +
+  scale_alpha_continuous(range = c(0.1, 1)) +
+  geom_sf(data = bbox_new,
+          fill = NA) +
+  labs(alpha = "Increase in \nRidership") +
+  theme_void()
+
+ggsave(here("images", "a10", "route_rider_map.png"))
+```
+```{r}
+msa_sf <- zones %>%
+  st_union()
+
+box_labx <- (st_coordinates(bbox_new)[1,1]+st_coordinates(bbox_new)[2,1])/2
+  
+box_laby <- (st_coordinates(bbox_new)[2,2]+st_coordinates(bbox_new)[3,2])/2
+
+ggplot() +
+  geom_sf(data = msa_sf,
+          color = NA,
+          fill = "gray95") + 
+  geom_sf(data = capmetro_trips,
+          aes(geometry = geometry)) +
+  geom_sf(data = bbox_new,
+          fill = "white",
+          alpha = 0.9,
+          size = 1) +
+  geom_text(aes(x = box_labx, 
+                y = box_laby,
+                label = "Detail \nArea"),
+            size = 8) +
+  theme_void()
+
+ggsave(here("images", "a10", "inset_map.png"))
+```
+
+```{r}
+big_change <- ridership_comp %>%
+  filter(comp_total > 32) %>%
+  arrange(desc(comp_total))
+
+big_change <- melt(big_change[,c("route", "total_ridership_ex", "total_ridership_alt")], id.vars = 1)
+  
+big_change <- big_change %>%
+  mutate(variable = ifelse(variable=="total_ridership_ex","Existing","Alternative"))
+
+ggplot(big_change,aes(x = route, y = value)) + 
+    geom_bar(aes(fill = variable),stat = "identity",position = "dodge") +
+  scale_fill_manual(values = c("darkorange","darkorange4")) +
+  theme_minimal() + 
+  labs(fill = "Condition",
+       x = "Route",
+       y = "Ridership")
+
+ggsave(here("images", "a10", "bigch.png"),
+        height = 4.5,
+       width = 7)
+```
+
+```{r}
+big_ridership <- ridership_comp %>%
+  filter(total_ridership_alt > 3284) %>%
+  arrange(desc(total_ridership_alt))
+
+big_ridership <- melt(big_ridership[,c("route", "total_ridership_ex", "total_ridership_alt")], id.vars = 1)
+  
+big_ridership <- big_ridership %>%
+  mutate(variable = ifelse(variable=="total_ridership_ex","Existing","Alternative"))
+
+ggplot(big_ridership,aes(x = route, y = value)) + 
+    geom_bar(aes(fill = variable),stat = "identity",position = "dodge") +
+  scale_fill_manual(values = c("darkorange","darkorange4")) +
+  theme_minimal() + 
+  labs(fill = "Condition",
+       x = "Route",
+       y = "Ridership")
+
+ggsave(here("images", "a10", "bigrd.png"),
+       height = 4.5,
+       width = 7)
 ```
