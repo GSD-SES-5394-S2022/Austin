@@ -25,3 +25,4 @@ The following R Markdown files are used to perform this analysis (list to be upd
 * *a7_model.Rmd* - models of trip generation and attraction and graphics for report chapter
 * *a8_model.Rmd* - models trip distribution by type in existing conditions and apply predictions to alternative, saves travel flows appended to corresponding skim files (*all_skims_ex.csv* and *sall_skims_alt.csv*), and creates visualizations
 * *a9_model.Rmd* - models mode choice by trip type in existing conditions and apply predictions to alternative, saves mode trip counts appended to corresponding skim files (*skims_merged.csv* and *skims_merged_alt.csv*), and creates visualizations
+* *a10_assignment.Rmd* - assigns transit trips to particular routes, and using detailed travel itineraries, calculates regional VMT and PMT for driving/walking/biking
