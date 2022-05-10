@@ -341,6 +341,17 @@ write_csv(zone_data, "alternative/data/zone_data.csv", append = FALSE)
 ```
 
 ```{r}
+zone_data <- read.csv(here("existing", "data", "zone_data.csv"))
+zone_data$GEOID <- as.character(zone_data$GEOID)
+
+zones <- st_read(here("zones", "boundaries.geojson"))
+
+
+zones <- zones %>%
+  left_join(zone_data)
+```
+
+```{r}
 # define various color palettes for vis
 
 pnw_contin1 <- pnw_palette(name = "Moth", 
@@ -376,6 +387,10 @@ low_inc_map +
                        breaks = my_brks <- seq(0, 1, by = 0.2),
                        labels = paste(my_brks * 100, "%", sep = ""),
                        colors = pnw_contin2)
+
+ggsave(here("images", "a2", "pct_lowinc.png"),
+        height = 7,
+       width = 7)
 ```
 
 ```{r}
@@ -390,6 +405,10 @@ high_inc_map +
                        breaks = my_brks <- seq(0, 1, by = 0.2),
                        labels = paste(my_brks * 100, "%", sep = ""),
                        colors = pnw_contin2)
+
+ggsave(here("images", "a2", "pct_highinc.png"),
+        height = 7,
+       width = 7)
 ```
 
 ```{r}
@@ -402,6 +421,10 @@ density_map +
   theme_void() +
   scale_fill_gradientn(name = "Residential density \n(units per square mile)",
                        colors = pnw_contin1)
+
+ggsave(here("images", "a2", "res_dens.png"),
+        height = 7,
+       width = 7)
 ```
 
 ```{r}
@@ -416,6 +439,10 @@ race_map +
                        breaks = my_brks <- seq(0, 1, by = 0.2),
                        labels = paste(my_brks * 100, "%", sep = ""),
                        colors = pnw_contin3)
+
+ggsave(here("images", "a2", "pct_white.png"),
+        height = 7,
+       width = 7)
 ```
 
 ```{r}
@@ -426,10 +453,14 @@ veh_hist <- ggplot(zones) +
                  fill = "aquamarine",
                  color = "azure4")
 
-veh_hist +
-  theme_void() +
+veh_hist  +
+  theme_classic() +
   scale_x_continuous(name = "Average number of vehicles per household") +
   scale_y_continuous(name = "Number of census tracts")
+
+ggsave(here("images", "a2", "vehicles.png"),
+        height = 4.5,
+       width = 7)
 ```
 
 ```{r}
@@ -442,6 +473,10 @@ commute_map +
   theme_void() +
   scale_fill_gradientn(name = "Average commute \ntime (minutes)",
                        colors = pnw_contin5)
+
+ggsave(here("images", "a2", "commute_time.png"),
+        height = 7,
+       width = 7)
 ```
 
 ```{r}
@@ -453,10 +488,14 @@ commute_hist <- ggplot(zones) +
                  color = "azure4")
 
 commute_hist +
-  theme_void() +
+  theme_classic() +
   scale_x_continuous(name = "Average commute time (minutes)",
                      breaks = seq(0, 135, by = 15)) +
   scale_y_continuous(name = "Number of census tracts")
+
+ggsave(here("images", "a2", "commute_hist.png"),
+        height = 4.5,
+       width = 7)
 ```
 
 ```{r}
@@ -469,6 +508,31 @@ no_veh_map +
   theme_void() +
   scale_fill_gradientn(name = "Number of households \nwithout vehicle access",
                        colors = pnw_contin4)
+
+ggsave(here("images", "a2", "no_veh_map.png"),
+        height = 7,
+       width = 7)
+```
+
+```{r}
+# map pct of households with no vehicle access
+
+zones <- zones %>%
+  mutate(pct_no_veh = hh_no_vehE/hh_totalE)
+
+no_vh_pct <- ggplot(zones) +
+  geom_sf(aes(fill = pct_no_veh), color = NA)
+
+no_vh_pct + 
+  theme_void() +
+  scale_fill_gradientn(breaks = seq(0, 0.3, by = 0.05), 
+                       labels = scales::percent_format(accuracy = 1),
+                       name = "Percent of households \nwithout vehicle access",
+                       colors = pnw_contin4)
+
+ggsave(here("images", "a2", "no_veh_pct.png"),
+        height = 7,
+       width = 7)
 ```
 
 ```{r}
@@ -481,6 +545,10 @@ job_dens_map +
   theme_void() +
   scale_fill_gradientn(name = "Employment density \n(jobs per square mile)",
                        colors = pnw_contin1)
+
+ggsave(here("images", "a2", "job_dens.png"),
+        height = 7,
+       width = 7)
 ```
 
 ```{r employment stats 1}
@@ -494,7 +562,11 @@ bas_hg <- ggplot(zones) +
 
 bas_map + 
   theme_void() +
-  scale_fill_viridis_c(name = "Basic Jobs")
+  scale_fill_viridis_c(name = "Number of Jobs \nby Tract (Basic)")
+
+ggsave(here("images", "a2", "basic_jobs.png"),
+        height = 7,
+       width = 7)
 ```
 
 ```{r employment stats 2}
@@ -505,8 +577,12 @@ ret_map <- ggplot(zones) +
 
 ret_map + 
   theme_void() +
-  scale_fill_gradientn(name = "Retail Jobs",
+  scale_fill_gradientn(name = "Number of Jobs \nby Tract (Retail)",
                        colors = pnw_contin2)
+
+ggsave(here("images", "a2", "retail_jobs.png"),
+        height = 7,
+       width = 7)
 
 ret_hg <- ggplot(zones) +
   geom_histogram(aes(x = retail_emp))
@@ -520,32 +596,48 @@ serv_map <- ggplot(zones) +
 
 serv_map + 
   theme_void() +
-  scale_fill_gradientn(name = "Service Jobs",
+  scale_fill_gradientn(name = "Number of Jobs \nby Tract (Service)",
                        colors = pnw_contin5)
+
+ggsave(here("images", "a2", "service_jobs.png"),
+        height = 7,
+       width = 7)
   
 serv_hg <- ggplot(zones) +
   geom_histogram(aes(x = service_emp))
 ```
+
 ```{r}
 # map number of commuters who work downtown
 
 commute_dens_map <- ggplot(MSA) +
   geom_sf(aes(fill = as.numeric(commutes)), color = NA) +
-  scale_fill_viridis_c(name = "Commuters to Downtown\nby Census Tract")
+  scale_fill_viridis_c(name = "Number of Commuters \nto Downtown by Tract")
 
 commute_dens_map +
   theme_void()
+
+ggsave(here("images", "a2", "dt_commuters.png"),
+        height = 7,
+       width = 7)
 ```
 
 ```{r the downtown moat}
 # map tracts affected by road closures downtown
 
-moat_map <- ggplot(MSA) +
+downtown <- st_union(filter(zones,GEOID == "48453001100"),
+                     filter(zones,GEOID == "48453000700"))
+
+moat_map <- ggplot(zones) +
   geom_sf(aes(color = NULL))+
-  geom_sf(data = downtown, color = 'red', lwd = 1)
+  geom_sf(data = downtown, color = 'red', fill = 'red', lwd = 1)
 
 moat_map +
   theme_void()
+
+ggsave(here("images", "a2", "dt_map.png"),
+        height = 7,
+       width = 7)
 ```
 
 ```{r}
